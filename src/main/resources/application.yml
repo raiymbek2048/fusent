@@ -6,9 +6,9 @@ spring:
     active: ${SPRING_PROFILE:dev}
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/fucent}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:1234}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fusent}
+    username: ${DB_USERNAME:fusent_user}
+    password: ${DB_PASSWORD:fusent_password}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -66,7 +66,7 @@ spring:
       ack-mode: manual
 
 server:
-  port: ${SERVER_PORT:8978}
+  port: ${SERVER_PORT:8080}
   compression:
     enabled: true
     mime-types: application/json,text/html,text/xml,text/plain
@@ -94,6 +94,17 @@ management:
     export:
       prometheus:
         enabled: true
+
+jwt:
+  secret-key: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket-name: ${MINIO_BUCKET:fucent-media}
 
 app:
   jwt:

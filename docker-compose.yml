@@ -1,129 +1,138 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: fucent-postgres
+    container_name: fusent-postgres
     environment:
-      POSTGRES_DB: fucent
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_INITDB_ARGS: "-E UTF8"
+      POSTGRES_DB: fusent
+      POSTGRES_USER: fusent_user
+      POSTGRES_PASSWORD: fusent_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fusent-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U fusent_user -d fusent"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - fucent-network
 
+  # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: fucent-redis
+    container_name: fusent-redis
     ports:
       - "6379:6379"
     volumes:
-      - redis-data:/data
+      - redis_data:/data
+    networks:
+      - fusent-network
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 3s
-      retries: 3
-    networks:
-      - fucent-network
+      timeout: 5s
+      retries: 5
 
+  # Zookeeper for Kafka
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    container_name: fucent-zookeeper
+    container_name: fusent-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
     volumes:
-      - zookeeper-data:/var/lib/zookeeper/data
-      - zookeeper-logs:/var/lib/zookeeper/log
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
     networks:
-      - fucent-network
+      - fusent-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # Kafka Message Broker
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: fucent-kafka
+    container_name: fusent-kafka
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     ports:
       - "9092:9092"
-      - "9093:9093"
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
     volumes:
-      - kafka-data:/var/lib/kafka/data
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - fusent-network
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
-      interval: 30s
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
       timeout: 10s
       retries: 5
-    networks:
-      - fucent-network
 
+  # MinIO S3 Storage
   minio:
     image: minio/minio:latest
-    container_name: fucent-minio
-    command: server /data --console-address ":9001"
+    container_name: fusent-minio
     ports:
       - "9000:9000"
       - "9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
     volumes:
-      - minio-data:/data
+      - minio_data:/data
+    networks:
+      - fusent-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    networks:
-      - fucent-network
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # MinIO client для создания бакетов при старте
-  minio-init:
+  # MinIO Client - Create bucket on startup
+  minio-create-bucket:
     image: minio/mc:latest
-    container_name: fucent-minio-init
+    container_name: fusent-minio-create-bucket
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      sleep 5;
-      mc alias set myminio http://minio:9000 minioadmin minioadmin123;
-      mc mb myminio/fucent-media --ignore-existing;
-      mc mb myminio/fucent-thumbnails --ignore-existing;
-      mc anonymous set download myminio/fucent-media;
-      mc anonymous set download myminio/fucent-thumbnails;
-      echo 'MinIO buckets created successfully';
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/fucent-media --ignore-existing;
+      /usr/bin/mc anonymous set public myminio/fucent-media;
+      exit 0;
       "
     networks:
-      - fucent-network
-
-volumes:
-  postgres-data:
-  redis-data:
-  zookeeper-data:
-  zookeeper-logs:
-  kafka-data:
-  minio-data:
+      - fusent-network
 
 networks:
-  fucent-network:
+  fusent-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  zookeeper_data:
+  zookeeper_logs:
+  kafka_data:
+  minio_data:
