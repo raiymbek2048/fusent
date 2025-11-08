@@ -3,26 +3,39 @@ import toast from 'react-hot-toast'
 import api from '@/lib/api'
 import { Post, Comment, CreatePostRequest, CreateCommentRequest, PageResponse, PageRequest } from '@/types'
 
-// Get feed posts
-export const useFeedPosts = (params?: PageRequest) => {
+// Get public feed posts
+export const usePublicFeed = (params?: PageRequest) => {
   return useQuery({
-    queryKey: ['posts', 'feed', params],
+    queryKey: ['posts', 'public', params],
     queryFn: async (): Promise<PageResponse<Post>> => {
-      const response = await api.get<PageResponse<Post>>('/social/feed', { params })
+      const response = await api.get<PageResponse<Post>>('/social/feed/public', { params })
       return response.data
     },
   })
 }
 
-// Get shop posts
-export const useShopPosts = (shopId: string, params?: PageRequest) => {
+// Get following feed posts
+export const useFollowingFeed = (params?: PageRequest) => {
   return useQuery({
-    queryKey: ['posts', 'shop', shopId, params],
+    queryKey: ['posts', 'following', params],
     queryFn: async (): Promise<PageResponse<Post>> => {
-      const response = await api.get<PageResponse<Post>>(`/social/shops/${shopId}/posts`, { params })
+      const response = await api.get<PageResponse<Post>>('/social/feed/following', { params })
       return response.data
     },
-    enabled: !!shopId,
+  })
+}
+
+// Get posts by owner
+export const usePostsByOwner = (ownerType: string, ownerId: string, params?: PageRequest) => {
+  return useQuery({
+    queryKey: ['posts', 'owner', ownerType, ownerId, params],
+    queryFn: async (): Promise<PageResponse<Post>> => {
+      const response = await api.get<PageResponse<Post>>('/social/posts/by-owner', {
+        params: { ownerType, ownerId, ...params },
+      })
+      return response.data
+    },
+    enabled: !!ownerType && !!ownerId,
   })
 }
 
@@ -64,9 +77,9 @@ export const useLikePost = () => {
 
   return useMutation({
     mutationFn: async (postId: string): Promise<void> => {
-      await api.post(`/social/posts/${postId}/like`)
+      await api.post('/social/likes', { postId })
     },
-    onSuccess: (_, postId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
     },
   })
@@ -78,7 +91,7 @@ export const useUnlikePost = () => {
 
   return useMutation({
     mutationFn: async (postId: string): Promise<void> => {
-      await api.delete(`/social/posts/${postId}/like`)
+      await api.delete(`/social/posts/${postId}/likes`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
