@@ -50,17 +50,27 @@ export interface ChangePasswordRequest {
 // Shop Types
 export interface Shop {
   id: string
-  sellerId: string
+  sellerId?: string
+  ownerId?: string
   name: string
   description?: string
+  city?: string
+  address?: string
+  phone?: string
   logoUrl?: string
   bannerUrl?: string
-  rating: number
-  totalReviews: number
-  totalProducts: number
-  address?: string
-  latitude?: number
-  longitude?: number
+  rating?: number
+  totalReviews?: number
+  totalProducts?: number
+  lat?: number
+  lon?: number
+  geoLat?: number
+  geoLon?: number
+  openTime?: string
+  closeTime?: string
+  daysOfWeek?: string
+  active?: boolean
+  posStatus?: string
   createdAt: string
 }
 
