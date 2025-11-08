@@ -12,7 +12,7 @@ import java.util.UUID;
 
 
 @Entity
-@Table(name = "orders")
+@Table(name = "\"order\"")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Order {
     @Id @GeneratedValue
