@@ -5,6 +5,7 @@ package kg.bishkek.fucent.fusent.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -22,7 +23,7 @@ public class Merchant {
     private UUID id;
 
 
-    @Column(nullable = false)
+    @Column(name = "owner_id", nullable = false)
     private UUID ownerUserId;
 
 
@@ -52,4 +53,7 @@ public class Merchant {
 
     @CreationTimestamp
     private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
 }
