@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ShopRepository extends JpaRepository<Shop, UUID> {
-    List<Shop> findByOwnerId(UUID ownerId);
     List<Shop> findByMerchantId(UUID merchantId);
     Page<Shop> findByNameContainingIgnoreCase(String name, Pageable pageable);
 }
