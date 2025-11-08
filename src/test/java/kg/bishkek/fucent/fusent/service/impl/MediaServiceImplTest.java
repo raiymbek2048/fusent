@@ -39,7 +39,7 @@ class MediaServiceImplTest {
     @Test
     void generateUploadUrl_shouldReturnValidResponse() throws Exception {
         // Given
-        MediaUploadRequest request = new MediaUploadRequest("test.jpg", "products");
+        MediaUploadRequest request = new MediaUploadRequest("test.jpg", "image/jpeg", "products");
         String expectedPresignedUrl = "http://localhost:9000/test-bucket/products/test.jpg?signature=xyz";
 
         when(minioClient.getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class)))
@@ -64,6 +64,7 @@ class MediaServiceImplTest {
         // Given
         MediaUploadRequest request = new MediaUploadRequest(
             "test file with spaces!@#.jpg",
+            "image/jpeg",
             "products"
         );
 
@@ -83,7 +84,7 @@ class MediaServiceImplTest {
     @Test
     void generateUploadUrl_shouldThrowExceptionWhenFileNameIsEmpty() {
         // Given
-        MediaUploadRequest request = new MediaUploadRequest("", "products");
+        MediaUploadRequest request = new MediaUploadRequest("", "image/jpeg", "products");
 
         // When & Then
         assertThatThrownBy(() -> mediaService.generateUploadUrl(request))
@@ -96,7 +97,7 @@ class MediaServiceImplTest {
     @Test
     void generateUploadUrl_shouldThrowExceptionWhenFolderIsEmpty() {
         // Given
-        MediaUploadRequest request = new MediaUploadRequest("test.jpg", "");
+        MediaUploadRequest request = new MediaUploadRequest("test.jpg", "image/jpeg", "");
 
         // When & Then
         assertThatThrownBy(() -> mediaService.generateUploadUrl(request))
@@ -109,7 +110,7 @@ class MediaServiceImplTest {
     @Test
     void generateUploadUrl_shouldThrowMediaStorageExceptionWhenMinioFails() throws Exception {
         // Given
-        MediaUploadRequest request = new MediaUploadRequest("test.jpg", "products");
+        MediaUploadRequest request = new MediaUploadRequest("test.jpg", "image/jpeg", "products");
 
         when(minioClient.getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class)))
             .thenThrow(new RuntimeException("MinIO connection failed"));

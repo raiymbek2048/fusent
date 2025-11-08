@@ -203,7 +203,7 @@ class ChatServiceImplTest {
             UnreadCountResponse response = chatService.getUnreadCount();
 
             // Then
-            assertThat(response.count()).isEqualTo(expectedCount);
+            assertThat(response.unreadCount()).isEqualTo(expectedCount);
         }
     }
 
