@@ -160,6 +160,22 @@ public class PostServiceImpl implements PostService {
         ).map(this::toPostResponse);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getPostsByShop(UUID shopId, Pageable pageable) {
+        // Get the shop first
+        var shop = shopRepository.findById(shopId)
+            .orElseThrow(() -> new IllegalArgumentException("Shop not found with id: " + shopId));
+
+        // Get the merchant ID from the shop
+        UUID merchantId = shop.getMerchant().getId();
+
+        // Return posts owned by the merchant
+        return postRepository.findByOwnerTypeAndOwnerIdAndStatusOrderByCreatedAtDesc(
+            OwnerType.MERCHANT, merchantId, PostStatus.ACTIVE, pageable
+        ).map(this::toPostResponse);
+    }
+
     private PostResponse toPostResponse(Post post) {
         // Get owner name
         String ownerName = getOwnerName(post.getOwnerType(), post.getOwnerId());

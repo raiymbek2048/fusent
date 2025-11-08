@@ -43,10 +43,13 @@ public class ShopController {
 
     @Operation(summary = "Get shop by ID")
     @GetMapping("/{id}")
-    public ResponseEntity<Shop> getShopById(@PathVariable UUID id) {
-        return shopRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ShopResponse> getShopById(@PathVariable UUID id) {
+        try {
+            ShopResponse shop = shopService.getShopById(id);
+            return ResponseEntity.ok(shop);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @Operation(summary = "Get shops by merchant ID")

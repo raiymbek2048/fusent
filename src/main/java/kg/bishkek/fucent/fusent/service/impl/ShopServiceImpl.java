@@ -63,6 +63,13 @@ public class ShopServiceImpl implements ShopService {
         return toShopResponse(shop);
     }
 
+    @Override
+    public ShopResponse getShopById(UUID id) {
+        Shop shop = shops.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Shop not found with id: " + id));
+        return toShopResponse(shop);
+    }
+
     private ShopResponse toShopResponse(Shop shop) {
         return new ShopResponse(
             shop.getId(),
@@ -75,7 +82,9 @@ public class ShopServiceImpl implements ShopService {
             shop.getLon(),
             shop.getPosStatus(),
             shop.getLastHeartbeatAt(),
-            shop.getCreatedAt()
+            shop.getCreatedAt(),
+            0.0,  // rating - placeholder until review system is implemented
+            0     // totalReviews - placeholder until review system is implemented
         );
     }
 }
