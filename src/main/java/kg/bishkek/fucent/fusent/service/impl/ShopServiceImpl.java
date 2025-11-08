@@ -1,5 +1,6 @@
 package kg.bishkek.fucent.fusent.service.impl;
 
+import kg.bishkek.fucent.fusent.dto.ShopDtos.*;
 import kg.bishkek.fucent.fusent.model.Merchant;
 import kg.bishkek.fucent.fusent.model.Shop;
 import kg.bishkek.fucent.fusent.repository.AppUserRepository;
@@ -21,10 +22,12 @@ public class ShopServiceImpl implements ShopService {
     private final MerchantRepository merchants;
     private final AppUserRepository users;
 
+    @Override
     @Transactional
-    public Shop create(UUID merchantId, String name, String address, String phone, Double lat, Double lon) {
+    public ShopResponse createShop(CreateShopRequest request) {
         var currentUserId = SecurityUtil.currentUserId(users);
-        Merchant merchant = merchants.findById(merchantId).orElseThrow();
+        Merchant merchant = merchants.findById(request.merchantId())
+            .orElseThrow(() -> new IllegalArgumentException("Merchant not found"));
 
         if (!merchant.getOwnerUserId().equals(currentUserId)) {
             throw new IllegalArgumentException("Not an owner of this merchant");
@@ -32,13 +35,30 @@ public class ShopServiceImpl implements ShopService {
 
         var shop = Shop.builder()
                 .merchant(merchant)
-                .name(name)
-                .address(address)
-                .phone(phone)
-                .lat(lat != null ? BigDecimal.valueOf(lat) : null)
-                .lon(lon != null ? BigDecimal.valueOf(lon) : null)
+                .name(request.name())
+                .address(request.address())
+                .phone(request.phone())
+                .lat(request.lat() != null ? BigDecimal.valueOf(request.lat()) : null)
+                .lon(request.lon() != null ? BigDecimal.valueOf(request.lon()) : null)
                 .build();
 
-        return shops.save(shop);
+        shop = shops.save(shop);
+        return toShopResponse(shop);
+    }
+
+    private ShopResponse toShopResponse(Shop shop) {
+        return new ShopResponse(
+            shop.getId(),
+            shop.getMerchant().getId(),
+            shop.getMerchant().getName(),
+            shop.getName(),
+            shop.getAddress(),
+            shop.getPhone(),
+            shop.getLat(),
+            shop.getLon(),
+            shop.getPosStatus(),
+            shop.getLastHeartbeatAt(),
+            shop.getCreatedAt()
+        );
     }
 }
