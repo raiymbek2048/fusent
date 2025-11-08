@@ -28,6 +28,19 @@ export const useCurrentUser = () => {
   })
 }
 
+// Main auth hook that combines user data and auth state
+export const useAuth = () => {
+  const { data: user, isLoading, error } = useCurrentUser()
+  const isAuthenticated = !!user
+
+  return {
+    user,
+    isLoading,
+    isAuthenticated,
+    error,
+  }
+}
+
 // Login mutation
 export const useLogin = () => {
   const router = useRouter()
