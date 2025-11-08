@@ -43,6 +43,8 @@ public class ShopServiceImpl implements ShopService {
                     var newMerchant = Merchant.builder()
                         .ownerUserId(currentUserId)
                         .name("Мой магазин")
+                        .payoutStatus("pending")
+                        .buyEligibility("manual_contact")
                         .build();
                     return merchants.save(newMerchant);
                 });

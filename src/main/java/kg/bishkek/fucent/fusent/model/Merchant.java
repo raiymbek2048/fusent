@@ -38,10 +38,12 @@ public class Merchant {
     private String payoutBankName; // nullable
 
 
+    @Builder.Default
     @Column(nullable = false)
     private String payoutStatus = "pending"; // pending|active|suspended
 
 
+    @Builder.Default
     @Column(nullable = false)
     private String buyEligibility = "manual_contact"; // manual_contact|online_purchase
 
