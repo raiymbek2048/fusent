@@ -39,6 +39,37 @@ export const usePostsByOwner = (ownerType: string, ownerId: string, params?: Pag
   })
 }
 
+// Get shop posts (uses merchant as owner)
+export const useShopPosts = (shopId: string, params?: PageRequest) => {
+  return useQuery({
+    queryKey: ['posts', 'shop', shopId, params],
+    queryFn: async (): Promise<PageResponse<Post>> => {
+      // First get the shop to find its merchant_id
+      const shopResponse = await api.get(`/shops/${shopId}`)
+      const merchantId = shopResponse.data.merchantId || shopResponse.data.ownerId
+
+      if (!merchantId) {
+        return {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          size: params?.size || 20,
+          number: params?.page || 0,
+          first: true,
+          last: true,
+        }
+      }
+
+      // Then get posts by merchant
+      const response = await api.get<PageResponse<Post>>('/social/posts/by-owner', {
+        params: { ownerType: 'MERCHANT', ownerId: merchantId, ...params },
+      })
+      return response.data
+    },
+    enabled: !!shopId,
+  })
+}
+
 // Get post comments
 export const usePostComments = (postId: string, params?: PageRequest) => {
   return useQuery({
