@@ -84,9 +84,9 @@ public class CartController {
         return new CartItemResponse(
                 item.getId(),
                 variant.getId(),
-                variant.getName(),
+                variant.getSku(),
                 product.getName(),
-                product.getMainImage(),
+                null, // TODO: implement product image support
                 product.getShop().getId(),
                 product.getShop().getName(),
                 variant.getPrice(),
