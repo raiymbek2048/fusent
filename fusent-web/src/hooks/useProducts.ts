@@ -7,7 +7,7 @@ export const useProducts = (params?: PageRequest & { categoryId?: string; shopId
   return useQuery({
     queryKey: ['products', params],
     queryFn: async (): Promise<PageResponse<Product>> => {
-      const response = await api.get<PageResponse<Product>>('/products', { params })
+      const response = await api.get<PageResponse<Product>>('/public/catalog/products', { params })
       return response.data
     },
   })
@@ -18,7 +18,7 @@ export const useProduct = (productId: string) => {
   return useQuery({
     queryKey: ['product', productId],
     queryFn: async (): Promise<Product> => {
-      const response = await api.get<Product>(`/products/${productId}`)
+      const response = await api.get<Product>(`/public/catalog/products/${productId}`)
       return response.data
     },
     enabled: !!productId,
@@ -30,7 +30,7 @@ export const useShopProducts = (shopId: string, params?: PageRequest) => {
   return useQuery({
     queryKey: ['products', 'shop', shopId, params],
     queryFn: async (): Promise<PageResponse<Product>> => {
-      const response = await api.get<PageResponse<Product>>(`/products`, {
+      const response = await api.get<PageResponse<Product>>(`/public/catalog/products`, {
         params: { ...params, shopId },
       })
       return response.data
@@ -44,7 +44,7 @@ export const useSearchProducts = (query: string, params?: PageRequest) => {
   return useQuery({
     queryKey: ['products', 'search', query, params],
     queryFn: async (): Promise<PageResponse<Product>> => {
-      const response = await api.get<PageResponse<Product>>('/products/search', {
+      const response = await api.get<PageResponse<Product>>('/public/catalog/products/search', {
         params: { ...params, query },
       })
       return response.data
