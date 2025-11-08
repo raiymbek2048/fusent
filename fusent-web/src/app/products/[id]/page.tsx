@@ -118,14 +118,14 @@ export default function ProductPage() {
             <div className="flex items-center gap-2 mb-4">
               <div className="flex items-center">
                 <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="ml-1 font-medium">{product.rating.toFixed(1)}</span>
+                <span className="ml-1 font-medium">{(product.rating || 0).toFixed(1)}</span>
               </div>
               <span className="text-gray-500">
-                ({product.totalReviews} отзывов)
+                ({product.totalReviews || 0} отзывов)
               </span>
               <span className="text-gray-400">•</span>
               <span className="text-gray-600">
-                Продано: {product.totalSales}
+                Продано: {product.totalSales || 0}
               </span>
             </div>
 
@@ -165,7 +165,7 @@ export default function ProductPage() {
             {/* Price */}
             <div className="mb-6">
               <div className="text-4xl font-bold text-gray-900">
-                {currentPrice.toLocaleString()} сом
+                {(currentPrice || 0).toLocaleString()} сом
               </div>
               {!inStock && (
                 <Badge variant="error" className="mt-2">
@@ -191,10 +191,10 @@ export default function ProductPage() {
                     >
                       <div className="font-medium">{variant.name}</div>
                       <div className="text-sm text-gray-600">
-                        {variant.price.toLocaleString()} сом
+                        {(variant.price || 0).toLocaleString()} сом
                       </div>
                       <div className="text-xs text-gray-500">
-                        В наличии: {variant.stockQuantity}
+                        В наличии: {variant.stockQuantity || 0}
                       </div>
                     </button>
                   ))}
