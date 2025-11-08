@@ -97,7 +97,7 @@ public class ChatServiceImpl implements ChatService {
                     otherUserName,
                     latestMessage.getMessageText(),
                     latestMessage.getCreatedAt(),
-                    unreadCount
+                    (int) unreadCount
                 );
             })
             .sorted((a, b) -> b.lastMessageAt().compareTo(a.lastMessageAt()))

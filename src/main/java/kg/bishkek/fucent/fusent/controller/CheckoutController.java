@@ -72,9 +72,9 @@ public class CheckoutController {
         return new OrderItemResponse(
                 item.getId(),
                 variant.getId(),
-                variant.getName(),
+                variant.getSku(),
                 product.getName(),
-                product.getMainImage(),
+                null, // TODO: implement product image support
                 item.getQty(),
                 item.getPrice(),
                 item.getSubtotal()
