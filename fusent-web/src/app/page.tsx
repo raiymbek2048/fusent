@@ -20,28 +20,28 @@ export default function HomePage() {
   return (
     <MainLayout>
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary-500 to-primary-600 text-white">
+      <section className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Добро пожаловать в Fusent
+              Добро пожаловать в Fucent
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-primary-100">
+            <p className="text-xl md:text-2xl mb-8 text-blue-100">
               Маркетплейс Кыргызстана - найдите лучшие магазины и товары в Бишкеке
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link
-                href="/shops"
-                className="bg-white text-primary-500 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-flex items-center justify-center"
+                href="/products"
+                className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-flex items-center justify-center"
               >
-                Смотреть магазины
+                Смотреть товары
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
-                href="/register"
-                className="bg-primary-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-800 transition-colors border-2 border-white inline-flex items-center justify-center"
+                href="/shops"
+                className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-flex items-center justify-center"
               >
-                Стать продавцом
+                Смотреть магазины
                 <Store className="ml-2 h-5 w-5" />
               </Link>
             </div>
@@ -54,8 +54,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Store className="h-8 w-8 text-primary-500" />
+              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Store className="h-8 w-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Проверенные магазины</h3>
               <p className="text-gray-600">
@@ -63,15 +63,15 @@ export default function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Package className="h-8 w-8 text-primary-500" />
+              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Package className="h-8 w-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Широкий выбор</h3>
               <p className="text-gray-600">Тысячи товаров в различных категориях</p>
             </div>
             <div className="text-center">
-              <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-primary-500" />
+              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Социальная лента</h3>
               <p className="text-gray-600">Следите за новостями любимых магазинов</p>
@@ -87,7 +87,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-gray-900">Популярные магазины</h2>
             <Link
               href="/shops"
-              className="text-primary-500 hover:text-primary-600 font-semibold inline-flex items-center"
+              className="text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center"
             >
               Смотреть все
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -117,7 +117,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-gray-900">Популярные товары</h2>
             <Link
               href="/products"
-              className="text-primary-500 hover:text-primary-600 font-semibold inline-flex items-center"
+              className="text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center"
             >
               Смотреть все
               <ArrowRight className="ml-2 h-5 w-5" />
