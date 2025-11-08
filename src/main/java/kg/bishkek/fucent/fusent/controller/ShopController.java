@@ -35,14 +35,10 @@ public class ShopController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "Get shops by seller/owner ID")
+    @Operation(summary = "Get shops by merchant ID")
     @GetMapping("/seller/{sellerId}")
     public ResponseEntity<List<Shop>> getShopsBySeller(@PathVariable UUID sellerId) {
-        // Try to find by owner first, then by merchant
-        List<Shop> shops = shopRepository.findByOwnerId(sellerId);
-        if (shops.isEmpty()) {
-            shops = shopRepository.findByMerchantId(sellerId);
-        }
+        List<Shop> shops = shopRepository.findByMerchantId(sellerId);
         return ResponseEntity.ok(shops);
     }
 
