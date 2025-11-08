@@ -7,12 +7,13 @@ import { useAuthStore } from '@/store/authStore'
 import { useUserOrders } from '@/hooks/useOrders'
 import { useSellerShops } from '@/hooks/useShops'
 import { useLogout } from '@/hooks/useAuth'
-import { Button, Card, CardContent, Badge } from '@/components/ui'
+import { Button, Card, CardContent, Badge, LoadingScreen } from '@/components/ui'
 import MainLayout from '@/components/MainLayout'
 
 export default function ProfilePage() {
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
+  const isLoading = useAuthStore((state) => state.isLoading)
   const logout = useLogout()
 
   const { data: orders } = useUserOrders(user?.id)
@@ -20,6 +21,12 @@ export default function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'shops'>('info')
 
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return <LoadingScreen message="Загрузка профиля..." />
+  }
+
+  // Redirect to login if not authenticated
   if (!user) {
     router.push('/login')
     return null
