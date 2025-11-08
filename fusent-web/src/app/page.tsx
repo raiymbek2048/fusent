@@ -1,21 +1,16 @@
 'use client'
 
-import { useEffect } from 'react'
 import Link from 'next/link'
 import MainLayout from '@/components/MainLayout'
 import ShopCard from '@/components/ShopCard'
 import ProductCard from '@/components/ProductCard'
 import { useShops } from '@/hooks/useShops'
 import { useProducts } from '@/hooks/useProducts'
-import { useCurrentUser } from '@/hooks/useAuth'
 import { ArrowRight, Store, Package, Users } from 'lucide-react'
 
 export default function HomePage() {
   const { data: shopsData, isLoading: shopsLoading } = useShops({ page: 0, size: 6 })
   const { data: productsData, isLoading: productsLoading } = useProducts({ page: 0, size: 8 })
-
-  // Load current user on mount
-  useCurrentUser()
 
   return (
     <MainLayout>
