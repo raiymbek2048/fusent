@@ -19,8 +19,12 @@ export const useCurrentUser = () => {
       const response = await api.get<User>('/auth/me')
       return response.data
     },
-    retry: false,
+    retry: 1,  // Retry once to handle temporary network issues
+    retryDelay: 1000,  // Wait 1 second before retrying
     staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep cached data for 10 minutes
+    refetchOnWindowFocus: false,  // Don't refetch when window gains focus
+    enabled: typeof window !== 'undefined' && !!localStorage.getItem('accessToken'),  // Only fetch if token exists
   })
 }
 

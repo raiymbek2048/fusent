@@ -7,7 +7,7 @@ import { useLogout } from '@/hooks/useAuth'
 import { User, ShoppingCart, MessageCircle, LogOut, Store, Package, Search } from 'lucide-react'
 
 export default function Header() {
-  const { user, isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated, isLoading } = useAuthStore()
   const { data: cartSummary } = useCartSummary(user?.id)
   const logoutMutation = useLogout()
 
@@ -53,7 +53,10 @@ export default function Header() {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            {isAuthenticated && user ? (
+            {isLoading ? (
+              // Show loading state to prevent flash of unauthenticated content
+              <div className="w-32 h-8" />
+            ) : isAuthenticated && user ? (
               <>
                 {/* Cart */}
                 <Link

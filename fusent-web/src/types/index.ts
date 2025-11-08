@@ -75,7 +75,7 @@ export interface Shop {
 }
 
 export interface CreateShopRequest {
-  merchantId: string
+  merchantId?: string  // Optional - will auto-create merchant if not provided
   name: string
   description?: string
   address?: string
