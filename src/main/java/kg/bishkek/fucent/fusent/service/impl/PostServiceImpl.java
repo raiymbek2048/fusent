@@ -221,6 +221,9 @@ public class PostServiceImpl implements PostService {
             case USER -> userRepository.findById(ownerId)
                 .map(AppUser::getEmail)
                 .orElse("Unknown User");
+            case SHOP -> shopRepository.findById(ownerId)
+                .map(Shop::getName)
+                .orElse("Unknown Shop");
         };
     }
 }
