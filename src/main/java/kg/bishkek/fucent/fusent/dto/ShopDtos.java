@@ -32,6 +32,8 @@ public class ShopDtos {
         BigDecimal lon,
         String posStatus,
         Instant lastHeartbeatAt,
-        Instant createdAt
+        Instant createdAt,
+        Double rating,
+        Integer totalReviews
     ) {}
 }

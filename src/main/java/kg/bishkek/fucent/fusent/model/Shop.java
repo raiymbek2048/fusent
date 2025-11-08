@@ -33,6 +33,7 @@ public class Shop {
     private BigDecimal lat;
     private BigDecimal lon;
 
+    @Builder.Default
     @Column(name = "pos_status", nullable = false)
     private String posStatus = "inactive"; // inactive|active
 

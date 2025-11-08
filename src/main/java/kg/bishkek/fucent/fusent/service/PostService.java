@@ -21,4 +21,6 @@ public interface PostService {
     Page<PostResponse> getFollowingFeed(Pageable pageable);
 
     Page<PostResponse> getPostsByOwner(OwnerType ownerType, UUID ownerId, Pageable pageable);
+
+    Page<PostResponse> getPostsByShop(UUID shopId, Pageable pageable);
 }

@@ -102,6 +102,19 @@ public class SocialController {
         );
     }
 
+    @GetMapping("/shops/{shopId}/posts")
+    @Operation(summary = "Get posts by shop (returns merchant's posts)")
+    public Page<PostResponse> getPostsByShop(
+        @PathVariable UUID shopId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        return postService.getPostsByShop(
+            shopId,
+            PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
+    }
+
     // ========== Comments ==========
 
     @PostMapping("/comments")
