@@ -6,6 +6,7 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.http.Method;
 import kg.bishkek.fucent.fusent.dto.MediaDtos.*;
+import kg.bishkek.fucent.fusent.exception.MediaStorageException;
 import kg.bishkek.fucent.fusent.service.MediaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,14 @@ public class MediaServiceImpl implements MediaService {
     @Override
     public UploadUrlResponse generateUploadUrl(MediaUploadRequest request) {
         try {
+            if (request.fileName() == null || request.fileName().isBlank()) {
+                throw new MediaStorageException("File name cannot be empty");
+            }
+
+            if (request.folder() == null || request.folder().isBlank()) {
+                throw new MediaStorageException("Folder name cannot be empty");
+            }
+
             // Generate unique file key
             String fileKey = String.format("%s/%s-%s",
                 request.folder(),
@@ -54,31 +63,45 @@ public class MediaServiceImpl implements MediaService {
 
             Instant expiresAt = Instant.now().plus(15, ChronoUnit.MINUTES);
 
+            log.info("Generated upload URL for file: {} in folder: {}", request.fileName(), request.folder());
             return new UploadUrlResponse(uploadUrl, fileKey, publicUrl, expiresAt);
 
+        } catch (MediaStorageException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error generating upload URL", e);
-            throw new RuntimeException("Failed to generate upload URL", e);
+            log.error("Error generating upload URL for file: {}", request.fileName(), e);
+            throw new MediaStorageException("Failed to generate upload URL", e);
         }
     }
 
     @Override
     public void deleteMedia(String fileKey) {
         try {
+            if (fileKey == null || fileKey.isBlank()) {
+                throw new MediaStorageException("File key cannot be empty");
+            }
+
             minioClient.removeObject(
                 RemoveObjectArgs.builder()
                     .bucket(bucketName)
                     .object(fileKey)
                     .build()
             );
+
+            log.info("Successfully deleted media file: {}", fileKey);
+        } catch (MediaStorageException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error deleting media: {}", fileKey, e);
-            throw new RuntimeException("Failed to delete media", e);
+            throw new MediaStorageException("Failed to delete media file: " + fileKey, e);
         }
     }
 
     @Override
     public String getPublicUrl(String fileKey) {
+        if (fileKey == null || fileKey.isBlank()) {
+            throw new MediaStorageException("File key cannot be empty");
+        }
         return String.format("%s/%s/%s", minioUrl, bucketName, fileKey);
     }
 
