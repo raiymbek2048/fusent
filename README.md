@@ -46,7 +46,7 @@ docker-compose up -d
 Это запустит:
 - PostgreSQL на порту `5432`
 - Redis на порту `6379`
-- Kafka на портах `9092` (внешний) и `9093` (внутренний)
+- Kafka на портах `9092` (внешний) и `29092` (внутренний)
 - Zookeeper на порту `2181`
 - MinIO на портах `9000` (API) и `9001` (Console)
 
@@ -78,14 +78,46 @@ cp .env.example .env
 ./mvnw spring-boot:run
 ```
 
-Приложение будет доступно по адресу: `http://localhost:8978`
+Приложение будет доступно по адресу: `http://localhost:8080`
+
+При первом запуске автоматически создаются тестовые данные (см. [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md)):
+- 9 пользователей (1 admin, 3 sellers, 5 buyers)
+- 3 магазина в Бишкеке
+- 8 продуктов с вариантами
+- Посты в социальной ленте
 
 ### 6. Проверка работоспособности
 
 Откройте в браузере:
-- API Documentation (Swagger): http://localhost:8978/swagger-ui.html
-- Health Check: http://localhost:8978/actuator/health
-- MinIO Console: http://localhost:9001 (логин: `minioadmin`, пароль: `minioadmin123`)
+- API Documentation (Swagger): http://localhost:8080/swagger-ui.html
+- Health Check: http://localhost:8080/actuator/health
+- MinIO Console: http://localhost:9001 (логин: `minioadmin`, пароль: `minioadmin`)
+
+### 7. Тестовые аккаунты
+
+После запуска доступны тестовые аккаунты (подробнее в [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md)):
+
+**Администратор:**
+- Email: `admin@fusent.kg`
+- Password: `admin123`
+
+**Продавцы:**
+- Email: `fashion.store@fusent.kg` / `tech.shop@fusent.kg` / `home.decor@fusent.kg`
+- Password: `seller123`
+
+**Покупатели:**
+- Email: `buyer1@test.kg` - `buyer5@test.kg`
+- Password: `buyer123`
+
+**Пример логина:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "buyer1@test.kg",
+    "password": "buyer123"
+  }'
+```
 
 ## Структура проекта
 
