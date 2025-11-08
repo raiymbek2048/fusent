@@ -142,7 +142,7 @@ public class ChatServiceImpl implements ChatService {
             otherUser.getEmail(),
             firstMessage.getMessageText(),
             firstMessage.getCreatedAt(),
-            unreadCount
+            (int) unreadCount
         );
     }
 
