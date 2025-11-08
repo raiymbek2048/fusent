@@ -9,7 +9,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalTime;
 import java.util.UUID;
 
 
@@ -19,37 +18,31 @@ import java.util.UUID;
 public class Shop {
     @Id @GeneratedValue
     private UUID id;
-    @ManyToOne(optional = false)
-    private AppUser owner;
-    private String description;
-    private String city;
-    private BigDecimal geoLat;
-    private BigDecimal geoLon;
-    private LocalTime openTime;
-    private LocalTime closeTime;
-    private String daysOfWeek;
-    @Column(nullable = false)
-    private Boolean active = true;
-    @ManyToOne(optional = false)
-    private Merchant merchant;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "merchant_id", nullable = false)
+    private Merchant merchant;
 
     @Column(nullable = false)
     private String name;
 
-
     private String address;
     private String phone;
 
+    private BigDecimal lat;
+    private BigDecimal lon;
 
-    private Double lat;
-    private Double lon;
-
-
-    @Column(nullable = false)
+    @Column(name = "pos_status", nullable = false)
     private String posStatus = "inactive"; // inactive|active
 
+    @Column(name = "last_heartbeat_at")
+    private Instant lastHeartbeatAt;
 
+    @Column(name = "created_at")
     @CreationTimestamp
     private Instant createdAt;
+
+    @Column(name = "updated_at")
+    @CreationTimestamp
+    private Instant updatedAt;
 }

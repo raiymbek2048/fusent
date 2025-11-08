@@ -18,6 +18,8 @@ public class Category {
     @Column(nullable = false)
     private String name;
     private String description;
+
+    @Column(name = "is_active")
     private Boolean active = true;
 
     @ManyToOne
