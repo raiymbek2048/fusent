@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -34,8 +35,8 @@ public class ShopServiceImpl implements ShopService {
                 .name(name)
                 .address(address)
                 .phone(phone)
-                .lat(lat)
-                .lon(lon)
+                .lat(lat != null ? BigDecimal.valueOf(lat) : null)
+                .lon(lon != null ? BigDecimal.valueOf(lon) : null)
                 .build();
 
         return shops.save(shop);

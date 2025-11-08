@@ -23,6 +23,7 @@ import java.util.UUID;
 public class DataSeeder {
 
     private final AppUserRepository userRepository;
+    private final MerchantRepository merchantRepository;
     private final CategoryRepository categoryRepository;
     private final ShopRepository shopRepository;
     private final ProductRepository productRepository;
@@ -53,8 +54,12 @@ public class DataSeeder {
             var categories = createCategories();
             log.info("Created {} categories", categories.size());
 
-            // 3. Create shops
-            var shops = createShops(users);
+            // 3. Create merchants
+            var merchants = createMerchants(users);
+            log.info("Created {} merchants", merchants.size());
+
+            // 4. Create shops
+            var shops = createShops(merchants);
             log.info("Created {} shops", shops.size());
 
             // 4. Create products
@@ -154,8 +159,8 @@ public class DataSeeder {
         return categoryRepository.saveAll(categories);
     }
 
-    private List<Shop> createShops(List<AppUser> users) {
-        List<Shop> shops = new ArrayList<>();
+    private List<Merchant> createMerchants(List<AppUser> users) {
+        List<Merchant> merchants = new ArrayList<>();
 
         // Get seller users
         AppUser seller1 = users.stream()
@@ -170,49 +175,68 @@ public class DataSeeder {
                 .filter(u -> u.getEmail().equals("home.decor@fusent.kg"))
                 .findFirst().orElseThrow();
 
+        merchants.add(Merchant.builder()
+                .ownerUserId(seller1.getId())
+                .name("Fashion Store Merchant")
+                .description("Модная одежда и аксессуары")
+                .payoutStatus("active")
+                .buyEligibility("online_purchase")
+                .build());
+
+        merchants.add(Merchant.builder()
+                .ownerUserId(seller2.getId())
+                .name("TechnoWorld Merchant")
+                .description("Официальный дилер электроники")
+                .payoutStatus("active")
+                .buyEligibility("online_purchase")
+                .build());
+
+        merchants.add(Merchant.builder()
+                .ownerUserId(seller3.getId())
+                .name("Уютный Дом Merchant")
+                .description("Товары для дома")
+                .payoutStatus("active")
+                .buyEligibility("online_purchase")
+                .build());
+
+        return merchantRepository.saveAll(merchants);
+    }
+
+    private List<Shop> createShops(List<Merchant> merchants) {
+        List<Shop> shops = new ArrayList<>();
+
+        Merchant merchant1 = merchants.get(0);
+        Merchant merchant2 = merchants.get(1);
+        Merchant merchant3 = merchants.get(2);
+
         shops.add(Shop.builder()
-                .owner(seller1)
+                .merchant(merchant1)
                 .name("Fashion Store Bishkek")
-                .description("Модная одежда и аксессуары по доступным ценам. Новые коллекции каждый месяц!")
                 .phone("+996 555 123 456")
                 .address("ТЦ Дордой, 2-этаж, бутик 245")
-                .city("Бишкек")
-                .geoLat(new BigDecimal("42.8746"))
-                .geoLon(new BigDecimal("74.5698"))
-                .openTime(LocalTime.of(9, 0))
-                .closeTime(LocalTime.of(20, 0))
-                .daysOfWeek("ПН-ВС")
-                .active(true)
+                .lat(new BigDecimal("42.8746"))
+                .lon(new BigDecimal("74.5698"))
+                .posStatus("active")
                 .build());
 
         shops.add(Shop.builder()
-                .owner(seller2)
+                .merchant(merchant2)
                 .name("TechnoWorld KG")
-                .description("Официальный дилер Samsung, Apple, Xiaomi. Гарантия и доставка!")
                 .phone("+996 700 987 654")
                 .address("пр. Чуй 156, ТЦ Vefa Center")
-                .city("Бишкек")
-                .geoLat(new BigDecimal("42.8765"))
-                .geoLon(new BigDecimal("74.6123"))
-                .openTime(LocalTime.of(10, 0))
-                .closeTime(LocalTime.of(21, 0))
-                .daysOfWeek("ПН-ВС")
-                .active(true)
+                .lat(new BigDecimal("42.8765"))
+                .lon(new BigDecimal("74.6123"))
+                .posStatus("active")
                 .build());
 
         shops.add(Shop.builder()
-                .owner(seller3)
+                .merchant(merchant3)
                 .name("Уютный Дом")
-                .description("Всё для дома: мебель, текстиль, декор. Индивидуальный подход к каждому клиенту.")
                 .phone("+996 550 111 222")
                 .address("ул. Токтогула 123")
-                .city("Бишкек")
-                .geoLat(new BigDecimal("42.8700"))
-                .geoLon(new BigDecimal("74.5900"))
-                .openTime(LocalTime.of(9, 0))
-                .closeTime(LocalTime.of(19, 0))
-                .daysOfWeek("ПН-СБ")
-                .active(true)
+                .lat(new BigDecimal("42.8700"))
+                .lon(new BigDecimal("74.5900"))
+                .posStatus("active")
                 .build());
 
         return shopRepository.saveAll(shops);
