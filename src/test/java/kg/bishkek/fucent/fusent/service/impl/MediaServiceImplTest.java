@@ -82,7 +82,7 @@ class MediaServiceImplTest {
     }
 
     @Test
-    void generateUploadUrl_shouldThrowExceptionWhenFileNameIsEmpty() {
+    void generateUploadUrl_shouldThrowExceptionWhenFileNameIsEmpty() throws Exception {
         // Given
         MediaUploadRequest request = new MediaUploadRequest("", "image/jpeg", "products");
 
@@ -95,7 +95,7 @@ class MediaServiceImplTest {
     }
 
     @Test
-    void generateUploadUrl_shouldThrowExceptionWhenFolderIsEmpty() {
+    void generateUploadUrl_shouldThrowExceptionWhenFolderIsEmpty() throws Exception {
         // Given
         MediaUploadRequest request = new MediaUploadRequest("test.jpg", "image/jpeg", "");
 
@@ -136,7 +136,7 @@ class MediaServiceImplTest {
     }
 
     @Test
-    void deleteMedia_shouldThrowExceptionWhenFileKeyIsEmpty() {
+    void deleteMedia_shouldThrowExceptionWhenFileKeyIsEmpty() throws Exception {
         // Given
         String emptyFileKey = "";
 
@@ -149,7 +149,7 @@ class MediaServiceImplTest {
     }
 
     @Test
-    void deleteMedia_shouldThrowExceptionWhenFileKeyIsNull() {
+    void deleteMedia_shouldThrowExceptionWhenFileKeyIsNull() throws Exception {
         // When & Then
         assertThatThrownBy(() -> mediaService.deleteMedia(null))
             .isInstanceOf(MediaStorageException.class)
