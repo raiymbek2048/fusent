@@ -14,6 +14,8 @@ public interface ChatService {
 
     List<ConversationResponse> getConversations();
 
+    ConversationResponse getConversationById(UUID conversationId);
+
     void markAsRead(UUID messageId);
 
     UnreadCountResponse getUnreadCount();

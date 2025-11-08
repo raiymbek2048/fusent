@@ -105,6 +105,48 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ConversationResponse getConversationById(UUID conversationId) {
+        var currentUserId = SecurityUtil.currentUserId(userRepository);
+
+        // Get all messages in this conversation
+        var messages = chatMessageRepository.findByConversationIdOrderByCreatedAtDesc(conversationId);
+
+        if (messages.isEmpty()) {
+            throw new IllegalArgumentException("Conversation not found");
+        }
+
+        // Verify that current user is part of this conversation
+        var firstMessage = messages.get(0);
+        boolean isParticipant = firstMessage.getSender().getId().equals(currentUserId)
+            || firstMessage.getRecipient().getId().equals(currentUserId);
+
+        if (!isParticipant) {
+            throw new IllegalArgumentException("You are not a participant in this conversation");
+        }
+
+        // Determine the other participant
+        UUID otherUserId = firstMessage.getSender().getId().equals(currentUserId)
+            ? firstMessage.getRecipient().getId()
+            : firstMessage.getSender().getId();
+
+        var otherUser = userRepository.findById(otherUserId)
+            .orElseThrow(() -> new IllegalArgumentException("Other user not found"));
+
+        // Count unread messages in this conversation
+        long unreadCount = chatMessageRepository.countUnreadInConversation(conversationId, currentUserId);
+
+        return new ConversationResponse(
+            conversationId,
+            otherUserId,
+            otherUser.getEmail(),
+            firstMessage.getMessageText(),
+            firstMessage.getCreatedAt(),
+            unreadCount
+        );
+    }
+
+    @Override
     @Transactional
     public void markAsRead(UUID messageId) {
         var message = chatMessageRepository.findById(messageId)
