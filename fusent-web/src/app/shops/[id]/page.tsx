@@ -1,13 +1,15 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import MainLayout from '@/components/MainLayout'
 import ProductCard from '@/components/ProductCard'
 import PostCard from '@/components/PostCard'
 import { useShop } from '@/hooks/useShops'
 import { useShopProducts } from '@/hooks/useProducts'
 import { useShopPosts } from '@/hooks/usePosts'
-import { MapPin, Star, Package, Loader } from 'lucide-react'
+import { useAuthStore } from '@/store/authStore'
+import { Button } from '@/components/ui/button'
+import { MapPin, Star, Package, Loader, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 // Helper function to validate UUID
@@ -18,7 +20,9 @@ const isValidUUID = (uuid: string): boolean => {
 
 export default function ShopDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const shopId = params.id as string
+  const user = useAuthStore((state) => state.user)
   const [activeTab, setActiveTab] = useState<'products' | 'posts'>('products')
 
   // Check if shopId is a valid UUID
@@ -89,7 +93,19 @@ export default function ShopDetailPage() {
 
             {/* Shop Info */}
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{shop.name}</h1>
+              <div className="flex items-start justify-between mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">{shop.name}</h1>
+                {/* Show Add Product button if user is the shop owner */}
+                {user && (user.id === shop.ownerId || user.id === shop.sellerId) && (
+                  <Button
+                    onClick={() => router.push(`/products/create?shopId=${shopId}`)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Добавить товар
+                  </Button>
+                )}
+              </div>
 
               {shop.description && <p className="text-gray-600 mb-4">{shop.description}</p>}
 

@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 import api from '@/lib/api'
-import { Product, PageResponse, PageRequest } from '@/types'
+import { Product, PageResponse, PageRequest, CreateProductRequest } from '@/types'
 
 // Get all products with pagination
 export const useProducts = (params?: PageRequest & { categoryId?: string; shopId?: string }) => {
@@ -50,5 +51,26 @@ export const useSearchProducts = (query: string, params?: PageRequest) => {
       return response.data
     },
     enabled: !!query && query.length > 0,
+  })
+}
+
+// Create product
+export const useCreateProduct = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: CreateProductRequest): Promise<Product> => {
+      const response = await api.post<Product>('/catalog/products', data)
+      return response.data
+    },
+    onSuccess: (product) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      queryClient.invalidateQueries({ queryKey: ['products', 'shop', product.shopId] })
+      toast.success('Товар создан!')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Ошибка создания товара'
+      toast.error(message)
+    },
   })
 }
