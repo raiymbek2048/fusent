@@ -10,17 +10,43 @@ import { useShopPosts } from '@/hooks/usePosts'
 import { MapPin, Star, Package, Loader } from 'lucide-react'
 import { useState } from 'react'
 
+// Helper function to validate UUID
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return uuidRegex.test(uuid)
+}
+
 export default function ShopDetailPage() {
   const params = useParams()
   const shopId = params.id as string
   const [activeTab, setActiveTab] = useState<'products' | 'posts'>('products')
 
-  const { data: shop, isLoading: shopLoading } = useShop(shopId)
-  const { data: productsData, isLoading: productsLoading } = useShopProducts(shopId, {
-    page: 0,
-    size: 12,
-  })
-  const { data: postsData, isLoading: postsLoading } = useShopPosts(shopId, { page: 0, size: 10 })
+  // Check if shopId is a valid UUID
+  const isValid = isValidUUID(shopId)
+
+  const { data: shop, isLoading: shopLoading } = useShop(isValid ? shopId : '')
+  const { data: productsData, isLoading: productsLoading } = useShopProducts(
+    isValid ? shopId : '',
+    {
+      page: 0,
+      size: 12,
+    }
+  )
+  const { data: postsData, isLoading: postsLoading } = useShopPosts(
+    isValid ? shopId : '',
+    { page: 0, size: 10 }
+  )
+
+  // Handle invalid UUID
+  if (!isValid) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">
+          <p className="text-gray-600">Неверный ID магазина</p>
+        </div>
+      </MainLayout>
+    )
+  }
 
   if (shopLoading) {
     return (
