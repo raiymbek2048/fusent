@@ -1,6 +1,5 @@
 package kg.bishkek.fucent.fusent.controller;
 
-import kg.bishkek.fucent.fusent.dto.CatalogDtos.Paged;
 import kg.bishkek.fucent.fusent.dto.CatalogDtos.ProductFilter;
 import kg.bishkek.fucent.fusent.model.Product;
 import kg.bishkek.fucent.fusent.model.ProductVariant;
@@ -8,6 +7,7 @@ import kg.bishkek.fucent.fusent.repository.ProductRepository;
 import kg.bishkek.fucent.fusent.repository.ProductVariantRepository;
 import kg.bishkek.fucent.fusent.service.CatalogQueryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +22,7 @@ public class CatalogPublicController {
     private final ProductVariantRepository variants;
 
     @GetMapping("/products")
-    public Paged<Product> products(
+    public Page<Product> products(
             @RequestParam(required=false) UUID shopId,
             @RequestParam(required=false) UUID categoryId,
             @RequestParam(required=false) String qtext,
