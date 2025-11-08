@@ -1,0 +1,52 @@
+package kg.bishkek.fucent.fusent.model;
+
+
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+
+import java.time.Instant;
+import java.util.UUID;
+
+
+@Entity
+@Table(name = "merchant")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class Merchant {
+    @Id
+    @GeneratedValue
+    private UUID id;
+
+
+    @Column(nullable = false)
+    private UUID ownerUserId;
+
+
+    @Column(nullable = false)
+    private String name;
+
+
+    private String description;
+
+
+    private String payoutAccountNumber; // nullable
+    private String payoutBankName; // nullable
+
+
+    @Column(nullable = false)
+    private String payoutStatus = "pending"; // pending|active|suspended
+
+
+    @Column(nullable = false)
+    private String buyEligibility = "manual_contact"; // manual_contact|online_purchase
+
+
+    @Column(columnDefinition = "jsonb")
+    private String settingsJson; // posEnabled, inventoryMode
+
+
+    @CreationTimestamp
+    private Instant createdAt;
+}

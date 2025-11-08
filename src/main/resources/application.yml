@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fucent
+    username: postgres
+    password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        format_sql: true
+server:
+  port: 8978
+
+logging:
+  level:
+    org.hibernate.SQL: warn
+    org.springframework: info
+
+
+app:
+  jwt:
+    secret: "change-this-to-strong-secret-change-this"
+    issuer: "fusent"
+    expires-in-min: 60
+  cors:
+    origins: "http://localhost:4200,https://your-angular-domain"
