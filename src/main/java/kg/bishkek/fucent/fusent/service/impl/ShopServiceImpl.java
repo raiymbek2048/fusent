@@ -26,11 +26,26 @@ public class ShopServiceImpl implements ShopService {
     @Transactional
     public ShopResponse createShop(CreateShopRequest request) {
         var currentUserId = SecurityUtil.currentUserId(users);
-        Merchant merchant = merchants.findById(request.merchantId())
-            .orElseThrow(() -> new IllegalArgumentException("Merchant not found"));
 
-        if (!merchant.getOwnerUserId().equals(currentUserId)) {
-            throw new IllegalArgumentException("Not an owner of this merchant");
+        // Find or create merchant for the current user
+        Merchant merchant;
+        if (request.merchantId() != null) {
+            // If merchantId is provided, use it and verify ownership
+            merchant = merchants.findById(request.merchantId())
+                .orElseThrow(() -> new IllegalArgumentException("Merchant not found"));
+            if (!merchant.getOwnerUserId().equals(currentUserId)) {
+                throw new IllegalArgumentException("Not an owner of this merchant");
+            }
+        } else {
+            // If no merchantId provided, find existing merchant by user ID or create one
+            merchant = merchants.findByOwnerUserId(currentUserId)
+                .orElseGet(() -> {
+                    var newMerchant = Merchant.builder()
+                        .ownerUserId(currentUserId)
+                        .name("Мой магазин")
+                        .build();
+                    return merchants.save(newMerchant);
+                });
         }
 
         var shop = Shop.builder()

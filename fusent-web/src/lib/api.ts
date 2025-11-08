@@ -94,7 +94,10 @@ api.interceptors.response.use(
 
       if (!refreshToken) {
         clearTokens()
-        if (typeof window !== 'undefined') {
+        // Only redirect if we're not already on the login or register page
+        if (typeof window !== 'undefined' &&
+            !window.location.pathname.startsWith('/login') &&
+            !window.location.pathname.startsWith('/register')) {
           window.location.href = '/login'
         }
         return Promise.reject(error)
@@ -118,7 +121,10 @@ api.interceptors.response.use(
       } catch (err) {
         processQueue(err as AxiosError, null)
         clearTokens()
-        if (typeof window !== 'undefined') {
+        // Only redirect if we're not already on the login or register page
+        if (typeof window !== 'undefined' &&
+            !window.location.pathname.startsWith('/login') &&
+            !window.location.pathname.startsWith('/register')) {
           window.location.href = '/login'
         }
         return Promise.reject(err)

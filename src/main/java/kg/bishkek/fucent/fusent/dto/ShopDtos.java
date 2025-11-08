@@ -10,8 +10,7 @@ import java.util.UUID;
 public class ShopDtos {
 
     public record CreateShopRequest(
-        @NotNull(message = "Merchant ID is required")
-        UUID merchantId,
+        UUID merchantId,  // Optional - will auto-create merchant if not provided
 
         @NotBlank(message = "Shop name is required")
         String name,

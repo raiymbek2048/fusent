@@ -30,7 +30,6 @@ export default function CreateShopPage() {
 
     try {
       const shop = await createShopMutation.mutateAsync({
-        merchantId: user.id,
         name: formData.name,
         address: formData.address || undefined,
       })
