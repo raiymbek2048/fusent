@@ -5,6 +5,8 @@ package kg.bishkek.fucent.fusent.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 
 import java.time.Instant;
@@ -43,6 +45,7 @@ public class Merchant {
     private String buyEligibility = "manual_contact"; // manual_contact|online_purchase
 
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String settingsJson; // posEnabled, inventoryMode
 
