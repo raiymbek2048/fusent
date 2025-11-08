@@ -123,22 +123,86 @@ export interface Category {
   iconUrl?: string
 }
 
+// Cart Types
+export interface Cart {
+  id: string
+  userId: string
+  items: CartItem[]
+  totalItems: number
+  totalAmount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CartItem {
+  id: string
+  variantId: string
+  variantName: string
+  productName: string
+  productImage?: string
+  shopId: string
+  shopName: string
+  price: number
+  qty: number
+  subtotal: number
+  stockQty: number
+  addedAt: string
+}
+
+export interface AddToCartRequest {
+  variantId: string
+  qty: number
+}
+
+export interface UpdateCartItemRequest {
+  qty: number
+}
+
+export interface CartSummary {
+  totalItems: number
+  totalAmount: number
+}
+
 // Order Types
 export interface Order {
   id: string
-  buyerId: string
-  status: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED'
+  userId: string
+  shopId: string
+  shopName: string
+  status: 'pending' | 'paid' | 'cancelled' | 'fulfilled' | 'refunded'
+  items: OrderItem[]
   totalAmount: number
   createdAt: string
-  items?: OrderItem[]
+  paidAt?: string
+  fulfilledAt?: string
 }
 
 export interface OrderItem {
   id: string
-  orderId: string
   variantId: string
-  quantity: number
-  priceAtOrder: number
+  variantName: string
+  productName: string
+  productImage?: string
+  qty: number
+  price: number
+  subtotal: number
+}
+
+export interface OrderSummary {
+  id: string
+  shopId: string
+  shopName: string
+  status: string
+  itemCount: number
+  totalAmount: number
+  createdAt: string
+}
+
+export interface CheckoutRequest {
+  shopId: string
+  shippingAddress?: string
+  paymentMethod?: string
+  notes?: string
 }
 
 // Social Types
