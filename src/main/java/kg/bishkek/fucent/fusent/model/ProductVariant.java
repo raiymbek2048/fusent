@@ -4,7 +4,9 @@ package kg.bishkek.fucent.fusent.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 
 import java.time.Instant;
@@ -30,6 +32,7 @@ public class ProductVariant {
     private String barcode; // required for online purchase later
 
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String attributesJson; // {"size":"42","color":"black"}
 

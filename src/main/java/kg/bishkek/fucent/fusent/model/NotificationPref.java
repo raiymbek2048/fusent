@@ -1,12 +1,12 @@
 package kg.bishkek.fucent.fusent.model;
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import kg.bishkek.fucent.fusent.enums.NotificationChannel;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Map;
@@ -38,7 +38,7 @@ public class NotificationPref {
     @Builder.Default
     private Boolean enabled = true;
 
-    @Type(JsonBinaryType.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "quiet_hours", columnDefinition = "jsonb")
     private Map<String, Object> quietHours;
 

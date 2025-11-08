@@ -1,13 +1,13 @@
 package kg.bishkek.fucent.fusent.model;
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import kg.bishkek.fucent.fusent.enums.CampaignStatus;
 import kg.bishkek.fucent.fusent.enums.CampaignType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -55,7 +55,7 @@ public class AdCampaign {
     @Column(name = "end_date")
     private Instant endDate;
 
-    @Type(JsonBinaryType.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "targeting_json", columnDefinition = "jsonb")
     private Map<String, Object> targetingJson;
 

@@ -1,12 +1,12 @@
 package kg.bishkek.fucent.fusent.model;
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import kg.bishkek.fucent.fusent.enums.NotificationChannel;
 import kg.bishkek.fucent.fusent.enums.NotificationStatus;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Map;
@@ -34,7 +34,7 @@ public class NotificationLog {
     @Column(name = "template_key", nullable = false, length = 100)
     private String templateKey;
 
-    @Type(JsonBinaryType.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payload_json", columnDefinition = "jsonb")
     private Map<String, Object> payloadJson;
 
