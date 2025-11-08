@@ -5,6 +5,7 @@ package kg.bishkek.fucent.fusent.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 
 import java.math.BigDecimal;
@@ -43,6 +44,6 @@ public class Shop {
     private Instant createdAt;
 
     @Column(name = "updated_at")
-    @CreationTimestamp
+    @UpdateTimestamp
     private Instant updatedAt;
 }
