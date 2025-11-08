@@ -75,11 +75,13 @@ export interface Shop {
 }
 
 export interface CreateShopRequest {
+  merchantId: string
   name: string
   description?: string
   address?: string
-  latitude?: number
-  longitude?: number
+  phone?: string
+  lat?: number
+  lon?: number
 }
 
 // Product Types

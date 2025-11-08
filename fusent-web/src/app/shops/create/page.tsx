@@ -24,14 +24,14 @@ export default function CreateShopPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name.trim()) {
+    if (!formData.name.trim() || !user?.id) {
       return
     }
 
     try {
       const shop = await createShopMutation.mutateAsync({
+        merchantId: user.id,
         name: formData.name,
-        description: formData.description || undefined,
         address: formData.address || undefined,
       })
       router.push(`/shops/${shop.id}`)
