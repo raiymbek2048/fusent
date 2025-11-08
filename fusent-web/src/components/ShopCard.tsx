@@ -37,11 +37,11 @@ export default function ShopCard({ shop }: ShopCardProps) {
         <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 mb-3">
           <div className="flex items-center">
             <Star className="h-4 w-4 text-yellow-400 mr-1" />
-            <span>{shop.rating.toFixed(1)}</span>
+            <span>{shop.rating ? shop.rating.toFixed(1) : '0.0'}</span>
           </div>
           <div className="flex items-center">
             <Package className="h-4 w-4 mr-1" />
-            <span>{shop.totalProducts} товаров</span>
+            <span>{shop.totalProducts ?? 0} товаров</span>
           </div>
         </div>
 
