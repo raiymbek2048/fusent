@@ -33,7 +33,6 @@ public class AppUser implements UserDetails {
     private String passwordHash;
 
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.BUYER;
 
