@@ -218,36 +218,82 @@ export interface CheckoutRequest {
 }
 
 // Social Types
+export type OwnerType = 'MERCHANT' | 'USER'
+export type PostType = 'PHOTO' | 'VIDEO' | 'CAROUSEL'
+export type PostVisibility = 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE'
+export type PostStatus = 'ACTIVE' | 'ARCHIVED' | 'DELETED'
+export type MediaType = 'IMAGE' | 'VIDEO'
+export type FollowTargetType = 'MERCHANT' | 'USER'
+
+export interface PostMediaDto {
+  id?: string
+  mediaType: MediaType
+  url: string
+  thumbUrl?: string
+  sortOrder?: number
+  durationSeconds?: number
+  width?: number
+  height?: number
+}
+
 export interface Post {
   id: string
-  shopId: string
-  content: string
-  mediaUrls?: string[]
+  ownerType: OwnerType
+  ownerId: string
+  ownerName?: string
+  text?: string
+  postType: PostType
+  geoLat?: number
+  geoLon?: number
+  visibility: PostVisibility
+  status: PostStatus
   likesCount: number
   commentsCount: number
+  sharesCount?: number
+  media?: PostMediaDto[]
+  tags?: string[]
+  isLikedByCurrentUser?: boolean
   createdAt: string
-  shop?: Shop
+  updatedAt?: string
+}
+
+export interface CreatePostRequest {
+  ownerType: OwnerType
+  ownerId: string
+  text?: string
+  postType: PostType
+  geoLat?: number
+  geoLon?: number
+  visibility?: PostVisibility
+  media?: PostMediaDto[]
+  tags?: string[]
+  placeIds?: string[]
 }
 
 export interface Comment {
   id: string
   postId: string
   userId: string
-  content: string
-  isVerifiedPurchase: boolean
+  userName?: string
+  text: string
+  isFlagged?: boolean
+  verifiedPurchase?: boolean
   createdAt: string
-  user?: User
-}
-
-export interface CreatePostRequest {
-  shopId: string
-  content: string
-  mediaUrls?: string[]
+  updatedAt?: string
 }
 
 export interface CreateCommentRequest {
   postId: string
-  content: string
+  text: string
+}
+
+export interface LikeRequest {
+  postId: string
+}
+
+export interface FollowRequest {
+  targetType: FollowTargetType
+  targetId: string
 }
 
 // Chat Types

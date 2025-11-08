@@ -49,6 +49,15 @@ export default function Header() {
             >
               Лента
             </Link>
+            {user && user.role === 'SELLER' && (
+              <Link
+                href="/seller"
+                className="flex items-center text-gray-700 hover:text-blue-600 transition-colors font-medium"
+              >
+                <Package className="h-4 w-4 mr-1" />
+                Панель продавца
+              </Link>
+            )}
           </nav>
 
           {/* User Menu */}
