@@ -26,8 +26,15 @@ const statusLabels = {
 export default function OrdersPage() {
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
+  const isAuthLoading = useAuthStore((state) => state.isLoading)
   const { data: orders, isLoading } = useUserOrders(user?.id)
 
+  // Show loading screen while checking authentication
+  if (isAuthLoading) {
+    return <LoadingScreen message="Загрузка..." />
+  }
+
+  // Redirect to login if not authenticated
   if (!user) {
     router.push('/login')
     return null
