@@ -34,7 +34,7 @@ public class Product {
     @Column(length = 4000)
     private String description;
 
-
+    @Column(name = "is_active")
     private boolean active = true;
 
 
