@@ -58,16 +58,9 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public List<ConversationResponse> getConversations() {
         var currentUserId = SecurityUtil.currentUserId(userRepository);
-        var currentUser = userRepository.findById(currentUserId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Get all messages where current user is sender or recipient
-        var allMessages = chatMessageRepository.findAll().stream()
-            .filter(msg ->
-                msg.getSender().getId().equals(currentUserId) ||
-                msg.getRecipient().getId().equals(currentUserId)
-            )
-            .toList();
+        // Get all messages where current user is involved (optimized query)
+        var allMessages = chatMessageRepository.findAllByUserIdInvolved(currentUserId);
 
         // Group by conversation ID
         var conversationMap = new HashMap<UUID, List<ChatMessage>>();
@@ -95,13 +88,8 @@ public class ChatServiceImpl implements ChatService {
                 var otherUser = userRepository.findById(otherUserId).orElse(null);
                 String otherUserName = otherUser != null ? otherUser.getEmail() : "Unknown";
 
-                // Count unread messages in this conversation
-                long unreadCount = messages.stream()
-                    .filter(msg ->
-                        msg.getRecipient().getId().equals(currentUserId) &&
-                        !msg.getIsRead()
-                    )
-                    .count();
+                // Count unread messages in this conversation (optimized query)
+                long unreadCount = chatMessageRepository.countUnreadInConversation(conversationId, currentUserId);
 
                 return new ConversationResponse(
                     conversationId,
