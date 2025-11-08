@@ -1,11 +1,14 @@
 package kg.bishkek.fucent.fusent.service.impl;
 
 import kg.bishkek.fucent.fusent.dto.SocialDtos.*;
+import kg.bishkek.fucent.fusent.enums.OwnerType;
 import kg.bishkek.fucent.fusent.model.Comment;
 import kg.bishkek.fucent.fusent.model.Post;
 import kg.bishkek.fucent.fusent.repository.AppUserRepository;
 import kg.bishkek.fucent.fusent.repository.CommentRepository;
+import kg.bishkek.fucent.fusent.repository.OrderRepository;
 import kg.bishkek.fucent.fusent.repository.PostRepository;
+import kg.bishkek.fucent.fusent.repository.ShopRepository;
 import kg.bishkek.fucent.fusent.security.SecurityUtil;
 import kg.bishkek.fucent.fusent.service.CommentService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,8 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final AppUserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final ShopRepository shopRepository;
 
     @Override
     @Transactional
@@ -33,12 +38,15 @@ public class CommentServiceImpl implements CommentService {
         var post = postRepository.findById(request.postId())
             .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
+        // Check if this is a verified purchase
+        boolean isVerifiedPurchase = checkVerifiedPurchase(currentUserId, post);
+
         var comment = Comment.builder()
             .post(post)
             .user(user)
             .text(request.text())
             .isFlagged(false)
-            .verifiedPurchase(false) // TODO: Check if user purchased from this merchant
+            .verifiedPurchase(isVerifiedPurchase)
             .build();
 
         comment = commentRepository.save(comment);
@@ -100,5 +108,26 @@ public class CommentServiceImpl implements CommentService {
             comment.getCreatedAt(),
             comment.getUpdatedAt()
         );
+    }
+
+    private boolean checkVerifiedPurchase(UUID userId, Post post) {
+        // Only check for shop posts
+        if (post.getOwnerType() != OwnerType.SHOP) {
+            return false;
+        }
+
+        // Check if user has any paid/fulfilled orders from this shop
+        var shop = shopRepository.findById(post.getOwnerId()).orElse(null);
+        if (shop == null) {
+            return false;
+        }
+
+        // Check if user has completed orders from this shop
+        return orderRepository.findAll().stream()
+            .anyMatch(order ->
+                order.getUserId().equals(userId) &&
+                order.getShop().getId().equals(shop.getId()) &&
+                (order.getStatus().equals("paid") || order.getStatus().equals("fulfilled"))
+            );
     }
 }

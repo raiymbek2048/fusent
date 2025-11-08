@@ -151,9 +151,60 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductMetricDailyResponse> getTopProducts(UUID shopId, LocalDate startDate, LocalDate endDate, String sortBy, Integer limit) {
-        // For now, return empty list - would need complex query to aggregate across variants
-        // TODO: Implement aggregation query
-        return List.of();
+        var shop = shopRepository.findById(shopId)
+            .orElseThrow(() -> new IllegalArgumentException("Shop not found"));
+
+        // Get all product variants for this shop
+        var variants = productVariantRepository.findAll().stream()
+            .filter(v -> v.getProduct().getShop().getId().equals(shopId))
+            .collect(Collectors.toList());
+
+        // Aggregate metrics for each variant across the date range
+        var aggregatedMetrics = variants.stream()
+            .map(variant -> {
+                var metrics = productMetricRepository.findByVariantAndDayBetween(variant, startDate, endDate);
+
+                int totalViews = metrics.stream().mapToInt(m -> m.getViews() != null ? m.getViews() : 0).sum();
+                int totalClicks = metrics.stream().mapToInt(m -> m.getClicks() != null ? m.getClicks() : 0).sum();
+                int totalAddToCart = metrics.stream().mapToInt(m -> m.getAddToCart() != null ? m.getAddToCart() : 0).sum();
+                int totalOrders = metrics.stream().mapToInt(m -> m.getOrders() != null ? m.getOrders() : 0).sum();
+                BigDecimal totalRevenue = metrics.stream()
+                    .map(m -> m.getRevenue() != null ? m.getRevenue() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                return new ProductMetricDailyResponse(
+                    variant.getId(),
+                    variant.getId(),
+                    variant.getProduct().getName(),
+                    variant.getSku(),
+                    startDate,
+                    totalViews,
+                    totalClicks,
+                    totalAddToCart,
+                    totalOrders,
+                    totalRevenue,
+                    Instant.now()
+                );
+            })
+            .collect(Collectors.toList());
+
+        // Sort by specified field
+        var sorted = switch (sortBy.toLowerCase()) {
+            case "views" -> aggregatedMetrics.stream()
+                .sorted((a, b) -> Integer.compare(b.views(), a.views()))
+                .collect(Collectors.toList());
+            case "orders" -> aggregatedMetrics.stream()
+                .sorted((a, b) -> Integer.compare(b.orders(), a.orders()))
+                .collect(Collectors.toList());
+            default -> aggregatedMetrics.stream()
+                .sorted((a, b) -> b.revenue().compareTo(a.revenue()))
+                .collect(Collectors.toList());
+        };
+
+        // Limit results
+        return sorted.stream()
+            .limit(limit != null ? limit : 10)
+            .collect(Collectors.toList());
     }
 
     private ShopMetricDailyResponse toShopMetricResponse(ShopMetricDaily metrics) {

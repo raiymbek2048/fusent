@@ -58,10 +58,62 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public List<ConversationResponse> getConversations() {
         var currentUserId = SecurityUtil.currentUserId(userRepository);
+        var currentUser = userRepository.findById(currentUserId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // TODO: Implement proper conversation aggregation
-        // This is a simplified version
-        return List.of();
+        // Get all messages where current user is sender or recipient
+        var allMessages = chatMessageRepository.findAll().stream()
+            .filter(msg ->
+                msg.getSender().getId().equals(currentUserId) ||
+                msg.getRecipient().getId().equals(currentUserId)
+            )
+            .toList();
+
+        // Group by conversation ID
+        var conversationMap = new HashMap<UUID, List<ChatMessage>>();
+        for (var message : allMessages) {
+            conversationMap
+                .computeIfAbsent(message.getConversationId(), k -> new ArrayList<>())
+                .add(message);
+        }
+
+        // Build conversation responses
+        return conversationMap.entrySet().stream()
+            .map(entry -> {
+                var conversationId = entry.getKey();
+                var messages = entry.getValue();
+
+                // Sort by created date descending to get latest message first
+                messages.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+                var latestMessage = messages.get(0);
+
+                // Determine the other participant
+                UUID otherUserId = latestMessage.getSender().getId().equals(currentUserId)
+                    ? latestMessage.getRecipient().getId()
+                    : latestMessage.getSender().getId();
+
+                var otherUser = userRepository.findById(otherUserId).orElse(null);
+                String otherUserName = otherUser != null ? otherUser.getEmail() : "Unknown";
+
+                // Count unread messages in this conversation
+                long unreadCount = messages.stream()
+                    .filter(msg ->
+                        msg.getRecipient().getId().equals(currentUserId) &&
+                        !msg.getIsRead()
+                    )
+                    .count();
+
+                return new ConversationResponse(
+                    conversationId,
+                    otherUserId,
+                    otherUserName,
+                    latestMessage.getMessageText(),
+                    latestMessage.getCreatedAt(),
+                    unreadCount
+                );
+            })
+            .sorted((a, b) -> b.lastMessageAt().compareTo(a.lastMessageAt()))
+            .collect(Collectors.toList());
     }
 
     @Override
