@@ -51,6 +51,13 @@ public class ChatController {
         return chatService.getConversations();
     }
 
+    @GetMapping("/conversations/{conversationId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get a specific conversation by ID")
+    public ConversationResponse getConversationById(@PathVariable UUID conversationId) {
+        return chatService.getConversationById(conversationId);
+    }
+
     @PatchMapping("/messages/{messageId}/read")
     @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.NO_CONTENT)

@@ -14,6 +14,8 @@ import java.util.UUID;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> {
     Page<ChatMessage> findByConversationIdOrderByCreatedAtDesc(UUID conversationId, Pageable pageable);
 
+    List<ChatMessage> findByConversationIdOrderByCreatedAtDesc(UUID conversationId);
+
     List<ChatMessage> findByRecipientAndIsReadFalse(AppUser recipient);
 
     long countByRecipientAndIsReadFalse(AppUser recipient);
