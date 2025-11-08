@@ -13,9 +13,6 @@ import {
 
 // Get current user
 export const useCurrentUser = () => {
-  const setUser = useAuthStore((state) => state.setUser)
-  const setLoading = useAuthStore((state) => state.setLoading)
-
   return useQuery({
     queryKey: ['currentUser'],
     queryFn: async (): Promise<User> => {
@@ -24,15 +21,6 @@ export const useCurrentUser = () => {
     },
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    onSuccess: (user) => {
-      setUser(user)
-    },
-    onError: () => {
-      setUser(null)
-    },
-    onSettled: () => {
-      setLoading(false)
-    },
   })
 }
 
