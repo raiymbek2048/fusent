@@ -5,11 +5,15 @@ package kg.bishkek.fucent.fusent.controller;
 import jakarta.validation.Valid;
 import kg.bishkek.fucent.fusent.dto.ProductCreateRequest;
 import kg.bishkek.fucent.fusent.dto.VariantCreateRequest;
+import kg.bishkek.fucent.fusent.model.Category;
 import kg.bishkek.fucent.fusent.model.Product;
 import kg.bishkek.fucent.fusent.model.ProductVariant;
+import kg.bishkek.fucent.fusent.repository.CategoryRepository;
 import kg.bishkek.fucent.fusent.service.CatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -17,6 +21,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CatalogController {
     private final CatalogService service;
+    private final CategoryRepository categoryRepository;
+
+
+    @GetMapping("/categories")
+    public List<Category> getCategories() {
+        return categoryRepository.findAll();
+    }
 
 
     @PostMapping("/products")
