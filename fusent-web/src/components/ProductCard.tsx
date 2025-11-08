@@ -34,16 +34,16 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
             <div className="flex items-center">
               <Star className="h-4 w-4 text-yellow-400 mr-1" />
-              <span>{product.rating.toFixed(1)}</span>
-              <span className="ml-1">({product.totalReviews})</span>
+              <span>{(product.rating || 0).toFixed(1)}</span>
+              <span className="ml-1">({product.totalReviews || 0})</span>
             </div>
-            <span className="text-xs">{product.totalSales} продаж</span>
+            <span className="text-xs">{product.totalSales || 0} продаж</span>
           </div>
 
           {/* Product Price */}
           <div className="flex items-center justify-between">
             <span className="text-xl font-bold text-primary-500">
-              {product.basePrice.toLocaleString('ru-RU')} сом
+              {(product.basePrice || 0).toLocaleString('ru-RU')} сом
             </span>
           </div>
         </div>
