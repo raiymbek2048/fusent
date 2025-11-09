@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useAuthStore } from '@/store/authStore'
 import { useCartSummary } from '@/hooks/useCart'
 import { useLogout } from '@/hooks/useAuth'
-import { User, ShoppingCart, MessageCircle, LogOut, Store, Package, Search, Image } from 'lucide-react'
+import { User, ShoppingCart, MessageCircle, LogOut, Store, Package, Search, Image, Map } from 'lucide-react'
 
 export default function Header() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
@@ -49,6 +49,13 @@ export default function Header() {
             >
               <Image className="h-4 w-4 mr-1" />
               Лента
+            </Link>
+            <Link
+              href="/map"
+              className="flex items-center text-gray-700 hover:text-blue-600 transition-colors font-medium"
+            >
+              <Map className="h-4 w-4 mr-1" />
+              Карта
             </Link>
             {user && user.role === 'SELLER' && (
               <Link
