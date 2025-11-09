@@ -143,7 +143,7 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'cart-storage',
-      partialStorage: ['cart'],
+      partialize: (state) => ({ cart: state.cart }),
     }
   )
 )

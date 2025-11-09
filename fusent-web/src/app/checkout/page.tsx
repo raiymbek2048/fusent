@@ -8,12 +8,13 @@ import { useCheckout } from '@/hooks/useOrders'
 import { useAuthStore } from '@/store/authStore'
 import { Button, Card, CardContent, Input, LoadingScreen } from '@/components/ui'
 import MainLayout from '@/components/MainLayout'
+import { Cart } from '@/types'
 
 export default function CheckoutPage() {
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
 
-  const { data: cart, isLoading } = useCart(user?.id)
+  const { data: cart, isLoading } = useCart(user?.id) as { data: Cart | undefined, isLoading: boolean }
   const checkout = useCheckout(user?.id)
 
   const [shippingAddress, setShippingAddress] = useState('')

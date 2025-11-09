@@ -20,16 +20,11 @@ export const useCart = (userId?: string) => {
     queryFn: async (): Promise<Cart> => {
       if (!userId) throw new Error('User ID required')
       const response = await api.get<Cart>(`/cart/${userId}`)
+      setCart(response.data)
+      setLoading(false)
       return response.data
     },
     enabled: !!userId,
-    onSuccess: (cart) => {
-      setCart(cart)
-      setLoading(false)
-    },
-    onError: () => {
-      setLoading(false)
-    },
   })
 }
 

@@ -168,7 +168,7 @@ export default function ProfilePage() {
                 orders.slice(0, 5).map((order) => (
                   <Card
                     key={order.id}
-                    hover
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
                     onClick={() => router.push(`/orders/${order.id}`)}
                   >
                     <CardContent className="flex items-center justify-between">
@@ -185,7 +185,7 @@ export default function ProfilePage() {
                         <p className="font-semibold text-gray-900">
                           {order.totalAmount.toLocaleString()} сом
                         </p>
-                        <Badge variant="info" size="sm">
+                        <Badge variant="info">
                           {order.status}
                         </Badge>
                       </div>
@@ -218,7 +218,7 @@ export default function ProfilePage() {
                 shops.map((shop) => (
                   <Card
                     key={shop.id}
-                    hover
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
                     onClick={() => router.push(`/shops/${shop.id}`)}
                   >
                     <CardContent className="flex items-center justify-between">
@@ -234,10 +234,10 @@ export default function ProfilePage() {
                       <div className="text-right">
                         <div className="flex items-center gap-1 mb-1">
                           <span className="text-yellow-500">★</span>
-                          <span className="font-medium">{shop.rating.toFixed(1)}</span>
+                          <span className="font-medium">{(shop.rating || 0).toFixed(1)}</span>
                         </div>
                         <p className="text-sm text-gray-600">
-                          {shop.totalReviews} отзывов
+                          {shop.totalReviews || 0} отзывов
                         </p>
                       </div>
                     </CardContent>

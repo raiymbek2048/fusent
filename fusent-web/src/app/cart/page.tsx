@@ -7,12 +7,13 @@ import { useCart, useUpdateCartItem, useRemoveFromCart, useClearCart } from '@/h
 import { useAuthStore } from '@/store/authStore'
 import { Button, Card, CardContent, LoadingScreen } from '@/components/ui'
 import MainLayout from '@/components/MainLayout'
+import { Cart } from '@/types'
 
 export default function CartPage() {
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
 
-  const { data: cart, isLoading } = useCart(user?.id)
+  const { data: cart, isLoading } = useCart(user?.id) as { data: Cart | undefined, isLoading: boolean }
   const updateItem = useUpdateCartItem(user?.id)
   const removeItem = useRemoveFromCart(user?.id)
   const clearCart = useClearCart(user?.id)

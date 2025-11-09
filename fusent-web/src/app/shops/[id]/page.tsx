@@ -8,7 +8,7 @@ import { useShop } from '@/hooks/useShops'
 import { useShopProducts } from '@/hooks/useProducts'
 import { useShopPosts } from '@/hooks/usePosts'
 import { useAuthStore } from '@/store/authStore'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui'
 import { MapPin, Star, Package, Loader, Plus } from 'lucide-react'
 import { useState } from 'react'
 
@@ -112,8 +112,8 @@ export default function ShopDetailPage() {
               <div className="flex flex-wrap gap-6 text-sm text-gray-600">
                 <div className="flex items-center">
                   <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                  <span className="font-semibold">{shop.rating.toFixed(1)}</span>
-                  <span className="ml-1">({shop.totalReviews} отзывов)</span>
+                  <span className="font-semibold">{(shop.rating || 0).toFixed(1)}</span>
+                  <span className="ml-1">({shop.totalReviews || 0} отзывов)</span>
                 </div>
 
                 <div className="flex items-center">

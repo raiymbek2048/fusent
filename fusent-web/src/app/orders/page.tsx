@@ -73,7 +73,7 @@ export default function OrdersPage() {
           {orders.map((order) => (
             <Card
               key={order.id}
-              hover
+              className="cursor-pointer hover:shadow-lg transition-shadow"
               onClick={() => router.push(`/orders/${order.id}`)}
             >
               <CardContent className="flex items-center justify-between">
@@ -82,8 +82,8 @@ export default function OrdersPage() {
                     <h3 className="font-semibold text-gray-900">
                       Заказ #{order.id.slice(0, 8)}
                     </h3>
-                    <Badge variant={statusColors[order.status]}>
-                      {statusLabels[order.status]}
+                    <Badge variant={statusColors[order.status as keyof typeof statusColors]}>
+                      {statusLabels[order.status as keyof typeof statusLabels]}
                     </Badge>
                   </div>
                   <p className="text-sm text-gray-600 mb-1">

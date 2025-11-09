@@ -5,9 +5,7 @@ import { useRouter } from 'next/navigation'
 import MainLayout from '@/components/MainLayout'
 import { useCreateShop } from '@/hooks/useShops'
 import { useAuthStore } from '@/store/authStore'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { Button, Input, Textarea } from '@/components/ui'
 import { Store } from 'lucide-react'
 
 export default function CreateShopPage() {

@@ -93,7 +93,7 @@ export default function OrderDetailPage() {
               })}
             </p>
           </div>
-          <Badge variant={statusColors[order.status]} size="md">
+          <Badge variant={statusColors[order.status]}>
             {statusLabels[order.status]}
           </Badge>
         </div>

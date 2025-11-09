@@ -1,13 +1,10 @@
-import { ReactNode } from 'react'
-import { clsx } from 'clsx'
+import { HTMLAttributes } from 'react'
 
-interface BadgeProps {
-  children: ReactNode
+interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: 'default' | 'success' | 'warning' | 'error' | 'info'
-  size?: 'sm' | 'md'
 }
 
-export const Badge = ({ children, variant = 'default', size = 'md' }: BadgeProps) => {
+export const Badge = ({ variant = 'default', className = '', children, ...props }: BadgeProps) => {
   const variants = {
     default: 'bg-gray-100 text-gray-800',
     success: 'bg-green-100 text-green-800',
@@ -16,18 +13,10 @@ export const Badge = ({ children, variant = 'default', size = 'md' }: BadgeProps
     info: 'bg-blue-100 text-blue-800',
   }
 
-  const sizes = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-3 py-1 text-sm',
-  }
-
   return (
     <span
-      className={clsx(
-        'inline-flex items-center font-medium rounded-full',
-        variants[variant],
-        sizes[size]
-      )}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}
+      {...props}
     >
       {children}
     </span>

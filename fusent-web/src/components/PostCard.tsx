@@ -35,26 +35,18 @@ export default function PostCard({ post }: PostCardProps) {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {/* Shop Header */}
-      {post.shop && (
+      {/* Owner Header */}
+      {post.ownerName && (
         <div className="p-4 border-b border-gray-200">
           <Link
-            href={`/shops/${post.shop.id}`}
+            href={`/${post.ownerType === 'MERCHANT' ? 'shops' : 'users'}/${post.ownerId}`}
             className="flex items-center hover:text-primary-500"
           >
-            {post.shop.logoUrl ? (
-              <img
-                src={post.shop.logoUrl}
-                alt={post.shop.name}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                <Store className="h-5 w-5 text-primary-500" />
-              </div>
-            )}
+            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+              <Store className="h-5 w-5 text-primary-500" />
+            </div>
             <div className="ml-3">
-              <p className="text-sm font-semibold text-gray-900">{post.shop.name}</p>
+              <p className="text-sm font-semibold text-gray-900">{post.ownerName}</p>
               <p className="text-xs text-gray-500">
                 {new Date(post.createdAt).toLocaleDateString('ru-RU')}
               </p>
@@ -65,15 +57,15 @@ export default function PostCard({ post }: PostCardProps) {
 
       {/* Post Content */}
       <div className="p-4">
-        <p className="text-gray-900 whitespace-pre-wrap">{post.content}</p>
+        {post.text && <p className="text-gray-900 whitespace-pre-wrap">{post.text}</p>}
 
         {/* Media */}
-        {post.mediaUrls && post.mediaUrls.length > 0 && (
+        {post.media && post.media.length > 0 && (
           <div className="mt-4 grid grid-cols-2 gap-2">
-            {post.mediaUrls.map((url, index) => (
+            {post.media.map((mediaItem, index) => (
               <img
                 key={index}
-                src={url}
+                src={mediaItem.url}
                 alt={`Post media ${index + 1}`}
                 className="rounded-lg object-cover w-full h-48"
               />
