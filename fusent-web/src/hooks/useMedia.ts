@@ -1,30 +1,51 @@
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
+import axios from 'axios'
+
+export interface MediaUploadRequest {
+  fileName: string
+  contentType: string
+  folder: 'products' | 'posts' | 'avatars'
+}
+
+export interface UploadUrlResponse {
+  uploadUrl: string
+  fileKey: string
+  publicUrl: string
+  expiresAt: string
+}
 
 export interface UploadResponse {
   url: string
-  fileName: string
-  fileSize: number
-  contentType: string
+  fileKey: string
 }
 
-// Upload file
-export const useUploadFile = () => {
+// Upload single file using presigned URL
+export const useUploadMedia = () => {
   return useMutation({
-    mutationFn: async (file: File): Promise<UploadResponse> => {
-      const formData = new FormData()
-      formData.append('file', file)
+    mutationFn: async ({ file, folder = 'posts' }: { file: File; folder?: 'products' | 'posts' | 'avatars' }): Promise<UploadResponse> => {
+      // Step 1: Get presigned URL from backend
+      const request: MediaUploadRequest = {
+        fileName: file.name,
+        contentType: file.type,
+        folder,
+      }
 
-      const response = await api.post<UploadResponse>('/media/upload', formData, {
+      const { data } = await api.post<UploadUrlResponse>('/media/upload-url', request)
+
+      // Step 2: Upload file directly to S3/MinIO using presigned URL
+      await axios.put(data.uploadUrl, file, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': file.type,
         },
       })
-      return response.data
-    },
-    onSuccess: () => {
-      toast.success('Файл загружен успешно!')
+
+      // Step 3: Return public URL and fileKey
+      return {
+        url: data.publicUrl,
+        fileKey: data.fileKey,
+      }
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Ошибка загрузки файла'
@@ -34,20 +55,33 @@ export const useUploadFile = () => {
 }
 
 // Upload multiple files
-export const useUploadFiles = () => {
+export const useUploadMultipleMedia = () => {
   return useMutation({
-    mutationFn: async (files: File[]): Promise<UploadResponse[]> => {
-      const formData = new FormData()
-      files.forEach((file) => {
-        formData.append('files', file)
+    mutationFn: async ({ files, folder = 'posts' }: { files: File[]; folder?: 'products' | 'posts' | 'avatars' }): Promise<UploadResponse[]> => {
+      const uploadPromises = files.map(async (file) => {
+        // Step 1: Get presigned URL
+        const request: MediaUploadRequest = {
+          fileName: file.name,
+          contentType: file.type,
+          folder,
+        }
+
+        const { data } = await api.post<UploadUrlResponse>('/media/upload-url', request)
+
+        // Step 2: Upload to S3/MinIO
+        await axios.put(data.uploadUrl, file, {
+          headers: {
+            'Content-Type': file.type,
+          },
+        })
+
+        return {
+          url: data.publicUrl,
+          fileKey: data.fileKey,
+        }
       })
 
-      const response = await api.post<UploadResponse[]>('/media/upload-multiple', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-      return response.data
+      return await Promise.all(uploadPromises)
     },
     onSuccess: (data) => {
       toast.success(`${data.length} файл(ов) загружено!`)
@@ -59,11 +93,11 @@ export const useUploadFiles = () => {
   })
 }
 
-// Delete file
-export const useDeleteFile = () => {
+// Delete media file
+export const useDeleteMedia = () => {
   return useMutation({
-    mutationFn: async (fileUrl: string): Promise<void> => {
-      await api.delete('/media/delete', { data: { url: fileUrl } })
+    mutationFn: async (fileKey: string): Promise<void> => {
+      await api.delete(`/media/${fileKey}`)
     },
     onSuccess: () => {
       toast.success('Файл удален')
@@ -71,6 +105,16 @@ export const useDeleteFile = () => {
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Ошибка удаления файла'
       toast.error(message)
+    },
+  })
+}
+
+// Get public URL for media
+export const useGetMediaUrl = () => {
+  return useMutation({
+    mutationFn: async (fileKey: string): Promise<string> => {
+      const { data } = await api.get<string>(`/media/url/${fileKey}`)
+      return data
     },
   })
 }

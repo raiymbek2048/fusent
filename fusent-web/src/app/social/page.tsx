@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import MainLayout from '@/components/MainLayout'
 import CreatePostModal from '@/components/CreatePostModal'
+import PostModal from '@/components/PostModal'
 import { usePublicFeed, useFollowingFeed, useLikePost, useUnlikePost } from '@/hooks/usePosts'
 import { useAuth } from '@/hooks/useAuth'
 import { Heart, MessageCircle, Share2, MapPin, Plus, Bookmark } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { Post } from '@/types'
 
 type FeedTab = 'explore' | 'following'
 
@@ -16,6 +18,7 @@ export default function SocialPage() {
   const [activeTab, setActiveTab] = useState<FeedTab>('explore')
   const [page, setPage] = useState(0)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null)
 
   const { data: exploreData, isLoading: isLoadingExplore } = usePublicFeed(
     { page, size: 20 },
@@ -213,7 +216,10 @@ export default function SocialPage() {
                               }`}
                             />
                           </button>
-                          <button className="hover:opacity-70 transition-opacity">
+                          <button
+                            onClick={() => setSelectedPost(post)}
+                            className="hover:opacity-70 transition-opacity"
+                          >
                             <MessageCircle className="h-7 w-7 text-gray-900" />
                           </button>
                           <button className="hover:opacity-70 transition-opacity">
@@ -251,7 +257,10 @@ export default function SocialPage() {
 
                       {/* View Comments */}
                       {post.commentsCount > 0 && (
-                        <button className="text-sm text-gray-500 hover:text-gray-700 mb-2">
+                        <button
+                          onClick={() => setSelectedPost(post)}
+                          className="text-sm text-gray-500 hover:text-gray-700 mb-2"
+                        >
                           Посмотреть все комментарии ({post.commentsCount})
                         </button>
                       )}
@@ -370,6 +379,13 @@ export default function SocialPage() {
       <CreatePostModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Post Details Modal */}
+      <PostModal
+        post={selectedPost}
+        isOpen={!!selectedPost}
+        onClose={() => setSelectedPost(null)}
       />
     </MainLayout>
   )

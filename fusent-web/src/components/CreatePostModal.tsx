@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { X, Image as ImageIcon, Video, MapPin } from 'lucide-react'
 import { useCreatePost } from '@/hooks/usePosts'
 import { useAuth } from '@/hooks/useAuth'
-import { useUploadMedia } from '@/hooks/useMedia'
+import { useUploadMultipleMedia } from '@/hooks/useMedia'
 import toast from 'react-hot-toast'
 
 interface CreatePostModalProps {
@@ -22,7 +22,7 @@ export default function CreatePostModal({
 }: CreatePostModalProps) {
   const { user } = useAuth()
   const { mutate: createPost, isPending } = useCreatePost()
-  const { mutate: uploadMedia } = useUploadMedia()
+  const { mutateAsync: uploadMultipleMedia, isPending: isUploading } = useUploadMultipleMedia()
 
   const [text, setText] = useState('')
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
@@ -110,8 +110,15 @@ export default function CreatePostModal({
       // First, upload media files if any
       let mediaUrls: string[] = []
       if (mediaFiles.length > 0) {
-        // TODO: Implement media upload
-        toast('Загрузка медиа...')
+        toast.loading('Загрузка медиа...', { id: 'upload-media' })
+        try {
+          const uploadResults = await uploadMultipleMedia({ files: mediaFiles, folder: 'posts' })
+          mediaUrls = uploadResults.map(r => r.url)
+          toast.success('Медиа загружены!', { id: 'upload-media' })
+        } catch (error) {
+          toast.error('Ошибка загрузки медиа', { id: 'upload-media' })
+          return
+        }
       }
 
       createPost({
@@ -123,6 +130,11 @@ export default function CreatePostModal({
         tags: tags.length > 0 ? tags : undefined,
         geoLat: location?.lat,
         geoLon: location?.lon,
+        media: mediaUrls.length > 0 ? mediaUrls.map((url, index) => ({
+          mediaType: 'IMAGE' as const,
+          url,
+          sortOrder: index,
+        })) : undefined,
       }, {
         onSuccess: () => {
           // Reset form
@@ -291,10 +303,10 @@ export default function CreatePostModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending || (!text.trim() && mediaFiles.length === 0)}
+                  disabled={isPending || isUploading || (!text.trim() && mediaFiles.length === 0)}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isPending ? 'Публикация...' : 'Опубликовать'}
+                  {isUploading ? 'Загрузка медиа...' : isPending ? 'Публикация...' : 'Опубликовать'}
                 </button>
               </div>
             </div>
