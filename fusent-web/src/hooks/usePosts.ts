@@ -4,24 +4,26 @@ import api from '@/lib/api'
 import { Post, Comment, CreatePostRequest, CreateCommentRequest, PageResponse, PageRequest } from '@/types'
 
 // Get public feed posts
-export const usePublicFeed = (params?: PageRequest) => {
+export const usePublicFeed = (params?: PageRequest, options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ['posts', 'public', params],
     queryFn: async (): Promise<PageResponse<Post>> => {
       const response = await api.get<PageResponse<Post>>('/social/feed/public', { params })
       return response.data
     },
+    ...options,
   })
 }
 
 // Get following feed posts
-export const useFollowingFeed = (params?: PageRequest) => {
+export const useFollowingFeed = (params?: PageRequest, options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ['posts', 'following', params],
     queryFn: async (): Promise<PageResponse<Post>> => {
       const response = await api.get<PageResponse<Post>>('/social/feed/following', { params })
       return response.data
     },
+    ...options,
   })
 }
 
