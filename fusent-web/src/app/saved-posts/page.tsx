@@ -6,7 +6,7 @@ import PostCard from '@/components/PostCard'
 import { useAuthStore } from '@/store/authStore'
 import { useRouter } from 'next/navigation'
 import { Bookmark, ChevronLeft, ChevronRight } from 'lucide-react'
-import Spinner from '@/components/ui/Spinner'
+import { Spinner } from '@/components/ui/Spinner'
 
 export default function SavedPostsPage() {
   const router = useRouter()
