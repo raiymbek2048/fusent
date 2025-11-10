@@ -74,7 +74,7 @@ public class NotificationEventConsumer {
             case PUSH -> sendPushNotification(request);
             case SMS -> sendSmsNotification(request);
             case EMAIL -> sendEmailNotification(request);
-            case NotificationChannel.IN_APP -> sendInAppNotification(request);
+            case IN_APP -> sendInAppNotification(request);
         };
     }
 
@@ -110,7 +110,7 @@ public class NotificationEventConsumer {
             case PUSH -> "FCM";
             case SMS -> "Twilio";
             case EMAIL -> "SendGrid";
-            case NotificationChannel.IN_APP -> "Database";
+            case IN_APP -> "Database";
         };
     }
 }
