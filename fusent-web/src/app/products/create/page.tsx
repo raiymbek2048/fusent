@@ -1,18 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import MainLayout from '@/components/MainLayout'
 import { useCreateProduct } from '@/hooks/useProducts'
 import { useCategories } from '@/hooks/useCategories'
 import { useAuthStore } from '@/store/authStore'
-import { Button, Input, Textarea } from '@/components/ui'
+import { Button, Input, Textarea, LoadingScreen } from '@/components/ui'
 import ImageUpload from '@/components/ImageUpload'
 import { Package, Loader } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default function CreateProductPage() {
+function CreateProductPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const shopId = searchParams.get('shopId')
@@ -183,5 +183,13 @@ export default function CreateProductPage() {
         </div>
       </div>
     </MainLayout>
+  )
+}
+
+export default function CreateProductPage() {
+  return (
+    <Suspense fallback={<LoadingScreen message="Загрузка..." />}>
+      <CreateProductPageContent />
+    </Suspense>
   )
 }

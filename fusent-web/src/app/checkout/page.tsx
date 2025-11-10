@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useCart } from '@/hooks/useCart'
@@ -24,9 +24,16 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash')
 
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+    } else if (!isLoading && (!cart || cart.items.length === 0)) {
+      router.push('/cart')
+    }
+  }, [user, cart, isLoading, router])
+
   if (!user) {
-    router.push('/login')
-    return null
+    return <LoadingScreen message="Перенаправление..." />
   }
 
   if (isLoading) {
@@ -34,8 +41,7 @@ export default function CheckoutPage() {
   }
 
   if (!cart || cart.items.length === 0) {
-    router.push('/cart')
-    return null
+    return <LoadingScreen message="Перенаправление..." />
   }
 
   // Group items by shop

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Trash2, ShoppingBag } from 'lucide-react'
@@ -20,9 +21,14 @@ export default function CartPage() {
   const removeItem = useRemoveFromCart(user?.id)
   const clearCart = useClearCart(user?.id)
 
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+    }
+  }, [user, router])
+
   if (!user) {
-    router.push('/login')
-    return null
+    return <LoadingScreen message="Перенаправление..." />
   }
 
   if (isLoading) {
