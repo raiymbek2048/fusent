@@ -51,9 +51,17 @@ export default function ProfilePage() {
           {/* Profile Header */}
           <Card className="mb-6">
             <CardContent className="flex items-center gap-6">
-              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
-                <User className="w-12 h-12 text-blue-600" />
-              </div>
+              {user.profile?.avatarUrl ? (
+                <img
+                  src={user.profile.avatarUrl}
+                  alt="Profile"
+                  className="w-24 h-24 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="w-12 h-12 text-blue-600" />
+                </div>
+              )}
               <div className="flex-grow">
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">
                   {user.profile?.firstName || user.email}
