@@ -151,3 +151,7 @@ storage:
     ads-enabled: false
     analytics-enabled: true
     notifications-enabled: true
+
+openrouteservice:
+  api:
+    key: ${OPENROUTESERVICE_API_KEY:}

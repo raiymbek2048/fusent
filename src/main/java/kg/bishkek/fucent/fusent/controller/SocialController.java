@@ -10,6 +10,8 @@ import kg.bishkek.fucent.fusent.service.CommentService;
 import kg.bishkek.fucent.fusent.service.FollowService;
 import kg.bishkek.fucent.fusent.service.LikeService;
 import kg.bishkek.fucent.fusent.service.PostService;
+import kg.bishkek.fucent.fusent.service.SavedPostService;
+import kg.bishkek.fucent.fusent.service.ShareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +32,8 @@ public class SocialController {
     private final CommentService commentService;
     private final LikeService likeService;
     private final FollowService followService;
+    private final SavedPostService savedPostService;
+    private final ShareService shareService;
 
     // ========== Posts ==========
 
@@ -235,5 +239,84 @@ public class SocialController {
         @PathVariable UUID targetId
     ) {
         return followService.getStats(targetType, targetId);
+    }
+
+    // ========== Saved Posts ==========
+
+    @PostMapping("/saved-posts")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Save a post")
+    public SavedPostResponse savePost(@Valid @RequestBody SavedPostRequest request) {
+        return savedPostService.savePost(request);
+    }
+
+    @DeleteMapping("/saved-posts/{postId}")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Unsave a post")
+    public void unsavePost(@PathVariable UUID postId) {
+        savedPostService.unsavePost(postId);
+    }
+
+    @GetMapping("/saved-posts/{postId}/is-saved")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Check if post is saved")
+    public boolean isPostSaved(@PathVariable UUID postId) {
+        return savedPostService.isPostSaved(postId);
+    }
+
+    @GetMapping("/saved-posts")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get all saved posts for current user")
+    public Page<SavedPostResponse> getSavedPosts(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        return savedPostService.getSavedPosts(
+            PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
+    }
+
+    // ========== Shares ==========
+
+    @PostMapping("/shares")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Share a post")
+    public ShareResponse sharePost(@Valid @RequestBody ShareRequest request) {
+        return shareService.sharePost(request);
+    }
+
+    @DeleteMapping("/shares/{postId}")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Unshare a post")
+    public void unsharePost(@PathVariable UUID postId) {
+        shareService.unsharePost(postId);
+    }
+
+    @GetMapping("/shares/{postId}/is-shared")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Check if post is shared by current user")
+    public boolean isPostShared(@PathVariable UUID postId) {
+        return shareService.isPostShared(postId);
+    }
+
+    @GetMapping("/posts/{postId}/shares/count")
+    @Operation(summary = "Get shares count for a post")
+    public Long getSharesCount(@PathVariable UUID postId) {
+        return shareService.getSharesCount(postId);
+    }
+
+    @GetMapping("/posts/{postId}/shares")
+    @Operation(summary = "Get list of users who shared a post")
+    public Page<ShareResponse> getPostShares(
+        @PathVariable UUID postId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        return shareService.getPostShares(
+            postId,
+            PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
     }
 }
