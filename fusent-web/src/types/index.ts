@@ -50,6 +50,8 @@ export interface ChangePasswordRequest {
 // Shop Types
 export interface Shop {
   id: string
+  merchantId?: string
+  merchantName?: string
   sellerId?: string
   ownerId?: string
   name: string
@@ -71,6 +73,7 @@ export interface Shop {
   daysOfWeek?: string
   active?: boolean
   posStatus?: string
+  lastHeartbeatAt?: string
   createdAt: string
 }
 

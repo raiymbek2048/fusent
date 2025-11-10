@@ -84,7 +84,7 @@ export function useSharesCount(postId: string | undefined): UseQueryResult<numbe
     queryKey: ['shares', postId, 'count'],
     queryFn: async () => {
       if (!postId) return 0;
-      const { data } = await api.get<number>(`/social/shares/${postId}/shares/count`);
+      const { data } = await api.get<number>(`/social/posts/${postId}/shares/count`);
       return data;
     },
     enabled: !!postId,
@@ -99,7 +99,7 @@ export function usePostShares(postId: string | undefined, page = 0, size = 20): 
     queryKey: ['shares', postId, 'shares', page, size],
     queryFn: async () => {
       if (!postId) throw new Error('Post ID is required');
-      const { data } = await api.get<SharesPage>(`/social/shares/${postId}/shares`, {
+      const { data } = await api.get<SharesPage>(`/social/posts/${postId}/shares`, {
         params: { page, size },
       });
       return data;
