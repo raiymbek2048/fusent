@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Bell, Check, X, Package, MessageCircle, ShoppingCart, AlertCircle } from 'lucide-react'
-import { useNotificationHistory, useUnreadNotificationsCount } from '@/hooks/useNotifications'
+import { Bell, Check, X, Package, MessageCircle, ShoppingCart, AlertCircle, CheckCheck } from 'lucide-react'
+import { useNotificationHistory, useUnreadNotificationsCount, useMarkAllAsRead } from '@/hooks/useNotifications'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
@@ -16,6 +16,7 @@ export default function NotificationDropdown({ userEmail }: NotificationDropdown
 
   const { data: notifications = [] } = useNotificationHistory(userEmail)
   const { data: unreadCount = 0 } = useUnreadNotificationsCount(userEmail)
+  const markAllAsRead = useMarkAllAsRead(userEmail)
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -172,16 +173,17 @@ export default function NotificationDropdown({ userEmail }: NotificationDropdown
           </div>
 
           {/* Footer */}
-          {inAppNotifications.length > 0 && (
+          {inAppNotifications.length > 0 && unreadCount > 0 && (
             <div className="px-4 py-3 border-t border-gray-200">
               <button
                 onClick={() => {
-                  // TODO: Implement mark all as read
-                  setIsOpen(false)
+                  markAllAsRead.mutate()
                 }}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                disabled={markAllAsRead.isPending}
+                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Отметить все как прочитанные
+                <CheckCheck className="h-4 w-4" />
+                {markAllAsRead.isPending ? 'Отмечаем...' : 'Отметить все как прочитанные'}
               </button>
             </div>
           )}

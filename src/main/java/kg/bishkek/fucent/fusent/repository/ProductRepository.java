@@ -6,6 +6,9 @@ import kg.bishkek.fucent.fusent.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.UUID;
 
 
@@ -15,5 +18,32 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     Page<Product> findAllByCategoryId(UUID categoryId, Pageable pageable);
     Page<Product> findAllByNameContainingIgnoreCase(String q, Pageable pageable);
 
+    /**
+     * Full-text search using PostgreSQL tsvector
+     * Searches in both Russian and English with weighted ranking
+     */
+    @Query(value = """
+        SELECT p.*, ts_rank(p.search_vector, query) AS rank
+        FROM product p,
+             to_tsquery('russian', :searchQuery) query
+        WHERE p.search_vector @@ query
+           OR to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')) @@ to_tsquery('english', :searchQuery)
+        ORDER BY rank DESC
+        """,
+        countQuery = """
+        SELECT count(*)
+        FROM product p
+        WHERE p.search_vector @@ to_tsquery('russian', :searchQuery)
+           OR to_tsvector('english', p.name || ' ' || COALESCE(p.description, '')) @@ to_tsquery('english', :searchQuery)
+        """,
+        nativeQuery = true)
+    Page<Product> fullTextSearch(@Param("searchQuery") String searchQuery, Pageable pageable);
 
+    /**
+     * Simple search for autocomplete suggestions
+     */
+    @Query("SELECT p FROM Product p WHERE " +
+           "LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "ORDER BY p.name")
+    Page<Product> searchForAutocomplete(@Param("query") String query, Pageable pageable);
 }

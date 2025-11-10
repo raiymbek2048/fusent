@@ -8,6 +8,8 @@ import kg.bishkek.fucent.fusent.repository.*;
 import kg.bishkek.fucent.fusent.security.SecurityUtil;
 import kg.bishkek.fucent.fusent.service.CatalogService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,5 +71,24 @@ public class CatalogServiceImpl implements CatalogService {
                 .build();
 
         return variantRepository.save(v);
+    }
+
+    @Override
+    public Page<Product> searchProducts(String query, Pageable pageable) {
+        // Prepare search query for PostgreSQL full-text search
+        // Replace spaces with & for AND operation in tsquery
+        String searchQuery = query.trim().replace(" ", " & ");
+
+        try {
+            return productRepository.fullTextSearch(searchQuery, pageable);
+        } catch (Exception e) {
+            // Fallback to simple search if full-text search fails
+            return productRepository.findAllByNameContainingIgnoreCase(query, pageable);
+        }
+    }
+
+    @Override
+    public Page<Product> autocompleteProducts(String query, Pageable pageable) {
+        return productRepository.searchForAutocomplete(query, pageable);
     }
 }
