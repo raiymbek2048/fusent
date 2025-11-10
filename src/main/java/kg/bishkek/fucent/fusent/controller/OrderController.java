@@ -5,6 +5,7 @@ package kg.bishkek.fucent.fusent.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import kg.bishkek.fucent.fusent.dto.OrderDtos.*;
+import kg.bishkek.fucent.fusent.enums.OrderStatus;
 import kg.bishkek.fucent.fusent.model.Order;
 import kg.bishkek.fucent.fusent.model.OrderItem;
 import kg.bishkek.fucent.fusent.repository.OrderItemRepository;
@@ -42,7 +43,7 @@ public class OrderController {
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<OrderSummary>> getAllOrders(
-            @RequestParam(required = false) Order.Status status,
+            @RequestParam(required = false) OrderStatus status,
             Pageable pageable
     ) {
         Page<Order> orders;
@@ -98,7 +99,7 @@ public class OrderController {
                 order.getUserId(),
                 order.getShop().getId(),
                 order.getShop().getName(),
-                order.getStatus(),
+                order.getStatus().name(),
                 items.stream().map(this::toOrderItemResponse).collect(Collectors.toList()),
                 order.getTotalAmount(),
                 order.getCreatedAt(),
@@ -129,7 +130,7 @@ public class OrderController {
                 order.getUserId(),
                 order.getShop().getId(),
                 order.getShop().getName(),
-                order.getStatus(),
+                order.getStatus().name(),
                 itemCount,
                 order.getTotalAmount(),
                 order.getCreatedAt()

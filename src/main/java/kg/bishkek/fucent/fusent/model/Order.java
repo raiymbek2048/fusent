@@ -3,6 +3,7 @@ package kg.bishkek.fucent.fusent.model;
 
 
 import jakarta.persistence.*;
+import kg.bishkek.fucent.fusent.enums.OrderStatus;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -27,8 +28,10 @@ public class Order {
     private Shop shop; // only one shop per order
 
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status = "created"; // created|paid|cancelled|fulfilled
+    @Builder.Default
+    private OrderStatus status = OrderStatus.CREATED;
 
 
     @Column(nullable = false)

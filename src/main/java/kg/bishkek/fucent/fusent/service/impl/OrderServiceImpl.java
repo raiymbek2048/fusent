@@ -2,6 +2,7 @@ package kg.bishkek.fucent.fusent.service.impl;
 
 
 
+import kg.bishkek.fucent.fusent.enums.OrderStatus;
 import kg.bishkek.fucent.fusent.model.Order;
 import kg.bishkek.fucent.fusent.model.OrderItem;
 import kg.bishkek.fucent.fusent.model.ProductVariant;
@@ -74,16 +75,19 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
+        // Convert string to enum
+        OrderStatus newStatus = OrderStatus.valueOf(status.toUpperCase());
+
         // Validate status transitions
-        String currentStatus = order.getStatus();
-        if ("cancelled".equals(currentStatus) || "refunded".equals(currentStatus)) {
-            throw new IllegalStateException("Cannot update status of cancelled or refunded order");
+        OrderStatus currentStatus = order.getStatus();
+        if (currentStatus == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot update status of cancelled order");
         }
 
-        order.setStatus(status);
+        order.setStatus(newStatus);
 
         // Update timestamps based on status
-        if ("paid".equals(status) && order.getPaidAt() == null) {
+        if (newStatus == OrderStatus.PAID && order.getPaidAt() == null) {
             order.setPaidAt(Instant.now());
         }
 
@@ -96,11 +100,11 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
-        if ("paid".equals(order.getStatus()) || "fulfilled".equals(order.getStatus())) {
+        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.FULFILLED) {
             throw new IllegalStateException("Cannot cancel paid or fulfilled orders");
         }
 
-        order.setStatus("cancelled");
+        order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
     }
 }

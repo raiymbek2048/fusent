@@ -34,6 +34,7 @@ public class AppUser implements UserDetails {
 
 
     @Column(nullable = false)
+    @Builder.Default
     private Role role = Role.BUYER;
 
 
