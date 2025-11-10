@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useCartSummary } from '@/hooks/useCart'
 import { useLogout } from '@/hooks/useAuth'
 import { User, ShoppingCart, MessageCircle, LogOut, Store, Package, Search, Image, Map } from 'lucide-react'
+import NotificationDropdown from '@/components/NotificationDropdown'
 
 export default function Header() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
@@ -66,6 +67,15 @@ export default function Header() {
                 Панель продавца
               </Link>
             )}
+            {user && user.role === 'ADMIN' && (
+              <Link
+                href="/admin"
+                className="flex items-center text-purple-700 hover:text-purple-900 transition-colors font-medium"
+              >
+                <Package className="h-4 w-4 mr-1" />
+                Админ панель
+              </Link>
+            )}
           </nav>
 
           {/* User Menu */}
@@ -106,6 +116,9 @@ export default function Header() {
                 >
                   <MessageCircle className="h-6 w-6" />
                 </Link>
+
+                {/* Notifications */}
+                <NotificationDropdown userEmail={user.email} />
 
                 {/* Profile */}
                 <div className="flex items-center space-x-3 border-l pl-4 ml-2">
