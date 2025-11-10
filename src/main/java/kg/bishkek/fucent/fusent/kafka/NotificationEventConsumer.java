@@ -29,40 +29,40 @@ public class NotificationEventConsumer {
             SendNotificationRequest request = objectMapper.readValue(message, SendNotificationRequest.class);
 
             // Find the notification log entry
-            var notificationLog = notificationLogRepository.findByRecipientAndTemplateKeyOrderByCreatedAtDesc(
+            var notificationOpt = notificationLogRepository.findByRecipientAndTemplateKeyOrderByCreatedAtDesc(
                     request.recipient(), request.templateKey()
             ).stream().findFirst();
 
-            if (notificationLog.isEmpty()) {
+            if (notificationOpt.isEmpty()) {
                 log.warn("Notification log not found for recipient: {}, templateKey: {}",
                         request.recipient(), request.templateKey());
                 return;
             }
 
-            var log = notificationLog.get();
-            log.setAttempts(log.getAttempts() + 1);
+            var notifLog = notificationOpt.get();
+            notifLog.setAttempts(notifLog.getAttempts() + 1);
 
             try {
                 // Send notification based on channel
                 boolean success = sendNotificationByChannel(request);
 
                 if (success) {
-                    log.setStatus(NotificationStatus.DELIVERED);
-                    log.setDeliveredAt(java.time.Instant.now());
-                    log.setProvider(getProviderName(request.channel()));
+                    notifLog.setStatus(NotificationStatus.DELIVERED);
+                    notifLog.setDeliveredAt(java.time.Instant.now());
+                    notifLog.setProvider(getProviderName(request.channel()));
                     log.info("Successfully delivered notification to {}: channel={}, template={}",
                             request.recipient(), request.channel(), request.templateKey());
                 } else {
-                    log.setStatus(NotificationStatus.FAILED);
-                    log.setLastError("Failed to send notification");
+                    notifLog.setStatus(NotificationStatus.FAILED);
+                    notifLog.setLastError("Failed to send notification");
                 }
             } catch (Exception e) {
-                log.setStatus(NotificationStatus.FAILED);
-                log.setLastError(e.getMessage());
+                notifLog.setStatus(NotificationStatus.FAILED);
+                notifLog.setLastError(e.getMessage());
                 log.error("Error sending notification: {}", e.getMessage(), e);
             }
 
-            notificationLogRepository.save(log);
+            notificationLogRepository.save(notifLog);
 
         } catch (Exception e) {
             log.error("Error processing notification event: {}", message, e);
@@ -74,7 +74,7 @@ public class NotificationEventConsumer {
             case PUSH -> sendPushNotification(request);
             case SMS -> sendSmsNotification(request);
             case EMAIL -> sendEmailNotification(request);
-            case IN_APP -> sendInAppNotification(request);
+            case NotificationChannel.IN_APP -> sendInAppNotification(request);
         };
     }
 
@@ -110,7 +110,7 @@ public class NotificationEventConsumer {
             case PUSH -> "FCM";
             case SMS -> "Twilio";
             case EMAIL -> "SendGrid";
-            case IN_APP -> "Database";
+            case NotificationChannel.IN_APP -> "Database";
         };
     }
 }
