@@ -87,7 +87,7 @@ class AnalyticsServiceImplTest {
             .id(UUID.randomUUID())
             .product(testProduct)
             .sku("TEST-SKU-001")
-            .price(99.99)
+            .price(new BigDecimal("99.99"))
             .build();
 
         testProductMetric = ProductMetricDaily.builder()
