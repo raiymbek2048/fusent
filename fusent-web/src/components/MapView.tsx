@@ -16,6 +16,14 @@ export default function MapView({ center, shops, posts, onShopClick, onPostClick
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
   const routeLayerRef = useRef<any>(null)
+  const onShopClickRef = useRef(onShopClick)
+  const onPostClickRef = useRef(onPostClick)
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onShopClickRef.current = onShopClick
+    onPostClickRef.current = onPostClick
+  }, [onShopClick, onPostClick])
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapRef.current) return
@@ -111,7 +119,7 @@ export default function MapView({ center, shops, posts, onShopClick, onPostClick
             `)
 
           marker.on('click', () => {
-            onShopClick(shop)
+            onShopClickRef.current(shop)
           })
 
           markersRef.current.push(marker)
@@ -156,7 +164,7 @@ export default function MapView({ center, shops, posts, onShopClick, onPostClick
             `)
 
           marker.on('click', () => {
-            onPostClick(post)
+            onPostClickRef.current(post)
           })
 
           markersRef.current.push(marker)
@@ -210,7 +218,7 @@ export default function MapView({ center, shops, posts, onShopClick, onPostClick
         routeLayerRef.current = null
       }
     }
-  }, [center, shops, posts, onShopClick, onPostClick, routeCoordinates])
+  }, [center, shops, posts, routeCoordinates])
 
   return <div ref={mapRef} className="w-full h-full" />
 }

@@ -9,7 +9,7 @@ export const useConversations = (userId?: string) => {
     queryKey: ['conversations', userId],
     queryFn: async (): Promise<Conversation[]> => {
       if (!userId) throw new Error('User ID required')
-      const response = await api.get<Conversation[]>(`/chat/conversations/${userId}`)
+      const response = await api.get<Conversation[]>('/chat/conversations')
       return response.data
     },
     enabled: !!userId,
