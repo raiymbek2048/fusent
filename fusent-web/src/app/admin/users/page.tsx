@@ -4,13 +4,33 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import MainLayout from '@/components/MainLayout'
-import { Search, UserCheck, UserX, Shield, ShoppingBag, User as UserIcon } from 'lucide-react'
+import { Search, UserCheck, UserX, Shield, ShoppingBag, User as UserIcon, RefreshCw } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+
+interface User {
+  id: string
+  email: string
+  role: 'ADMIN' | 'SELLER' | 'BUYER'
+  createdAt: string
+  updatedAt: string
+  verified: boolean
+}
+
+interface UsersResponse {
+  content: User[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+}
 
 export default function AdminUsersPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRole, setFilterRole] = useState<'all' | 'ADMIN' | 'SELLER' | 'BUYER'>('all')
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'ADMIN') {
@@ -18,24 +38,27 @@ export default function AdminUsersPage() {
     }
   }, [isAuthenticated, user, router])
 
+  const { data: usersData, isLoading, refetch } = useQuery<UsersResponse>({
+    queryKey: ['admin', 'users', page, filterRole],
+    queryFn: async () => {
+      const params: any = { page, size: 20 }
+      if (filterRole !== 'all') {
+        params.role = filterRole
+      }
+      const response = await api.get<UsersResponse>('/users', { params })
+      return response.data
+    },
+    enabled: isAuthenticated && user?.role === 'ADMIN',
+  })
+
   if (!user || user.role !== 'ADMIN') {
     return null
   }
 
-  // Mock users data - replace with real API call
-  const mockUsers = [
-    { id: '1', email: 'admin@fusent.kg', role: 'ADMIN', createdAt: '2025-01-15', verified: true },
-    { id: '2', email: 'fashion.store@fusent.kg', role: 'SELLER', createdAt: '2025-01-20', verified: true },
-    { id: '3', email: 'tech.shop@fusent.kg', role: 'SELLER', createdAt: '2025-02-01', verified: true },
-    { id: '4', email: 'buyer1@test.kg', role: 'BUYER', createdAt: '2025-02-10', verified: true },
-    { id: '5', email: 'buyer2@test.kg', role: 'BUYER', createdAt: '2025-02-15', verified: false },
-  ]
-
-  const filteredUsers = mockUsers.filter((u) => {
+  const filteredUsers = usersData?.content?.filter((u) => {
     const matchesSearch = u.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesRole = filterRole === 'all' || u.role === filterRole
-    return matchesSearch && matchesRole
-  })
+    return matchesSearch
+  }) || []
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -70,12 +93,23 @@ export default function AdminUsersPage() {
           >
             ← Назад к панели
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Управление пользователями
-          </h1>
-          <p className="text-gray-600">
-            Всего пользователей: {mockUsers.length}
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Управление пользователями
+              </h1>
+              <p className="text-gray-600">
+                Всего пользователей: {usersData?.totalElements || 0}
+              </p>
+            </div>
+            <button
+              onClick={() => refetch()}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Обновить
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -96,7 +130,10 @@ export default function AdminUsersPage() {
             {/* Role Filter */}
             <select
               value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value as any)}
+              onChange={(e) => {
+                setFilterRole(e.target.value as any)
+                setPage(0)
+              }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">Все роли</option>
@@ -108,6 +145,16 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Users Table */}
+        {isLoading ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Загрузка пользователей...</p>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <p className="text-gray-600">Пользователи не найдены</p>
+          </div>
+        ) : (
         <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -184,13 +231,31 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
-
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Пользователи не найдены</p>
-            </div>
-          )}
         </div>
+        )}
+
+        {/* Pagination */}
+        {usersData && usersData.totalPages > 1 && (
+          <div className="mt-6 flex justify-center gap-2">
+            <button
+              onClick={() => setPage(Math.max(0, page - 1))}
+              disabled={page === 0}
+              className="px-4 py-2 bg-white border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Назад
+            </button>
+            <span className="px-4 py-2 bg-white border rounded-lg">
+              Страница {page + 1} из {usersData.totalPages}
+            </span>
+            <button
+              onClick={() => setPage(Math.min(usersData.totalPages - 1, page + 1))}
+              disabled={page >= usersData.totalPages - 1}
+              className="px-4 py-2 bg-white border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Далее
+            </button>
+          </div>
+        )}
       </div>
     </MainLayout>
   )

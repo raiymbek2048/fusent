@@ -8,11 +8,14 @@ import kg.bishkek.fucent.fusent.dto.OrderDtos.*;
 import kg.bishkek.fucent.fusent.model.Order;
 import kg.bishkek.fucent.fusent.model.OrderItem;
 import kg.bishkek.fucent.fusent.repository.OrderItemRepository;
+import kg.bishkek.fucent.fusent.repository.OrderRepository;
 import kg.bishkek.fucent.fusent.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +28,7 @@ import java.util.stream.Collectors;
 public class OrderController {
     private final OrderService service;
     private final OrderItemRepository orderItemRepository;
-
+    private final OrderRepository orderRepository;
 
     public record CreateOrderRequest(@NotNull UUID userId, @NotNull UUID shopId, @NotNull List<OrderService.Item> items) {}
 
@@ -34,6 +37,21 @@ public class OrderController {
     public OrderResponse create(@RequestBody CreateOrderRequest req) {
         Order order = service.createOrder(req.userId(), req.shopId(), req.items());
         return toOrderResponse(order);
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<OrderSummary>> getAllOrders(
+            @RequestParam(required = false) Order.Status status,
+            Pageable pageable
+    ) {
+        Page<Order> orders;
+        if (status != null) {
+            orders = orderRepository.findByStatus(status, pageable);
+        } else {
+            orders = orderRepository.findAll(pageable);
+        }
+        return ResponseEntity.ok(orders.map(this::toOrderSummary));
     }
 
     @GetMapping("/{id}")
@@ -108,6 +126,7 @@ public class OrderController {
         int itemCount = orderItemRepository.findByOrderId(order.getId()).size();
         return new OrderSummary(
                 order.getId(),
+                order.getUserId(),
                 order.getShop().getId(),
                 order.getShop().getName(),
                 order.getStatus(),
