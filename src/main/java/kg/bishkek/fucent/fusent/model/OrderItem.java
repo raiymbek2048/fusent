@@ -4,6 +4,7 @@ package kg.bishkek.fucent.fusent.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 
@@ -27,10 +28,10 @@ public class OrderItem {
     private Integer qty;
 
 
-    @Column(nullable = false)
-    private Double price;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal price;
 
 
-    @Column(nullable = false)
-    private Double subtotal;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal subtotal;
 }

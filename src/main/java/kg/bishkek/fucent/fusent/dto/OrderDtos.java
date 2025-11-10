@@ -3,6 +3,7 @@ package kg.bishkek.fucent.fusent.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -16,8 +17,8 @@ public class OrderDtos {
         String productName,
         String productImage,
         Integer qty,
-        Double price,
-        Double subtotal
+        BigDecimal price,
+        BigDecimal subtotal
     ) {}
 
     public record OrderResponse(
@@ -27,7 +28,7 @@ public class OrderDtos {
         String shopName,
         String status,
         List<OrderItemResponse> items,
-        Double totalAmount,
+        BigDecimal totalAmount,
         Instant createdAt,
         Instant paidAt,
         Instant fulfilledAt
@@ -40,7 +41,7 @@ public class OrderDtos {
         String shopName,
         String status,
         Integer itemCount,
-        Double totalAmount,
+        BigDecimal totalAmount,
         Instant createdAt
     ) {}
 

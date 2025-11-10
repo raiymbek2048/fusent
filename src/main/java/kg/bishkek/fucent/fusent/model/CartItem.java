@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -33,7 +34,7 @@ public class CartItem {
     @CreationTimestamp
     private Instant addedAt;
 
-    public double getSubtotal() {
-        return variant.getPrice() * qty;
+    public BigDecimal getSubtotal() {
+        return variant.getPrice().multiply(BigDecimal.valueOf(qty));
     }
 }

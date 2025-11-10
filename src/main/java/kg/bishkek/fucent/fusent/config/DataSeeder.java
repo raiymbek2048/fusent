@@ -345,44 +345,44 @@ public class DataSeeder {
         for (Product product : products) {
             if (product.getName().contains("куртка")) {
                 // Jacket variants by size
-                variants.add(createVariant(product, "NF-WJ-001-S", null, 12500.0, 5));
-                variants.add(createVariant(product, "NF-WJ-001-M", null, 12500.0, 10));
-                variants.add(createVariant(product, "NF-WJ-001-L", null, 12500.0, 8));
-                variants.add(createVariant(product, "NF-WJ-001-XL", null, 12500.0, 3));
+                variants.add(createVariant(product, "NF-WJ-001-S", null, new BigDecimal("12500.00"), 5));
+                variants.add(createVariant(product, "NF-WJ-001-M", null, new BigDecimal("12500.00"), 10));
+                variants.add(createVariant(product, "NF-WJ-001-L", null, new BigDecimal("12500.00"), 8));
+                variants.add(createVariant(product, "NF-WJ-001-XL", null, new BigDecimal("12500.00"), 3));
 
             } else if (product.getName().contains("Джинсы")) {
-                variants.add(createVariant(product, "LEVI-501-30", "{\"size\":\"30\",\"color\":\"Синий\"}", 5500.0, 15));
-                variants.add(createVariant(product, "LEVI-501-32", "{\"size\":\"32\",\"color\":\"Синий\"}", 5500.0, 12));
-                variants.add(createVariant(product, "LEVI-501-34", "{\"size\":\"34\",\"color\":\"Черный\"}", 5500.0, 8));
+                variants.add(createVariant(product, "LEVI-501-30", "{\"size\":\"30\",\"color\":\"Синий\"}", new BigDecimal("5500.00"), 15));
+                variants.add(createVariant(product, "LEVI-501-32", "{\"size\":\"32\",\"color\":\"Синий\"}", new BigDecimal("5500.00"), 12));
+                variants.add(createVariant(product, "LEVI-501-34", "{\"size\":\"34\",\"color\":\"Черный\"}", new BigDecimal("5500.00"), 8));
 
             } else if (product.getName().contains("Платье")) {
-                variants.add(createVariant(product, "DRESS-001-S", "{\"size\":\"S\",\"color\":\"Красное\"}", 8900.0, 5));
-                variants.add(createVariant(product, "DRESS-001-M", "{\"size\":\"M\",\"color\":\"Черное\"}", 8900.0, 7));
+                variants.add(createVariant(product, "DRESS-001-S", "{\"size\":\"S\",\"color\":\"Красное\"}", new BigDecimal("8900.00"), 5));
+                variants.add(createVariant(product, "DRESS-001-M", "{\"size\":\"M\",\"color\":\"Черное\"}", new BigDecimal("8900.00"), 7));
 
             } else if (product.getName().contains("iPhone 15")) {
-                variants.add(createVariant(product, "IPHONE15PRO-128-BLK", "{\"memory\":\"128GB\",\"color\":\"Black Titanium\"}", 95000.0, 3));
-                variants.add(createVariant(product, "IPHONE15PRO-256-BLU", "{\"memory\":\"256GB\",\"color\":\"Blue Titanium\"}", 105000.0, 2));
+                variants.add(createVariant(product, "IPHONE15PRO-128-BLK", "{\"memory\":\"128GB\",\"color\":\"Black Titanium\"}", new BigDecimal("95000.00"), 3));
+                variants.add(createVariant(product, "IPHONE15PRO-256-BLU", "{\"memory\":\"256GB\",\"color\":\"Blue Titanium\"}", new BigDecimal("105000.00"), 2));
 
             } else if (product.getName().contains("Samsung")) {
-                variants.add(createVariant(product, "S24U-256-BLK", "{\"memory\":\"256GB\",\"color\":\"Phantom Black\"}", 89000.0, 5));
-                variants.add(createVariant(product, "S24U-512-GRY", "{\"memory\":\"512GB\",\"color\":\"Titanium Gray\"}", 99000.0, 2));
+                variants.add(createVariant(product, "S24U-256-BLK", "{\"memory\":\"256GB\",\"color\":\"Phantom Black\"}", new BigDecimal("89000.00"), 5));
+                variants.add(createVariant(product, "S24U-512-GRY", "{\"memory\":\"512GB\",\"color\":\"Titanium Gray\"}", new BigDecimal("99000.00"), 2));
 
             } else if (product.getName().contains("AirPods")) {
-                variants.add(createVariant(product, "AIRPODSPRO2-WHT", null, 28000.0, 10));
+                variants.add(createVariant(product, "AIRPODSPRO2-WHT", null, new BigDecimal("28000.00"), 10));
 
             } else if (product.getName().contains("Диван")) {
-                variants.add(createVariant(product, "SOFA-001-GRY", "{\"color\":\"Серый\",\"side\":\"Левый угол\"}", 45000.0, 2));
-                variants.add(createVariant(product, "SOFA-001-BEI", "{\"color\":\"Бежевый\",\"side\":\"Правый угол\"}", 45000.0, 1));
+                variants.add(createVariant(product, "SOFA-001-GRY", "{\"color\":\"Серый\",\"side\":\"Левый угол\"}", new BigDecimal("45000.00"), 2));
+                variants.add(createVariant(product, "SOFA-001-BEI", "{\"color\":\"Бежевый\",\"side\":\"Правый угол\"}", new BigDecimal("45000.00"), 1));
 
             } else if (product.getName().contains("посуды")) {
-                variants.add(createVariant(product, "LUM-SET-001", null, 3500.0, 20));
+                variants.add(createVariant(product, "LUM-SET-001", null, new BigDecimal("3500.00"), 20));
             }
         }
 
         return variantRepository.saveAll(variants);
     }
 
-    private ProductVariant createVariant(Product product, String sku, String attributes, Double price, Integer stock) {
+    private ProductVariant createVariant(Product product, String sku, String attributes, BigDecimal price, Integer stock) {
         return ProductVariant.builder()
                 .product(product)
                 .sku(sku)
