@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,5 +16,5 @@ public record PosSaleRequest(
         @NotBlank String receiptNumber,
         @NotNull List<Item> items
 ) {
-    public record Item(@NotNull UUID variantId, @NotNull Integer qty, @NotNull Double unitPrice) {}
+    public record Item(@NotNull UUID variantId, @NotNull BigDecimal qty, @NotNull BigDecimal unitPrice) {}
 }
