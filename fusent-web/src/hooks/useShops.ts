@@ -47,8 +47,13 @@ export const useCreateShop = () => {
       const response = await api.post<Shop>('/shops', data)
       return response.data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate all shops queries
       queryClient.invalidateQueries({ queryKey: ['shops'] })
+      // Invalidate seller-specific shops queries
+      if (data.ownerId) {
+        queryClient.invalidateQueries({ queryKey: ['shops', 'seller', data.ownerId] })
+      }
       toast.success('Магазин создан успешно!')
     },
     onError: (error: any) => {

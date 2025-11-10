@@ -253,6 +253,7 @@ export interface Post {
   media?: PostMediaDto[]
   tags?: string[]
   isLikedByCurrentUser?: boolean
+  isSavedByCurrentUser?: boolean
   createdAt: string
   updatedAt?: string
 }

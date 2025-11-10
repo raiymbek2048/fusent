@@ -5,6 +5,7 @@ import MainLayout from '@/components/MainLayout'
 import CreatePostModal from '@/components/CreatePostModal'
 import PostModal from '@/components/PostModal'
 import { usePublicFeed, useFollowingFeed, useLikePost, useUnlikePost } from '@/hooks/usePosts'
+import { useSavePost, useUnsavePost } from '@/hooks/useSavedPosts'
 import { useAuth } from '@/hooks/useAuth'
 import { Heart, MessageCircle, Share2, MapPin, Plus, Bookmark } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -32,6 +33,8 @@ export default function SocialPage() {
 
   const { mutate: likePost } = useLikePost()
   const { mutate: unlikePost } = useUnlikePost()
+  const { mutate: savePost } = useSavePost()
+  const { mutate: unsavePost } = useUnsavePost()
 
   const data = activeTab === 'explore' ? exploreData : followingData
   const isLoading = activeTab === 'explore' ? isLoadingExplore : isLoadingFollowing
@@ -41,6 +44,14 @@ export default function SocialPage() {
       unlikePost(postId)
     } else {
       likePost(postId)
+    }
+  }
+
+  const handleSave = (postId: string, isSaved?: boolean) => {
+    if (isSaved) {
+      unsavePost(postId)
+    } else {
+      savePost(postId)
     }
   }
 
@@ -226,8 +237,17 @@ export default function SocialPage() {
                             <Share2 className="h-7 w-7 text-gray-900" />
                           </button>
                         </div>
-                        <button className="hover:opacity-70 transition-opacity">
-                          <Bookmark className="h-7 w-7 text-gray-900" />
+                        <button
+                          onClick={() => handleSave(post.id, post.isSavedByCurrentUser)}
+                          className="hover:opacity-70 transition-opacity"
+                        >
+                          <Bookmark
+                            className={`h-7 w-7 ${
+                              post.isSavedByCurrentUser
+                                ? 'fill-gray-900 text-gray-900'
+                                : 'text-gray-900'
+                            }`}
+                          />
                         </button>
                       </div>
 
