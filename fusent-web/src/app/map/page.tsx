@@ -95,7 +95,7 @@ export default function MapPage() {
     <MainLayout>
       <div className="relative h-[calc(100vh-4rem)]">
         {/* Map Controls */}
-        <div className="absolute top-4 left-4 z-10 bg-white rounded-lg shadow-lg p-2">
+        <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-2" style={{ zIndex: 1000 }}>
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode('all')}
@@ -133,7 +133,7 @@ export default function MapPage() {
         </div>
 
         {/* Map */}
-        <div className="w-full h-full">
+        <div className="w-full h-full" style={{ position: 'relative', zIndex: 0 }}>
           {userLocation && (
             <MapComponent
               center={userLocation}
@@ -161,7 +161,7 @@ export default function MapPage() {
 
         {/* Shop Detail Card */}
         {selectedShop && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-md z-20">
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-md" style={{ zIndex: 1001 }}>
             <div className="bg-white rounded-lg shadow-xl p-6 m-4">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -205,7 +205,7 @@ export default function MapPage() {
 
         {/* Post Detail Card */}
         {selectedPost && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-md z-20">
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-md" style={{ zIndex: 1001 }}>
             <div className="bg-white rounded-lg shadow-xl p-4 m-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -243,7 +243,7 @@ export default function MapPage() {
         )}
 
         {/* Legend */}
-        <div className="absolute bottom-4 right-4 z-10 bg-white rounded-lg shadow-lg p-4">
+        <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg p-4" style={{ zIndex: 1000 }}>
           <h4 className="font-semibold text-gray-900 mb-2">Легенда</h4>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
