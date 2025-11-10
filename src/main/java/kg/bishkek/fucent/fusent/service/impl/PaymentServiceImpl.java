@@ -1,6 +1,7 @@
 package kg.bishkek.fucent.fusent.service.impl;
 
 import kg.bishkek.fucent.fusent.dto.PaymentDtos.*;
+import kg.bishkek.fucent.fusent.enums.OrderStatus;
 import kg.bishkek.fucent.fusent.model.Order;
 import kg.bishkek.fucent.fusent.repository.OrderRepository;
 import kg.bishkek.fucent.fusent.service.PaymentService;
@@ -109,7 +110,7 @@ public class PaymentServiceImpl implements PaymentService {
         // For now, simulate successful payment
 
         if (order.getPaidAt() == null) {
-            order.setStatus("paid");
+            order.setStatus(OrderStatus.PAID);
             order.setPaidAt(Instant.now());
             orderRepository.save(order);
 
@@ -166,14 +167,14 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalStateException("Cannot refund unpaid order");
         }
 
-        if ("refunded".equals(order.getStatus())) {
+        if (order.getStatus() == OrderStatus.REFUNDED) {
             throw new IllegalStateException("Order already refunded");
         }
 
         // In production, initiate refund with payment gateway
         // For now, simulate successful refund
 
-        order.setStatus("refunded");
+        order.setStatus(OrderStatus.REFUNDED);
         orderRepository.save(order);
 
         UUID refundId = UUID.randomUUID();
