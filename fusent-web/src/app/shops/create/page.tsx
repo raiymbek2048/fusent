@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import MainLayout from '@/components/MainLayout'
 import { useCreateShop } from '@/hooks/useShops'
@@ -12,6 +12,25 @@ import dynamic from 'next/dynamic'
 const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
   ssr: false,
 })
+
+interface NominatimResult {
+  place_id: number
+  display_name: string
+  lat: string
+  lon: string
+}
+
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(() => func(...args), wait)
+  }
+}
 
 export default function CreateShopPage() {
   const router = useRouter()
@@ -27,6 +46,10 @@ export default function CreateShopPage() {
     lon: undefined as number | undefined,
   })
   const [showLocationPicker, setShowLocationPicker] = useState(false)
+  const [addressSuggestions, setAddressSuggestions] = useState<NominatimResult[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const addressInputRef = useRef<HTMLDivElement>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,9 +73,84 @@ export default function CreateShopPage() {
     }
   }
 
+  // Reverse geocoding: get address from coordinates
+  const reverseGeocode = async (lat: number, lon: number) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=ru`
+      )
+      const data = await response.json()
+      if (data.display_name) {
+        setFormData(prev => ({ ...prev, address: data.display_name }))
+      }
+    } catch (error) {
+      console.error('Error reverse geocoding:', error)
+    }
+  }
+
   const handleLocationSelect = (location: { lat: number; lon: number }) => {
     setFormData({ ...formData, lat: location.lat, lon: location.lon })
+    // Automatically fill address from coordinates
+    reverseGeocode(location.lat, location.lon)
   }
+
+  // Search for address suggestions using Nominatim
+  const searchAddress = async (query: string) => {
+    if (!query || query.length < 3) {
+      setAddressSuggestions([])
+      return
+    }
+
+    setIsLoadingSuggestions(true)
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=kg&limit=5&addressdetails=1&accept-language=ru`
+      )
+      const data: NominatimResult[] = await response.json()
+      setAddressSuggestions(data)
+      setShowSuggestions(true)
+    } catch (error) {
+      console.error('Error searching address:', error)
+      setAddressSuggestions([])
+    } finally {
+      setIsLoadingSuggestions(false)
+    }
+  }
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce((query: string) => searchAddress(query), 500),
+    []
+  )
+
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setFormData({ ...formData, address: value })
+    debouncedSearch(value)
+  }
+
+  const handleSuggestionClick = (suggestion: NominatimResult) => {
+    setFormData({
+      ...formData,
+      address: suggestion.display_name,
+      lat: parseFloat(suggestion.lat),
+      lon: parseFloat(suggestion.lon),
+    })
+    setShowSuggestions(false)
+    setAddressSuggestions([])
+  }
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (addressInputRef.current && !addressInputRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Redirect if not seller
   if (user && user.role !== 'SELLER') {
@@ -104,17 +202,56 @@ export default function CreateShopPage() {
               />
             </div>
 
-            <div>
+            <div className="relative" ref={addressInputRef}>
               <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
                 Адрес
               </label>
-              <Input
-                id="address"
-                type="text"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Введите адрес магазина"
-              />
+              <div className="relative">
+                <Input
+                  id="address"
+                  type="text"
+                  value={formData.address}
+                  onChange={handleAddressChange}
+                  placeholder="Начните вводить адрес..."
+                  className="pr-20"
+                />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1 items-center">
+                  {isLoadingSuggestions && (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowLocationPicker(true)}
+                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                    title="Выбрать на карте"
+                  >
+                    <MapPin className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Address suggestions dropdown */}
+              {showSuggestions && addressSuggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {addressSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion.place_id}
+                      type="button"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                    >
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-gray-900">{suggestion.display_name}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <p className="mt-2 text-sm text-gray-500">
+                Введите адрес или нажмите на иконку карты для выбора точного местоположения
+              </p>
             </div>
 
             <div>
@@ -130,25 +267,20 @@ export default function CreateShopPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Локация на карте
-              </label>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowLocationPicker(true)}
-                className="w-full flex items-center justify-center gap-2"
-              >
-                <MapPin className="h-4 w-4" />
-                {formData.lat && formData.lon
-                  ? `Локация выбрана: ${formData.lat.toFixed(4)}, ${formData.lon.toFixed(4)}`
-                  : 'Показать на карте'}
-              </Button>
-              <p className="mt-2 text-sm text-gray-500">
-                Выберите точное местоположение вашего магазина на карте для отображения клиентам
-              </p>
-            </div>
+            {/* Location display */}
+            {formData.lat && formData.lon && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-medium text-green-900">Локация установлена</p>
+                    <p className="text-xs text-green-700">
+                      Координаты: {formData.lat.toFixed(6)}, {formData.lon.toFixed(6)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-4">
               <Button
