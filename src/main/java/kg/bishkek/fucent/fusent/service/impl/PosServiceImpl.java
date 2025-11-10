@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.RoundingMode;
+
 
 @Service
 @RequiredArgsConstructor
@@ -29,12 +31,13 @@ public class PosServiceImpl implements PosService {
                     .variant(variant)
                     .qty(it.qty())
                     .unitPrice(it.unitPrice())
-                    .totalPrice(it.qty() * it.unitPrice())
+                    .totalPrice(it.qty().multiply(it.unitPrice()))
                     .receiptNumber(req.receiptNumber())
                     .build();
             posSaleRepository.save(sale);
 // naive stock decrement (no reservations yet)
-            variant.setStockQty(Math.max(0, variant.getStockQty() - it.qty()));
+            int qtyToDecrement = it.qty().setScale(0, RoundingMode.UP).intValue();
+            variant.setStockQty(Math.max(0, variant.getStockQty() - qtyToDecrement));
             variantRepository.save(variant);
         }
     }
