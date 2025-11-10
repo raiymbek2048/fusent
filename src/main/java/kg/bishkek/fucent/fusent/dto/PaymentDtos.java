@@ -3,6 +3,7 @@ package kg.bishkek.fucent.fusent.dto;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -20,7 +21,7 @@ public class PaymentDtos {
         UUID orderId,
         String status, // "pending", "processing", "success", "failed", "cancelled"
         String paymentMethod,
-        Double amount,
+        BigDecimal amount,
         String currency,
         String transactionId,
         String paymentUrl, // For online payments (redirect to gateway)
@@ -35,7 +36,7 @@ public class PaymentDtos {
         UUID orderId,
         UUID paymentId,
         String status,
-        Double amount,
+        BigDecimal amount,
         String reason,
         Instant createdAt,
         Instant processedAt
