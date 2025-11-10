@@ -23,7 +23,7 @@ export default function MultiImageUpload({
   label = 'Изображения',
   description,
   maxImages = 10,
-  maxSizeMB = 5,
+  maxSizeMB = 10,
   disabled = false,
 }: MultiImageUploadProps) {
   const [uploading, setUploading] = useState(false)

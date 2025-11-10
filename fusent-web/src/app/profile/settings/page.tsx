@@ -100,10 +100,10 @@ export default function ProfileSettingsPage() {
                       <ImageUpload
                         value={formData.avatarUrl}
                         onChange={(url) => setFormData({ ...formData, avatarUrl: url || '' })}
-                        folder="avatars"
+                        folder="avatar"
                         label=""
-                        description="Загрузите фото профиля (макс. 5МБ)"
-                        maxSizeMB={5}
+                        description="Загрузите фото профиля (макс. 10МБ)"
+                        maxSizeMB={10}
                       />
                     </div>
                   </div>

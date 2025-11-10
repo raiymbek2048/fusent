@@ -146,10 +146,10 @@ export default function CreatePostModal({
             <MultiImageUpload
               value={mediaUrls}
               onChange={setMediaUrls}
-              folder="posts"
+              folder="post"
               label="Фото"
               maxImages={10}
-              maxSizeMB={5}
+              maxSizeMB={10}
             />
 
             {/* Tags */}
