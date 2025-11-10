@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useCalculateRoute, RouteResponse, RouteStep } from '@/hooks/useRoutes'
 import { Navigation, X, MapPin, Clock, Ruler, Car, PersonStanding, Bike, ChevronDown, ChevronUp } from 'lucide-react'
-import Spinner from '@/components/ui/Spinner'
+import { Spinner } from '@/components/ui/Spinner'
 
 interface RoutePanelProps {
   startLat: number

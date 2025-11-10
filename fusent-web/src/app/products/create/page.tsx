@@ -40,7 +40,6 @@ export default function CreateProductPage() {
         name: formData.name,
         description: formData.description || undefined,
         basePrice: parseFloat(formData.basePrice) || 0,
-        imageUrl: formData.imageUrl || undefined,
       })
       router.push(`/shops/${shopId}`)
     } catch (error) {

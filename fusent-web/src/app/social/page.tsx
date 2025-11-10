@@ -188,7 +188,7 @@ export default function SocialPage() {
                                     className="w-full h-full object-cover"
                                   />
                                 )}
-                                {idx === 3 && post.media.length > 4 && (
+                                {idx === 3 && post.media && post.media.length > 4 && (
                                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-2xl font-semibold">
                                     +{post.media.length - 4}
                                   </div>
@@ -322,10 +322,14 @@ export default function SocialPage() {
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold text-xl">
-                    {user.fullName?.[0]?.toUpperCase() || 'U'}
+                    {user.profile?.firstName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{user.fullName || user.email}</p>
+                    <p className="font-semibold text-gray-900">
+                      {user.profile?.firstName && user.profile?.lastName
+                        ? `${user.profile.firstName} ${user.profile.lastName}`
+                        : user.email}
+                    </p>
                     <p className="text-sm text-gray-500">{user.email}</p>
                   </div>
                 </div>
