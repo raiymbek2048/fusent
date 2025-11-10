@@ -12,7 +12,8 @@ import {
   TrendingUp,
   AlertCircle,
   DollarSign,
-  Activity
+  Activity,
+  FolderTree
 } from 'lucide-react'
 
 export default function AdminDashboard() {
@@ -166,6 +167,15 @@ export default function AdminDashboard() {
                 <span className="flex items-center gap-3">
                   <Activity className="h-5 w-5 text-orange-600" />
                   <span className="font-medium">Модерация постов</span>
+                </span>
+              </button>
+              <button
+                onClick={() => router.push('/admin/categories')}
+                className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between"
+              >
+                <span className="flex items-center gap-3">
+                  <FolderTree className="h-5 w-5 text-indigo-600" />
+                  <span className="font-medium">Управление категориями</span>
                 </span>
               </button>
             </div>
