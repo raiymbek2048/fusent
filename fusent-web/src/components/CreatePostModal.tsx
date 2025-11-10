@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { X, Image as ImageIcon, Video, MapPin } from 'lucide-react'
+import { useState } from 'react'
+import { X, MapPin } from 'lucide-react'
 import { useCreatePost } from '@/hooks/usePosts'
 import { useAuth } from '@/hooks/useAuth'
-import { useUploadMultipleMedia } from '@/hooks/useMedia'
+import MultiImageUpload from '@/components/MultiImageUpload'
 import toast from 'react-hot-toast'
 
 interface CreatePostModalProps {
@@ -25,40 +25,13 @@ export default function CreatePostModal({
   const { mutateAsync: uploadMultipleMedia, isPending: isUploading } = useUploadMultipleMedia()
 
   const [text, setText] = useState('')
-  const [mediaFiles, setMediaFiles] = useState<File[]>([])
-  const [mediaPreviews, setMediaPreviews] = useState<string[]>([])
+  const [mediaUrls, setMediaUrls] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [visibility, setVisibility] = useState<'PUBLIC' | 'FOLLOWERS' | 'PRIVATE'>('PUBLIC')
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null)
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
   if (!isOpen) return null
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    if (files.length + mediaFiles.length > 10) {
-      toast.error('Максимум 10 файлов')
-      return
-    }
-
-    setMediaFiles(prev => [...prev, ...files])
-
-    // Create previews
-    files.forEach(file => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setMediaPreviews(prev => [...prev, reader.result as string])
-      }
-      reader.readAsDataURL(file)
-    })
-  }
-
-  const removeMedia = (index: number) => {
-    setMediaFiles(prev => prev.filter((_, i) => i !== index))
-    setMediaPreviews(prev => prev.filter((_, i) => i !== index))
-  }
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim()) {
@@ -95,7 +68,7 @@ export default function CreatePostModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!text.trim() && mediaFiles.length === 0) {
+    if (!text.trim() && mediaUrls.length === 0) {
       toast.error('Добавьте текст или медиа')
       return
     }
@@ -107,25 +80,11 @@ export default function CreatePostModal({
     }
 
     try {
-      // First, upload media files if any
-      let mediaUrls: string[] = []
-      if (mediaFiles.length > 0) {
-        toast.loading('Загрузка медиа...', { id: 'upload-media' })
-        try {
-          const uploadResults = await uploadMultipleMedia({ files: mediaFiles, folder: 'posts' })
-          mediaUrls = uploadResults.map(r => r.url)
-          toast.success('Медиа загружены!', { id: 'upload-media' })
-        } catch (error) {
-          toast.error('Ошибка загрузки медиа', { id: 'upload-media' })
-          return
-        }
-      }
-
       createPost({
         ownerType,
         ownerId: finalOwnerId,
         text: text.trim(),
-        postType: mediaFiles.length > 0 ? 'PHOTO' : 'TEXT',
+        postType: mediaUrls.length > 0 ? 'PHOTO' : 'TEXT',
         visibility,
         tags: tags.length > 0 ? tags : undefined,
         geoLat: location?.lat,
@@ -139,8 +98,7 @@ export default function CreatePostModal({
         onSuccess: () => {
           // Reset form
           setText('')
-          setMediaFiles([])
-          setMediaPreviews([])
+          setMediaUrls([])
           setTags([])
           setLocation(null)
           onClose()
@@ -185,27 +143,15 @@ export default function CreatePostModal({
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
 
-            {/* Media Previews */}
-            {mediaPreviews.length > 0 && (
-              <div className="grid grid-cols-2 gap-2">
-                {mediaPreviews.map((preview, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={preview}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeMedia(index)}
-                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Media Upload */}
+            <MultiImageUpload
+              value={mediaUrls}
+              onChange={setMediaUrls}
+              folder="posts"
+              label="Фото"
+              maxImages={10}
+              maxSizeMB={5}
+            />
 
             {/* Tags */}
             {tags.length > 0 && (
@@ -266,32 +212,14 @@ export default function CreatePostModal({
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-4 border-t">
-              <div className="flex items-center gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  multiple
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Добавить фото/видео"
-                >
-                  <ImageIcon className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={getCurrentLocation}
-                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Добавить местоположение"
-                >
-                  <MapPin className="h-5 w-5" />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={getCurrentLocation}
+                className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <MapPin className="h-5 w-5" />
+                <span className="text-sm">{location ? 'Изменить местоположение' : 'Добавить местоположение'}</span>
+              </button>
 
               <div className="flex gap-2">
                 <button
@@ -303,10 +231,10 @@ export default function CreatePostModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending || isUploading || (!text.trim() && mediaFiles.length === 0)}
+                  disabled={isPending || (!text.trim() && mediaUrls.length === 0)}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isUploading ? 'Загрузка медиа...' : isPending ? 'Публикация...' : 'Опубликовать'}
+                  {isPending ? 'Публикация...' : 'Опубликовать'}
                 </button>
               </div>
             </div>

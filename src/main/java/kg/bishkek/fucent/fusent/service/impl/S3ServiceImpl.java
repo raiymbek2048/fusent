@@ -1,5 +1,7 @@
 package kg.bishkek.fucent.fusent.service.impl;
 
+import io.minio.*;
+import io.minio.errors.*;
 import kg.bishkek.fucent.fusent.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +14,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class S3ServiceImpl implements S3Service {
+
+    private final MinioClient minioClient;
 
     @Value("${storage.type:local}")
     private String storageType;
@@ -28,12 +35,12 @@ public class S3ServiceImpl implements S3Service {
     @Value("${storage.base-url:http://localhost:8080/uploads}")
     private String baseUrl;
 
-    // S3/MinIO configuration (for future use)
-    @Value("${storage.s3.bucket:fusent-media}")
-    private String s3Bucket;
+    // S3/MinIO configuration
+    @Value("${app.s3.endpoint}")
+    private String s3Endpoint;
 
-    @Value("${storage.s3.region:us-east-1}")
-    private String s3Region;
+    @Value("${app.s3.bucket-media}")
+    private String s3Bucket;
 
     @Override
     public String uploadFile(MultipartFile file, String folder) {
@@ -66,9 +73,22 @@ public class S3ServiceImpl implements S3Service {
     @Override
     public String generatePresignedUrl(String fileKey, int expirationMinutes) {
         if ("s3".equalsIgnoreCase(storageType) || "minio".equalsIgnoreCase(storageType)) {
-            // TODO: Implement actual S3 pre-signed URL generation
-            log.warn("Pre-signed URLs not implemented for S3/MinIO yet");
-            return baseUrl + "/" + fileKey;
+            try {
+                String url = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                        .method(io.minio.http.Method.GET)
+                        .bucket(s3Bucket)
+                        .object(fileKey)
+                        .expiry(expirationMinutes, TimeUnit.MINUTES)
+                        .build()
+                );
+                log.info("Generated pre-signed URL for key: {}", fileKey);
+                return url;
+            } catch (Exception e) {
+                log.error("Error generating pre-signed URL for key: {}", fileKey, e);
+                // Fallback to regular URL
+                return s3Endpoint + "/" + s3Bucket + "/" + fileKey;
+            }
         }
         // For local storage, return regular URL
         return baseUrl + "/" + fileKey;
@@ -121,56 +141,126 @@ public class S3ServiceImpl implements S3Service {
     }
 
     private String uploadToS3(MultipartFile file, String folder) {
-        // TODO: Implement actual S3/MinIO upload using AWS SDK or MinIO client
-        /*
-        Example with AWS SDK:
-
         try {
-            String key = folder + "/" + UUID.randomUUID() + "-" + file.getOriginalFilename();
+            // Ensure bucket exists
+            ensureBucketExists();
 
-            PutObjectRequest putRequest = PutObjectRequest.builder()
-                .bucket(s3Bucket)
-                .key(key)
-                .contentType(file.getContentType())
-                .build();
+            // Generate unique filename
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename != null && originalFilename.contains(".")
+                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                    : "";
+            String filename = UUID.randomUUID().toString() + extension;
+            String objectKey = folder + "/" + filename;
 
-            s3Client.putObject(putRequest, RequestBody.fromInputStream(
-                file.getInputStream(),
-                file.getSize()
-            ));
+            // Upload to MinIO
+            minioClient.putObject(
+                PutObjectArgs.builder()
+                    .bucket(s3Bucket)
+                    .object(objectKey)
+                    .stream(file.getInputStream(), file.getSize(), -1)
+                    .contentType(file.getContentType())
+                    .build()
+            );
 
-            return String.format("https://%s.s3.%s.amazonaws.com/%s",
-                s3Bucket, s3Region, key);
+            // Generate public URL
+            String fileUrl = s3Endpoint + "/" + s3Bucket + "/" + objectKey;
+            log.info("File uploaded to MinIO: {}", fileUrl);
+
+            return fileUrl;
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to upload to S3", e);
+            log.error("Error uploading file to MinIO", e);
+            throw new RuntimeException("Failed to upload file to MinIO", e);
         }
-        */
-
-        log.warn("S3/MinIO upload not implemented yet. Falling back to local storage.");
-        return uploadToLocal(file, folder);
     }
 
     private boolean deleteFromS3(String fileUrl) {
-        // TODO: Implement actual S3/MinIO delete
-        /*
-        Example with AWS SDK:
-
         try {
-            String key = extractKeyFromUrl(fileUrl);
-            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
-                .bucket(s3Bucket)
-                .key(key)
-                .build();
-            s3Client.deleteObject(deleteRequest);
+            // Extract object key from URL
+            // Expected format: http://localhost:9000/fusent-media/folder/filename.ext
+            String objectKey = extractKeyFromUrl(fileUrl);
+            if (objectKey == null) {
+                log.error("Failed to extract object key from URL: {}", fileUrl);
+                return false;
+            }
+
+            // Delete from MinIO
+            minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                    .bucket(s3Bucket)
+                    .object(objectKey)
+                    .build()
+            );
+
+            log.info("File deleted from MinIO: {}", fileUrl);
             return true;
+
         } catch (Exception e) {
-            log.error("Failed to delete from S3", e);
+            log.error("Error deleting file from MinIO: {}", fileUrl, e);
             return false;
         }
-        */
+    }
 
-        log.warn("S3/MinIO delete not implemented yet. Falling back to local storage.");
-        return deleteFromLocal(fileUrl);
+    private String extractKeyFromUrl(String fileUrl) {
+        // Extract object key from URL
+        // Format: http://localhost:9000/fusent-media/folder/filename.ext
+        // Result: folder/filename.ext
+        try {
+            String prefix = s3Endpoint + "/" + s3Bucket + "/";
+            if (fileUrl.startsWith(prefix)) {
+                return fileUrl.substring(prefix.length());
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error extracting key from URL: {}", fileUrl, e);
+            return null;
+        }
+    }
+
+    private void ensureBucketExists() {
+        try {
+            boolean exists = minioClient.bucketExists(
+                BucketExistsArgs.builder()
+                    .bucket(s3Bucket)
+                    .build()
+            );
+
+            if (!exists) {
+                minioClient.makeBucket(
+                    MakeBucketArgs.builder()
+                        .bucket(s3Bucket)
+                        .build()
+                );
+                log.info("Created MinIO bucket: {}", s3Bucket);
+
+                // Set public read policy for the bucket (optional)
+                String policy = """
+                    {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Principal": {"AWS": "*"},
+                                "Action": ["s3:GetObject"],
+                                "Resource": ["arn:aws:s3:::%s/*"]
+                            }
+                        ]
+                    }
+                    """.formatted(s3Bucket);
+
+                minioClient.setBucketPolicy(
+                    SetBucketPolicyArgs.builder()
+                        .bucket(s3Bucket)
+                        .config(policy)
+                        .build()
+                );
+                log.info("Set public read policy for bucket: {}", s3Bucket);
+            }
+        } catch (Exception e) {
+            log.error("Error ensuring bucket exists", e);
+            throw new RuntimeException("Failed to ensure bucket exists", e);
+        }
     }
 
     private boolean isAllowedContentType(String contentType) {
