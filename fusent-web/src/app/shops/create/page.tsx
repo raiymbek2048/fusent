@@ -6,7 +6,12 @@ import MainLayout from '@/components/MainLayout'
 import { useCreateShop } from '@/hooks/useShops'
 import { useAuthStore } from '@/store/authStore'
 import { Button, Input, Textarea } from '@/components/ui'
-import { Store } from 'lucide-react'
+import { Store, MapPin } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+  ssr: false,
+})
 
 export default function CreateShopPage() {
   const router = useRouter()
@@ -17,7 +22,11 @@ export default function CreateShopPage() {
     name: '',
     description: '',
     address: '',
+    phone: '',
+    lat: undefined as number | undefined,
+    lon: undefined as number | undefined,
   })
+  const [showLocationPicker, setShowLocationPicker] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,12 +38,20 @@ export default function CreateShopPage() {
     try {
       const shop = await createShopMutation.mutateAsync({
         name: formData.name,
+        description: formData.description || undefined,
         address: formData.address || undefined,
+        phone: formData.phone || undefined,
+        lat: formData.lat,
+        lon: formData.lon,
       })
       router.push(`/shops/${shop.id}`)
     } catch (error) {
       // Error is handled by the mutation
     }
+  }
+
+  const handleLocationSelect = (location: { lat: number; lon: number }) => {
+    setFormData({ ...formData, lat: location.lat, lon: location.lon })
   }
 
   // Redirect if not seller
@@ -100,6 +117,39 @@ export default function CreateShopPage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                Телефон
+              </label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+996 555 123 456"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Локация на карте
+              </label>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowLocationPicker(true)}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <MapPin className="h-4 w-4" />
+                {formData.lat && formData.lon
+                  ? `Локация выбрана: ${formData.lat.toFixed(4)}, ${formData.lon.toFixed(4)}`
+                  : 'Показать на карте'}
+              </Button>
+              <p className="mt-2 text-sm text-gray-500">
+                Выберите точное местоположение вашего магазина на карте для отображения клиентам
+              </p>
+            </div>
+
             <div className="flex gap-4">
               <Button
                 type="submit"
@@ -119,6 +169,19 @@ export default function CreateShopPage() {
           </form>
         </div>
       </div>
+
+      {/* Location Picker Modal */}
+      {showLocationPicker && (
+        <LocationPicker
+          initialLocation={
+            formData.lat && formData.lon
+              ? { lat: formData.lat, lon: formData.lon }
+              : undefined
+          }
+          onLocationSelect={handleLocationSelect}
+          onClose={() => setShowLocationPicker(false)}
+        />
+      )}
     </MainLayout>
   )
 }

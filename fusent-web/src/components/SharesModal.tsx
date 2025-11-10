@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { usePostShares } from '@/hooks/useShares'
-import Modal from '@/components/ui/Modal'
+import { Modal } from '@/components/ui/Modal'
 import { Share2, X, User as UserIcon } from 'lucide-react'
-import Spinner from '@/components/ui/Spinner'
+import { Spinner } from '@/components/ui/Spinner'
 import Link from 'next/link'
 
 interface SharesModalProps {

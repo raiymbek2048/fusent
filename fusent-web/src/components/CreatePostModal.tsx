@@ -83,7 +83,7 @@ export default function CreatePostModal({
         ownerType,
         ownerId: finalOwnerId,
         text: text.trim(),
-        postType: mediaUrls.length > 0 ? 'PHOTO' : 'TEXT',
+        postType: mediaUrls.length > 0 ? 'PHOTO' : 'PHOTO',
         visibility,
         tags: tags.length > 0 ? tags : undefined,
         geoLat: location?.lat,
