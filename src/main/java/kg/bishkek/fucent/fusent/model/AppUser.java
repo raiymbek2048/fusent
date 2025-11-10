@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import kg.bishkek.fucent.fusent.enums.Role;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,6 +41,9 @@ public class AppUser implements UserDetails {
 
     @CreationTimestamp
     private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
 
 
     @Override public Collection<? extends GrantedAuthority> getAuthorities() {

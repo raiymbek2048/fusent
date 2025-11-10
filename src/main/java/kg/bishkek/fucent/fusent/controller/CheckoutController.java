@@ -57,7 +57,7 @@ public class CheckoutController {
                 order.getUserId(),
                 order.getShop().getId(),
                 order.getShop().getName(),
-                order.getStatus(),
+                order.getStatus().name(),
                 items.stream().map(this::toOrderItemResponse).collect(Collectors.toList()),
                 order.getTotalAmount(),
                 order.getCreatedAt(),
