@@ -136,6 +136,8 @@ export interface Category {
   description?: string
   parentId?: string
   iconUrl?: string
+  active: boolean
+  sortOrder?: number
 }
 
 // Cart Types
