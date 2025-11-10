@@ -93,6 +93,7 @@ export function useSavedPosts(page = 0, size = 20): UseQueryResult<SavedPostsPag
 export function useToggleSavePost() {
   const savePost = useSavePost();
   const unsavePost = useUnsavePost();
+  const queryClient = useQueryClient();
 
   const toggleSave = async (postId: string, isSaved: boolean) => {
     if (isSaved) {
@@ -100,6 +101,8 @@ export function useToggleSavePost() {
     } else {
       await savePost.mutateAsync(postId);
     }
+    // Invalidate the is-saved query for this specific post
+    queryClient.invalidateQueries({ queryKey: ['saved-posts', postId, 'is-saved'] });
   };
 
   return {
