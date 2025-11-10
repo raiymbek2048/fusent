@@ -62,6 +62,17 @@ export default function MapPage() {
   const shops = viewMode === 'posts' ? [] : (shopsData?.content || []).filter(shop => shop.lat && shop.lon)
   const posts = viewMode === 'shops' ? [] : (postsData?.content || []).filter(post => post.geoLat && post.geoLon)
 
+  // Debug: Log shops data
+  useEffect(() => {
+    if (shopsData?.content) {
+      console.log('=== SHOPS DATA DEBUG ===')
+      console.log('Total shops from API:', shopsData.content.length)
+      console.log('Shops with coordinates:', shops.length)
+      console.log('All shops:', shopsData.content)
+      console.log('Shops without coordinates:', shopsData.content.filter(shop => !shop.lat || !shop.lon))
+    }
+  }, [shopsData, shops])
+
   const handleShopClick = (shop: any) => {
     setSelectedShop(shop)
     setSelectedPost(null)
