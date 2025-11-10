@@ -7,6 +7,7 @@ import { useCreateProduct } from '@/hooks/useProducts'
 import { useCategories } from '@/hooks/useCategories'
 import { useAuthStore } from '@/store/authStore'
 import { Button, Input, Textarea } from '@/components/ui'
+import ImageUpload from '@/components/ImageUpload'
 import { Package, Loader } from 'lucide-react'
 
 export default function CreateProductPage() {
@@ -22,6 +23,7 @@ export default function CreateProductPage() {
     description: '',
     categoryId: '',
     basePrice: '',
+    imageUrl: '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +40,7 @@ export default function CreateProductPage() {
         name: formData.name,
         description: formData.description || undefined,
         basePrice: parseFloat(formData.basePrice) || 0,
+        imageUrl: formData.imageUrl || undefined,
       })
       router.push(`/shops/${shopId}`)
     } catch (error) {
@@ -107,6 +110,15 @@ export default function CreateProductPage() {
                 rows={4}
               />
             </div>
+
+            <ImageUpload
+              value={formData.imageUrl}
+              onChange={(url) => setFormData({ ...formData, imageUrl: url || '' })}
+              folder="products"
+              label="Изображение товара"
+              description="Загрузите главное изображение товара"
+              maxSizeMB={5}
+            />
 
             <div>
               <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-2">
