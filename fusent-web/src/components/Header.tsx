@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useAuthStore } from '@/store/authStore'
 import { useCartSummary } from '@/hooks/useCart'
 import { useLogout } from '@/hooks/useAuth'
-import { User, ShoppingCart, MessageCircle, LogOut, Store, Package, Search, Image, Map } from 'lucide-react'
+import { User, ShoppingCart, MessageCircle, LogOut, Store, Package, Search, Image, Map, Bookmark } from 'lucide-react'
 import NotificationDropdown from '@/components/NotificationDropdown'
 
 export default function Header() {
@@ -115,6 +115,15 @@ export default function Header() {
                   title="Сообщения"
                 >
                   <MessageCircle className="h-6 w-6" />
+                </Link>
+
+                {/* Saved Posts */}
+                <Link
+                  href="/saved-posts"
+                  className="text-gray-700 hover:text-yellow-600 transition-colors"
+                  title="Сохраненные"
+                >
+                  <Bookmark className="h-6 w-6" />
                 </Link>
 
                 {/* Notifications */}
