@@ -37,8 +37,12 @@ const clearTokens = (): void => {
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Don't add token to auth endpoints
+    const isAuthEndpoint = config.url?.includes('/auth/login') ||
+                          config.url?.includes('/auth/register')
+
     const token = getAccessToken()
-    if (token && config.headers) {
+    if (token && config.headers && !isAuthEndpoint) {
       config.headers.Authorization = `Bearer ${token}`
     }
     return config

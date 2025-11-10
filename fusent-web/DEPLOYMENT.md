@@ -21,7 +21,7 @@ cd fusent-web
 
 # Файл .env.production уже настроен для вашего сервера:
 # NEXT_PUBLIC_API_URL=http://85.113.27.42:901/api/v1
-# NEXT_PUBLIC_APP_URL=http://85.113.27.42:3000
+# NEXT_PUBLIC_APP_URL=http://85.113.27.42:900
 # NEXT_PUBLIC_MINIO_URL=http://85.113.27.42:9000
 
 # Если нужно изменить - отредактируйте .env.production

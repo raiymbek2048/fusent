@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, Filter } from 'lucide-react'
 import { useProducts, useSearchProducts } from '@/hooks/useProducts'
@@ -9,7 +9,9 @@ import { Button, Input, Card, LoadingScreen } from '@/components/ui'
 import ProductCard from '@/components/ProductCard'
 import MainLayout from '@/components/MainLayout'
 
-export default function ProductsPage() {
+export const dynamic = 'force-dynamic'
+
+function ProductsPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const categoryId = searchParams.get('category')
@@ -17,6 +19,11 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [page, setPage] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const { data: categories } = useCategories()
   const { data: productsData, isLoading } = searchQuery
@@ -69,7 +76,7 @@ export default function ProductsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters Sidebar */}
-          {(showFilters || window.innerWidth >= 1024) && (
+          {(showFilters || (isClient && window.innerWidth >= 1024)) && (
             <div className="lg:col-span-1">
               <Card>
                 <div className="px-6 py-4 border-b border-gray-200">
@@ -159,5 +166,13 @@ export default function ProductsPage() {
         </div>
       </div>
     </MainLayout>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<LoadingScreen message="Загрузка товаров..." />}>
+      <ProductsPageContent />
+    </Suspense>
   )
 }

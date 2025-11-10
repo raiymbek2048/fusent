@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Send, MessageCircle } from 'lucide-react'
 import { useConversations, useMessages, useSendMessage, useCreateConversation } from '@/hooks/useChat'
@@ -8,7 +8,9 @@ import { useAuthStore } from '@/store/authStore'
 import { Button, Card, CardContent, Input, LoadingScreen } from '@/components/ui'
 import MainLayout from '@/components/MainLayout'
 
-export default function ChatPage() {
+export const dynamic = 'force-dynamic'
+
+function ChatPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const sellerId = searchParams.get('sellerId')
@@ -205,5 +207,13 @@ export default function ChatPage() {
         </div>
       </div>
     </MainLayout>
+  )
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<LoadingScreen message="Загрузка чатов..." />}>
+      <ChatPageContent />
+    </Suspense>
   )
 }

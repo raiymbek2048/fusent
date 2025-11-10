@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSavedPosts } from '@/hooks/useSavedPosts'
 import PostCard from '@/components/PostCard'
 import { useAuthStore } from '@/store/authStore'
@@ -9,16 +9,29 @@ import { Bookmark, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Spinner } from '@/components/ui/Spinner'
 import MainLayout from '@/components/MainLayout'
 
+export const dynamic = 'force-dynamic'
+
 export default function SavedPostsPage() {
   const router = useRouter()
   const { isAuthenticated } = useAuthStore()
   const [page, setPage] = useState(0)
   const { data, isLoading, error } = useSavedPosts(page, 20)
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login')
+    }
+  }, [isAuthenticated, router])
+
   // Redirect if not authenticated
   if (!isAuthenticated) {
-    router.push('/login')
-    return null
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Spinner />
+        </div>
+      </MainLayout>
+    )
   }
 
   if (isLoading) {
