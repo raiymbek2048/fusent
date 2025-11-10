@@ -36,7 +36,7 @@ public class MediaController {
         return ResponseEntity.ok(createResponse(url));
     }
 
-    @PostMapping("/upload/post")
+    @PostMapping("/upload/posts")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Upload post media (image/video)")
     public ResponseEntity<Map<String, String>> uploadPostMedia(@RequestParam("file") MultipartFile file) {

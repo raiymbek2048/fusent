@@ -8,7 +8,7 @@ import Image from 'next/image'
 interface ImageUploadProps {
   value?: string
   onChange: (url: string | null) => void
-  folder?: 'products' | 'avatars' | 'posts' | 'shop'
+  folder?: 'product' | 'avatar' | 'post' | 'shop'
   label?: string
   description?: string
   maxSizeMB?: number
@@ -18,10 +18,10 @@ interface ImageUploadProps {
 export default function ImageUpload({
   value,
   onChange,
-  folder = 'products',
+  folder = 'product',
   label = 'Изображение',
   description,
-  maxSizeMB = 5,
+  maxSizeMB = 10,
   disabled = false,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)

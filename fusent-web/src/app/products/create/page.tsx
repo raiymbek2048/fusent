@@ -114,10 +114,10 @@ export default function CreateProductPage() {
             <ImageUpload
               value={formData.imageUrl}
               onChange={(url) => setFormData({ ...formData, imageUrl: url || '' })}
-              folder="products"
+              folder="product"
               label="Изображение товара"
               description="Загрузите главное изображение товара"
-              maxSizeMB={5}
+              maxSizeMB={10}
             />
 
             <div>
