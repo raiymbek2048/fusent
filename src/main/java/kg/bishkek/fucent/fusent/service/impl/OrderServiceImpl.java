@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -34,16 +35,16 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order createOrder(UUID userId, UUID shopId, List<Item> items) {
         var shop = shopRepository.findById(shopId).orElseThrow();
-        double total = 0d;
-        var order = Order.builder().userId(userId).shop(shop).totalAmount(0d).build();
+        BigDecimal total = BigDecimal.ZERO;
+        var order = Order.builder().userId(userId).shop(shop).totalAmount(BigDecimal.ZERO).build();
         order = orderRepository.save(order);
         for (var i : items) {
             ProductVariant v = variantRepository.findById(i.variantId()).orElseThrow();
             if (!v.getProduct().getShop().getId().equals(shopId))
                 throw new IllegalArgumentException("All items must belong to the same shop");
             var price = v.getPrice();
-            var subtotal = price * i.qty();
-            total += subtotal;
+            var subtotal = price.multiply(BigDecimal.valueOf(i.qty()));
+            total = total.add(subtotal);
             var oi = OrderItem.builder().order(order).variant(v).qty(i.qty()).price(price).subtotal(subtotal).build();
             orderItemRepository.save(oi);
         }

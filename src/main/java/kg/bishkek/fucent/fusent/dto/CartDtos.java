@@ -3,6 +3,7 @@ package kg.bishkek.fucent.fusent.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -26,9 +27,9 @@ public class CartDtos {
         String productImage,
         UUID shopId,
         String shopName,
-        Double price,
+        BigDecimal price,
         Integer qty,
-        Double subtotal,
+        BigDecimal subtotal,
         Integer stockQty,
         Instant addedAt
     ) {}
@@ -38,13 +39,13 @@ public class CartDtos {
         UUID userId,
         List<CartItemResponse> items,
         Integer totalItems,
-        Double totalAmount,
+        BigDecimal totalAmount,
         Instant createdAt,
         Instant updatedAt
     ) {}
 
     public record CartSummary(
         Integer totalItems,
-        Double totalAmount
+        BigDecimal totalAmount
     ) {}
 }

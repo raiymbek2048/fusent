@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -37,8 +38,8 @@ public class ProductVariant {
     private String attributesJson; // {"size":"42","color":"black"}
 
 
-    @Column(nullable = false)
-    private Double price;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal price;
 
 
     @Column(nullable = false)
