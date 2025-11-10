@@ -8,7 +8,7 @@ import Image from 'next/image'
 interface MultiImageUploadProps {
   value?: string[]
   onChange: (urls: string[]) => void
-  folder?: 'products' | 'avatars' | 'posts' | 'shop'
+  folder?: 'product' | 'avatar' | 'posts' | 'shop'
   label?: string
   description?: string
   maxImages?: number

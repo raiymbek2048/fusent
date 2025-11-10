@@ -8,7 +8,7 @@ import Image from 'next/image'
 interface ImageUploadProps {
   value?: string
   onChange: (url: string | null) => void
-  folder?: 'product' | 'avatar' | 'post' | 'shop'
+  folder?: 'product' | 'avatar' | 'posts' | 'shop'
   label?: string
   description?: string
   maxSizeMB?: number
