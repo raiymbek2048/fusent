@@ -125,4 +125,30 @@ public class SocialDtos {
             if (sortBy == null) sortBy = "createdAt";
         }
     }
+
+    // SavedPost DTOs
+    public record SavedPostRequest(
+        @NotNull UUID postId
+    ) {}
+
+    public record SavedPostResponse(
+        UUID id,
+        UUID userId,
+        UUID postId,
+        PostResponse post,
+        Instant createdAt
+    ) {}
+
+    // Share DTOs
+    public record ShareRequest(
+        @NotNull UUID postId
+    ) {}
+
+    public record ShareResponse(
+        UUID id,
+        UUID userId,
+        String userName,
+        UUID postId,
+        Instant createdAt
+    ) {}
 }
