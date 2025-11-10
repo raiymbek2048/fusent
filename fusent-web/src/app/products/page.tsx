@@ -9,6 +9,8 @@ import { Button, Input, Card, LoadingScreen } from '@/components/ui'
 import ProductCard from '@/components/ProductCard'
 import MainLayout from '@/components/MainLayout'
 
+export const dynamic = 'force-dynamic'
+
 export default function ProductsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()

@@ -10,6 +10,8 @@ import { Button, Card, CardContent, Input, LoadingScreen } from '@/components/ui
 import MainLayout from '@/components/MainLayout'
 import { Cart } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 export default function CheckoutPage() {
   const router = useRouter()
   const user = useAuthStore((state) => state.user)

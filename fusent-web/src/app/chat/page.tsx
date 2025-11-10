@@ -8,6 +8,8 @@ import { useAuthStore } from '@/store/authStore'
 import { Button, Card, CardContent, Input, LoadingScreen } from '@/components/ui'
 import MainLayout from '@/components/MainLayout'
 
+export const dynamic = 'force-dynamic'
+
 export default function ChatPage() {
   const router = useRouter()
   const searchParams = useSearchParams()

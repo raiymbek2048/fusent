@@ -10,6 +10,8 @@ import { Button, Input, Textarea } from '@/components/ui'
 import ImageUpload from '@/components/ImageUpload'
 import { Package, Loader } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default function CreateProductPage() {
   const router = useRouter()
   const searchParams = useSearchParams()

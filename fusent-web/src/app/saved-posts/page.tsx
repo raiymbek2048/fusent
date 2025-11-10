@@ -9,6 +9,8 @@ import { Bookmark, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Spinner } from '@/components/ui/Spinner'
 import MainLayout from '@/components/MainLayout'
 
+export const dynamic = 'force-dynamic'
+
 export default function SavedPostsPage() {
   const router = useRouter()
   const { isAuthenticated } = useAuthStore()
