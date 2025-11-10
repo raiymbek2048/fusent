@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useCartSummary } from '@/hooks/useCart'
 import { useLogout } from '@/hooks/useAuth'
 import { User, ShoppingCart, MessageCircle, LogOut, Store, Package, Search, Image, Map } from 'lucide-react'
+import NotificationDropdown from '@/components/NotificationDropdown'
 
 export default function Header() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
@@ -106,6 +107,9 @@ export default function Header() {
                 >
                   <MessageCircle className="h-6 w-6" />
                 </Link>
+
+                {/* Notifications */}
+                <NotificationDropdown userEmail={user.email} />
 
                 {/* Profile */}
                 <div className="flex items-center space-x-3 border-l pl-4 ml-2">
