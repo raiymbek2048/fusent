@@ -223,34 +223,44 @@ export default function ProfilePage() {
           {activeTab === 'shops' && user.role === 'SELLER' && (
             <div className="space-y-3">
               {shops && shops.length > 0 ? (
-                shops.map((shop) => (
-                  <Card
-                    key={shop.id}
-                    className="cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => router.push(`/shops/${shop.id}`)}
-                  >
-                    <CardContent className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Store className="w-10 h-10 text-gray-400" />
-                        <div>
-                          <p className="font-medium text-gray-900">{shop.name}</p>
+                <>
+                  {shops.map((shop) => (
+                    <Card
+                      key={shop.id}
+                      className="cursor-pointer hover:shadow-lg transition-shadow"
+                      onClick={() => router.push(`/shops/${shop.id}`)}
+                    >
+                      <CardContent className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Store className="w-10 h-10 text-gray-400" />
+                          <div>
+                            <p className="font-medium text-gray-900">{shop.name}</p>
+                            <p className="text-sm text-gray-600">
+                              {shop.totalProducts} товаров
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-1 mb-1">
+                            <span className="text-yellow-500">★</span>
+                            <span className="font-medium">{(shop.rating || 0).toFixed(1)}</span>
+                          </div>
                           <p className="text-sm text-gray-600">
-                            {shop.totalProducts} товаров
+                            {shop.totalReviews || 0} отзывов
                           </p>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 mb-1">
-                          <span className="text-yellow-500">★</span>
-                          <span className="font-medium">{(shop.rating || 0).toFixed(1)}</span>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          {shop.totalReviews || 0} отзывов
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <Button
+                    fullWidth
+                    variant="outline"
+                    onClick={() => router.push('/shops/create')}
+                  >
+                    <Store className="w-4 h-4 mr-2" />
+                    Создать новый магазин
+                  </Button>
+                </>
               ) : (
                 <Card>
                   <CardContent className="text-center py-12">
