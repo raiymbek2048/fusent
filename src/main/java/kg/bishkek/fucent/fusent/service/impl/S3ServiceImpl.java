@@ -39,6 +39,9 @@ public class S3ServiceImpl implements S3Service {
     @Value("${app.s3.endpoint}")
     private String s3Endpoint;
 
+    @Value("${app.s3.public-endpoint:${app.s3.endpoint}}")
+    private String s3PublicEndpoint;
+
     @Value("${app.s3.bucket-media}")
     private String s3Bucket;
 
@@ -86,8 +89,8 @@ public class S3ServiceImpl implements S3Service {
                 return url;
             } catch (Exception e) {
                 log.error("Error generating pre-signed URL for key: {}", fileKey, e);
-                // Fallback to regular URL
-                return s3Endpoint + "/" + s3Bucket + "/" + fileKey;
+                // Fallback to regular public URL
+                return s3PublicEndpoint + "/" + s3Bucket + "/" + fileKey;
             }
         }
         // For local storage, return regular URL
@@ -163,8 +166,8 @@ public class S3ServiceImpl implements S3Service {
                     .build()
             );
 
-            // Generate public URL
-            String fileUrl = s3Endpoint + "/" + s3Bucket + "/" + objectKey;
+            // Generate public URL using public endpoint
+            String fileUrl = s3PublicEndpoint + "/" + s3Bucket + "/" + objectKey;
             log.info("File uploaded to MinIO: {}", fileUrl);
 
             return fileUrl;
@@ -207,6 +210,13 @@ public class S3ServiceImpl implements S3Service {
         // Format: http://localhost:9000/fusent-media/folder/filename.ext
         // Result: folder/filename.ext
         try {
+            // Try public endpoint first
+            String publicPrefix = s3PublicEndpoint + "/" + s3Bucket + "/";
+            if (fileUrl.startsWith(publicPrefix)) {
+                return fileUrl.substring(publicPrefix.length());
+            }
+
+            // Fallback to internal endpoint
             String prefix = s3Endpoint + "/" + s3Bucket + "/";
             if (fileUrl.startsWith(prefix)) {
                 return fileUrl.substring(prefix.length());
