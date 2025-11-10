@@ -1,5 +1,6 @@
 package kg.bishkek.fucent.fusent.repository;
 
+import kg.bishkek.fucent.fusent.enums.Role;
 import kg.bishkek.fucent.fusent.model.AppUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,5 +14,5 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
     boolean existsByEmail(String email);
 
-    Page<AppUser> findByRole(AppUser.Role role, Pageable pageable);
+    Page<AppUser> findByRole(Role role, Pageable pageable);
 }

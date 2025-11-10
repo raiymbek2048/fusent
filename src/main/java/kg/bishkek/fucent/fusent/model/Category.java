@@ -20,6 +20,7 @@ public class Category {
     private String description;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean active = true;
 
     @ManyToOne

@@ -42,6 +42,7 @@ public class ProductVariant {
 
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer stockQty = 0;
 
 

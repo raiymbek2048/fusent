@@ -1,5 +1,6 @@
 package kg.bishkek.fucent.fusent.repository;
 
+import kg.bishkek.fucent.fusent.enums.OrderStatus;
 import kg.bishkek.fucent.fusent.model.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +16,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     List<Order> findByShopIdOrderByCreatedAtDesc(UUID shopId);
 
-    Page<Order> findByStatus(Order.Status status, Pageable pageable);
+    Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.shop WHERE o.id = :orderId")
     Optional<Order> findByIdWithShop(UUID orderId);

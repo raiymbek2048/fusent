@@ -3,6 +3,7 @@ package kg.bishkek.fucent.fusent.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kg.bishkek.fucent.fusent.dto.UserDtos.UserResponse;
+import kg.bishkek.fucent.fusent.enums.Role;
 import kg.bishkek.fucent.fusent.model.AppUser;
 import kg.bishkek.fucent.fusent.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class UserController {
         Page<AppUser> users;
 
         if (role != null && !role.isEmpty()) {
-            users = userRepository.findByRole(AppUser.Role.valueOf(role), pageable);
+            users = userRepository.findByRole(Role.valueOf(role), pageable);
         } else {
             users = userRepository.findAll(pageable);
         }
