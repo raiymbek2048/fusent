@@ -98,6 +98,7 @@ public class ShopServiceImpl implements ShopService {
             shop.getId(),
             shop.getMerchant().getId(),
             shop.getMerchant().getName(),
+            shop.getMerchant().getOwnerUserId(),  // sellerId
             shop.getName(),
             shop.getAddress(),
             shop.getPhone(),

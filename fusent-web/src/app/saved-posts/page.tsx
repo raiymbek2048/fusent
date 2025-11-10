@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useRouter } from 'next/navigation'
 import { Bookmark, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Spinner } from '@/components/ui/Spinner'
+import MainLayout from '@/components/MainLayout'
 
 export default function SavedPostsPage() {
   const router = useRouter()
@@ -22,25 +23,29 @@ export default function SavedPostsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Spinner />
-      </div>
+      <MainLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Spinner />
+        </div>
+      </MainLayout>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 text-lg mb-4">Ошибка при загрузке сохраненных постов</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
-          >
-            Повторить
-          </button>
+      <MainLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-500 text-lg mb-4">Ошибка при загрузке сохраненных постов</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+            >
+              Повторить
+            </button>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     )
   }
 
@@ -48,8 +53,9 @@ export default function SavedPostsPage() {
   const totalPages = data?.totalPages || 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <MainLayout>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6 flex items-center space-x-3">
           <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -112,7 +118,8 @@ export default function SavedPostsPage() {
             </button>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </MainLayout>
   )
 }
