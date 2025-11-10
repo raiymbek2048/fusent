@@ -145,11 +145,9 @@ public class PostServiceImpl implements PostService {
         var currentUser = userRepository.findById(currentUserId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Get all users and merchants the current user follows
-        var following = followRepository.findByFollower(currentUser);
-
-        // For now, return public feed (TODO: filter by following)
-        return getPublicFeed(pageable);
+        // Get posts from users and merchants the current user follows
+        return postRepository.findFollowingFeedByUser(currentUser, PostStatus.ACTIVE, pageable)
+            .map(this::toPostResponse);
     }
 
     @Override

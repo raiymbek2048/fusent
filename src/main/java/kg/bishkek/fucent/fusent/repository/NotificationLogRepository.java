@@ -12,6 +12,8 @@ import java.util.UUID;
 public interface NotificationLogRepository extends JpaRepository<NotificationLog, UUID> {
     Page<NotificationLog> findByRecipientOrderByCreatedAtDesc(String recipient, Pageable pageable);
 
+    List<NotificationLog> findByRecipientAndTemplateKeyOrderByCreatedAtDesc(String recipient, String templateKey);
+
     List<NotificationLog> findByStatus(NotificationStatus status);
 
     List<NotificationLog> findByStatusAndAttemptsLessThan(NotificationStatus status, Integer maxAttempts);

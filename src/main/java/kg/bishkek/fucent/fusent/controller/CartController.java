@@ -86,7 +86,7 @@ public class CartController {
                 variant.getId(),
                 variant.getSku(),
                 product.getName(),
-                null, // TODO: implement product image support
+                product.getImageUrl(),
                 product.getShop().getId(),
                 product.getShop().getName(),
                 variant.getPrice(),

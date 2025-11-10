@@ -267,6 +267,7 @@ public class DataSeeder {
                 .category(clothing)
                 .name("Зимняя куртка North Face")
                 .description("Теплая зимняя куртка, водонепроницаемая, подходит для суровых зим Кыргызстана")
+                .imageUrl("https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400")
                 .active(true)
                 .build());
 
@@ -275,6 +276,7 @@ public class DataSeeder {
                 .category(clothing)
                 .name("Джинсы Levi's 501")
                 .description("Классические джинсы Levi's, оригинал, прямой крой")
+                .imageUrl("https://images.unsplash.com/photo-1542272604-787c3835535d?w=400")
                 .active(true)
                 .build());
 
@@ -283,6 +285,7 @@ public class DataSeeder {
                 .category(clothing)
                 .name("Платье вечернее")
                 .description("Элегантное вечернее платье, идеально для торжественных мероприятий")
+                .imageUrl("https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400")
                 .active(true)
                 .build());
 
@@ -292,6 +295,7 @@ public class DataSeeder {
                 .category(electronics)
                 .name("iPhone 15 Pro")
                 .description("Новейший iPhone с титановым корпусом, A17 Pro чип, невероятная камера")
+                .imageUrl("https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=400")
                 .active(true)
                 .build());
 
@@ -300,6 +304,7 @@ public class DataSeeder {
                 .category(electronics)
                 .name("Samsung Galaxy S24 Ultra")
                 .description("Флагманский смартфон Samsung с S Pen, 200MP камера")
+                .imageUrl("https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400")
                 .active(true)
                 .build());
 
@@ -308,6 +313,7 @@ public class DataSeeder {
                 .category(electronics)
                 .name("AirPods Pro 2")
                 .description("Беспроводные наушники Apple с активным шумоподавлением")
+                .imageUrl("https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=400")
                 .active(true)
                 .build());
 
@@ -317,6 +323,7 @@ public class DataSeeder {
                 .category(home)
                 .name("Диван угловой")
                 .description("Удобный угловой диван, раскладной, обивка из велюра")
+                .imageUrl("https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400")
                 .active(true)
                 .build());
 
@@ -325,6 +332,7 @@ public class DataSeeder {
                 .category(home)
                 .name("Набор посуды Luminarc")
                 .description("Набор посуды на 6 персон, закаленное стекло, Франция")
+                .imageUrl("https://images.unsplash.com/photo-1584990347449-39b4aa001b29?w=400")
                 .active(true)
                 .build());
 
