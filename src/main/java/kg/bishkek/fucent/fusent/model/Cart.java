@@ -7,6 +7,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,9 +52,9 @@ public class Cart {
         return items.stream().mapToInt(CartItem::getQty).sum();
     }
 
-    public double getTotalAmount() {
+    public BigDecimal getTotalAmount() {
         return items.stream()
-                .mapToDouble(item -> item.getVariant().getPrice() * item.getQty())
-                .sum();
+                .map(CartItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
