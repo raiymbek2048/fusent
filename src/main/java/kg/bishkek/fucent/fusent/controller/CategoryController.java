@@ -38,7 +38,7 @@ public class CategoryController {
 
     @Operation(summary = "Create a new category")
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Category> createCategory(@Valid @RequestBody CategoryRequest request) {
         Category category = Category.builder()
             .name(request.name())
@@ -57,7 +57,7 @@ public class CategoryController {
 
     @Operation(summary = "Update category")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Category> updateCategory(
             @PathVariable UUID id,
             @Valid @RequestBody CategoryRequest request) {
@@ -81,7 +81,7 @@ public class CategoryController {
 
     @Operation(summary = "Delete category")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
         if (categoryRepository.existsById(id)) {
             categoryRepository.deleteById(id);
