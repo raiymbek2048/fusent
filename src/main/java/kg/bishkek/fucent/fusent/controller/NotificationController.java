@@ -95,4 +95,39 @@ public class NotificationController {
     ) {
         return notificationService.getNotificationHistory(recipient, page, size);
     }
+
+    // ========== User Notifications ==========
+
+    @GetMapping("/user")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get current user's notifications")
+    public List<NotificationLogResponse> getUserNotifications(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        return notificationService.getUserNotifications(page, size);
+    }
+
+    @PatchMapping("/{notificationId}/read")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Mark notification as read")
+    public void markAsRead(@PathVariable UUID notificationId) {
+        notificationService.markAsRead(notificationId);
+    }
+
+    @PatchMapping("/mark-all-read")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Mark all user notifications as read")
+    public void markAllAsRead() {
+        notificationService.markAllAsRead();
+    }
+
+    @GetMapping("/unread-count")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get count of unread notifications")
+    public Long getUnreadCount() {
+        return notificationService.getUnreadCount();
+    }
 }

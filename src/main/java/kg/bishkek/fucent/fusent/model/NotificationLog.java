@@ -61,4 +61,15 @@ public class NotificationLog {
 
     @Column(name = "delivered_at")
     private Instant deliveredAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private AppUser user;
+
+    @Column(name = "is_read")
+    @Builder.Default
+    private Boolean isRead = false;
+
+    @Column(name = "read_at")
+    private Instant readAt;
 }

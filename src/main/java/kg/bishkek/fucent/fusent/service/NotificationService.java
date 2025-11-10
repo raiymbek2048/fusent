@@ -23,4 +23,13 @@ public interface NotificationService {
     void sendNotification(SendNotificationRequest request);
 
     List<NotificationLogResponse> getNotificationHistory(String recipient, int page, int size);
+
+    // Reading notifications
+    void markAsRead(UUID notificationId);
+
+    void markAllAsRead();
+
+    List<NotificationLogResponse> getUserNotifications(int page, int size);
+
+    Long getUnreadCount();
 }

@@ -6,6 +6,7 @@ import { useCartSummary } from '@/hooks/useCart'
 import { useLogout } from '@/hooks/useAuth'
 import { User, ShoppingCart, MessageCircle, LogOut, Store, Package, Search, Image, Map, Bookmark } from 'lucide-react'
 import NotificationDropdown from '@/components/NotificationDropdown'
+import { SearchBar } from '@/components/SearchBar'
 
 export default function Header() {
   const { user, isAuthenticated, isLoading } = useAuthStore()
@@ -19,17 +20,22 @@ export default function Header() {
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex items-center gap-6 h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center shrink-0">
             <ShoppingCart className="h-8 w-8 text-blue-600" />
             <span className="ml-2 text-xl font-bold text-gray-900">
               Fucent
             </span>
           </Link>
 
+          {/* Search Bar */}
+          <div className="flex-1 max-w-2xl hidden md:block">
+            <SearchBar />
+          </div>
+
           {/* Navigation */}
-          <nav className="hidden md:flex space-x-6">
+          <nav className="hidden lg:flex space-x-4 shrink-0">
             <Link
               href="/products"
               className="flex items-center text-gray-700 hover:text-blue-600 transition-colors font-medium"

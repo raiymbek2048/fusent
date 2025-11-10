@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
+import toast from 'react-hot-toast'
 
 export interface NotificationLog {
   id: string
@@ -49,5 +50,43 @@ export const useUnreadNotificationsCount = (recipient?: string) => {
     },
     enabled: !!recipient,
     refetchInterval: 30000,
+  })
+}
+
+// Mark all notifications as read
+export const useMarkAllAsRead = (recipient?: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async () => {
+      await api.patch('/notifications/mark-all-read')
+    },
+    onSuccess: () => {
+      // Invalidate and refetch notifications
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'history', recipient] })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', recipient] })
+      toast.success('Все уведомления отмечены как прочитанные')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Ошибка при обновлении уведомлений')
+    },
+  })
+}
+
+// Mark single notification as read
+export const useMarkAsRead = (recipient?: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (notificationId: string) => {
+      await api.patch(`/notifications/${notificationId}/read`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'history', recipient] })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', recipient] })
+    },
+    onError: (error: any) => {
+      console.error('Error marking notification as read:', error)
+    },
   })
 }

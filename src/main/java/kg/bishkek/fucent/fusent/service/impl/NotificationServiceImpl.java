@@ -6,9 +6,11 @@ import kg.bishkek.fucent.fusent.enums.NotificationStatus;
 import kg.bishkek.fucent.fusent.model.NotificationLog;
 import kg.bishkek.fucent.fusent.model.NotificationPref;
 import kg.bishkek.fucent.fusent.model.NotificationTemplate;
+import kg.bishkek.fucent.fusent.repository.AppUserRepository;
 import kg.bishkek.fucent.fusent.repository.NotificationLogRepository;
 import kg.bishkek.fucent.fusent.repository.NotificationPrefRepository;
 import kg.bishkek.fucent.fusent.repository.NotificationTemplateRepository;
+import kg.bishkek.fucent.fusent.security.SecurityUtil;
 import kg.bishkek.fucent.fusent.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +18,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,6 +30,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationTemplateRepository templateRepository;
     private final NotificationLogRepository logRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final AppUserRepository userRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -168,5 +172,63 @@ public class NotificationServiceImpl implements NotificationService {
             log.getCreatedAt(),
             log.getDeliveredAt()
         );
+    }
+
+    @Override
+    @Transactional
+    public void markAsRead(UUID notificationId) {
+        UUID currentUserId = SecurityUtil.currentUserId(userRepository);
+        NotificationLog notification = logRepository.findById(notificationId)
+            .orElseThrow(() -> new IllegalArgumentException("Notification not found"));
+
+        // Verify that notification belongs to current user
+        if (notification.getUser() != null && !notification.getUser().getId().equals(currentUserId)) {
+            throw new IllegalArgumentException("Unauthorized access to notification");
+        }
+
+        notification.setIsRead(true);
+        notification.setReadAt(Instant.now());
+        logRepository.save(notification);
+    }
+
+    @Override
+    @Transactional
+    public void markAllAsRead() {
+        UUID currentUserId = SecurityUtil.currentUserId(userRepository);
+        var user = userRepository.findById(currentUserId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        List<NotificationLog> unreadNotifications = logRepository.findByUserAndIsReadFalse(user);
+        Instant now = Instant.now();
+
+        unreadNotifications.forEach(notification -> {
+            notification.setIsRead(true);
+            notification.setReadAt(now);
+        });
+
+        logRepository.saveAll(unreadNotifications);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificationLogResponse> getUserNotifications(int page, int size) {
+        UUID currentUserId = SecurityUtil.currentUserId(userRepository);
+        var user = userRepository.findById(currentUserId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return logRepository.findByUserOrderByCreatedAtDesc(user, PageRequest.of(page, size))
+            .stream()
+            .map(this::toLogResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long getUnreadCount() {
+        UUID currentUserId = SecurityUtil.currentUserId(userRepository);
+        var user = userRepository.findById(currentUserId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return logRepository.countByUserAndIsReadFalse(user);
     }
 }
