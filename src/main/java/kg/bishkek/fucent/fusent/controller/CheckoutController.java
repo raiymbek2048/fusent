@@ -74,7 +74,7 @@ public class CheckoutController {
                 variant.getId(),
                 variant.getSku(),
                 product.getName(),
-                null, // TODO: implement product image support
+                product.getImageUrl(),
                 item.getQty(),
                 item.getPrice(),
                 item.getSubtotal()
