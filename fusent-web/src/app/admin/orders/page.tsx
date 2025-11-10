@@ -4,13 +4,35 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import MainLayout from '@/components/MainLayout'
-import { Search, Package, Clock, CheckCircle, XCircle, TruckIcon } from 'lucide-react'
+import { Search, Package, Clock, CheckCircle, XCircle, TruckIcon, RefreshCw } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+
+interface Order {
+  id: string
+  userId: string
+  shopId: string
+  shopName: string
+  status: 'PENDING' | 'PAID' | 'FULFILLED' | 'CANCELLED'
+  itemCount: number
+  totalAmount: number
+  createdAt: string
+}
+
+interface OrdersResponse {
+  content: Order[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+}
 
 export default function AdminOrdersPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'paid' | 'fulfilled' | 'cancelled'>('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'PENDING' | 'PAID' | 'FULFILLED' | 'CANCELLED'>('all')
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'ADMIN') {
@@ -18,68 +40,41 @@ export default function AdminOrdersPage() {
     }
   }, [isAuthenticated, user, router])
 
+  const { data: ordersData, isLoading, refetch } = useQuery<OrdersResponse>({
+    queryKey: ['admin', 'orders', page, filterStatus],
+    queryFn: async () => {
+      const params: any = { page, size: 20 }
+      if (filterStatus !== 'all') {
+        params.status = filterStatus
+      }
+      const response = await api.get<OrdersResponse>('/orders/all', { params })
+      return response.data
+    },
+    enabled: isAuthenticated && user?.role === 'ADMIN',
+  })
+
   if (!user || user.role !== 'ADMIN') {
     return null
   }
 
-  // Mock orders data
-  const mockOrders = [
-    {
-      id: 'ORD-001',
-      userId: 'buyer1@test.kg',
-      shopName: 'Fashion Store Bishkek',
-      totalAmount: 12500,
-      status: 'paid',
-      createdAt: '2025-11-10T10:30:00',
-      itemsCount: 2,
-    },
-    {
-      id: 'ORD-002',
-      userId: 'buyer2@test.kg',
-      shopName: 'TechnoWorld KG',
-      totalAmount: 85000,
-      status: 'pending',
-      createdAt: '2025-11-10T11:15:00',
-      itemsCount: 1,
-    },
-    {
-      id: 'ORD-003',
-      userId: 'buyer3@test.kg',
-      shopName: 'Уютный Дом',
-      totalAmount: 35000,
-      status: 'fulfilled',
-      createdAt: '2025-11-09T15:20:00',
-      itemsCount: 3,
-    },
-    {
-      id: 'ORD-004',
-      userId: 'buyer1@test.kg',
-      shopName: 'Fashion Store Bishkek',
-      totalAmount: 5600,
-      status: 'cancelled',
-      createdAt: '2025-11-09T09:00:00',
-      itemsCount: 1,
-    },
-  ]
-
-  const filteredOrders = mockOrders.filter((order) => {
-    const matchesSearch =
+  const filteredOrders = ordersData?.content?.filter((order) => {
+    const matchesSearch = !searchTerm ||
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.shopName.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = filterStatus === 'all' || order.status === filterStatus
-    return matchesSearch && matchesStatus
-  })
+    return matchesSearch
+  }) || []
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
+    const statusUpper = status.toUpperCase()
+    switch (statusUpper) {
+      case 'PENDING':
         return <Clock className="h-5 w-5 text-yellow-600" />
-      case 'paid':
+      case 'PAID':
         return <CheckCircle className="h-5 w-5 text-blue-600" />
-      case 'fulfilled':
+      case 'FULFILLED':
         return <TruckIcon className="h-5 w-5 text-green-600" />
-      case 'cancelled':
+      case 'CANCELLED':
         return <XCircle className="h-5 w-5 text-red-600" />
       default:
         return <Package className="h-5 w-5 text-gray-600" />
@@ -87,30 +82,32 @@ export default function AdminOrdersPage() {
   }
 
   const getStatusBadge = (status: string) => {
+    const statusUpper = status.toUpperCase()
     const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      paid: 'bg-blue-100 text-blue-800',
-      fulfilled: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
+      PENDING: 'bg-yellow-100 text-yellow-800',
+      PAID: 'bg-blue-100 text-blue-800',
+      FULFILLED: 'bg-green-100 text-green-800',
+      CANCELLED: 'bg-red-100 text-red-800',
     }
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+    return colors[statusUpper as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
 
   const getStatusText = (status: string) => {
+    const statusUpper = status.toUpperCase()
     const texts = {
-      pending: 'Ожидает оплаты',
-      paid: 'Оплачен',
-      fulfilled: 'Выполнен',
-      cancelled: 'Отменен',
+      PENDING: 'Ожидает оплаты',
+      PAID: 'Оплачен',
+      FULFILLED: 'Выполнен',
+      CANCELLED: 'Отменен',
     }
-    return texts[status as keyof typeof texts] || status
+    return texts[statusUpper as keyof typeof texts] || status
   }
 
   const stats = [
-    { label: 'Ожидают оплаты', value: mockOrders.filter((o) => o.status === 'pending').length, color: 'yellow' },
-    { label: 'Оплачены', value: mockOrders.filter((o) => o.status === 'paid').length, color: 'blue' },
-    { label: 'Выполнены', value: mockOrders.filter((o) => o.status === 'fulfilled').length, color: 'green' },
-    { label: 'Отменены', value: mockOrders.filter((o) => o.status === 'cancelled').length, color: 'red' },
+    { label: 'Ожидают оплаты', value: ordersData?.content?.filter((o) => o.status === 'PENDING').length || 0, color: 'yellow' },
+    { label: 'Оплачены', value: ordersData?.content?.filter((o) => o.status === 'PAID').length || 0, color: 'blue' },
+    { label: 'Выполнены', value: ordersData?.content?.filter((o) => o.status === 'FULFILLED').length || 0, color: 'green' },
+    { label: 'Отменены', value: ordersData?.content?.filter((o) => o.status === 'CANCELLED').length || 0, color: 'red' },
   ]
 
   return (
@@ -124,8 +121,19 @@ export default function AdminOrdersPage() {
           >
             ← Назад к панели
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Управление заказами</h1>
-          <p className="text-gray-600">Всего заказов: {mockOrders.length}</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Управление заказами</h1>
+              <p className="text-gray-600">Всего заказов: {ordersData?.totalElements || 0}</p>
+            </div>
+            <button
+              onClick={() => refetch()}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Обновить
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -157,19 +165,32 @@ export default function AdminOrdersPage() {
 
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
+              onChange={(e) => {
+                setFilterStatus(e.target.value as any)
+                setPage(0)
+              }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">Все статусы</option>
-              <option value="pending">Ожидает оплаты</option>
-              <option value="paid">Оплачен</option>
-              <option value="fulfilled">Выполнен</option>
-              <option value="cancelled">Отменен</option>
+              <option value="PENDING">Ожидает оплаты</option>
+              <option value="PAID">Оплачен</option>
+              <option value="FULFILLED">Выполнен</option>
+              <option value="CANCELLED">Отменен</option>
             </select>
           </div>
         </div>
 
         {/* Orders Table */}
+        {isLoading ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Загрузка заказов...</p>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <p className="text-gray-600">Заказы не найдены</p>
+          </div>
+        ) : (
         <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -240,13 +261,31 @@ export default function AdminOrdersPage() {
               </tbody>
             </table>
           </div>
-
-          {filteredOrders.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Заказы не найдены</p>
-            </div>
-          )}
         </div>
+        )}
+
+        {/* Pagination */}
+        {ordersData && ordersData.totalPages > 1 && (
+          <div className="mt-6 flex justify-center gap-2">
+            <button
+              onClick={() => setPage(Math.max(0, page - 1))}
+              disabled={page === 0}
+              className="px-4 py-2 bg-white border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Назад
+            </button>
+            <span className="px-4 py-2 bg-white border rounded-lg">
+              Страница {page + 1} из {ordersData.totalPages}
+            </span>
+            <button
+              onClick={() => setPage(Math.min(ordersData.totalPages - 1, page + 1))}
+              disabled={page >= ordersData.totalPages - 1}
+              className="px-4 py-2 bg-white border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Далее
+            </button>
+          </div>
+        )}
       </div>
     </MainLayout>
   )

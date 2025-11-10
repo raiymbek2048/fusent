@@ -35,6 +35,7 @@ public class OrderDtos {
 
     public record OrderSummary(
         UUID id,
+        UUID userId,
         UUID shopId,
         String shopName,
         String status,
