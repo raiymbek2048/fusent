@@ -22,7 +22,6 @@ export default function CreatePostModal({
 }: CreatePostModalProps) {
   const { user } = useAuth()
   const { mutate: createPost, isPending } = useCreatePost()
-  const { mutateAsync: uploadMultipleMedia, isPending: isUploading } = useUploadMultipleMedia()
 
   const [text, setText] = useState('')
   const [mediaUrls, setMediaUrls] = useState<string[]>([])
