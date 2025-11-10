@@ -131,6 +131,12 @@ app:
     bucket-thumbnails: ${S3_BUCKET_THUMBNAILS:fucent-thumbnails}
     region: ${S3_REGION:us-east-1}
 
+storage:
+  type: ${STORAGE_TYPE:minio}
+  local:
+    base-path: ${STORAGE_LOCAL_PATH:./uploads}
+  base-url: ${STORAGE_BASE_URL:http://localhost:8080/uploads}
+
   pos:
     heartbeat-timeout-minutes: 10
     sync-interval-seconds: 30
