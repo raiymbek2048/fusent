@@ -3,5 +3,6 @@ package kg.bishkek.fucent.fusent.enums;
 public enum NotificationChannel {
     PUSH,
     SMS,
-    EMAIL
+    EMAIL,
+    IN_APP
 }
