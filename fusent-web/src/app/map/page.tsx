@@ -5,7 +5,9 @@ import MainLayout from '@/components/MainLayout'
 import dynamic from 'next/dynamic'
 import { useShops } from '@/hooks/useShops'
 import { usePublicFeed } from '@/hooks/usePosts'
+import { RouteResponse } from '@/hooks/useRoutes'
 import { MapPin, Store, Image as ImageIcon, Navigation, X } from 'lucide-react'
+import RoutePanel from '@/components/RoutePanel'
 
 // Dynamic import to avoid SSR issues with map libraries
 const MapComponent = dynamic(() => import('@/components/MapView'), {
@@ -27,6 +29,9 @@ export default function MapPage() {
   const [selectedShop, setSelectedShop] = useState<any>(null)
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null)
+  const [showRoutePanel, setShowRoutePanel] = useState(false)
+  const [routeDestination, setRouteDestination] = useState<{ lat: number; lon: number; name: string } | null>(null)
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([])
 
   const { data: shopsData } = useShops({ page: 0, size: 1000 })
   const { data: postsData } = usePublicFeed({ page: 0, size: 1000 })
@@ -67,12 +72,23 @@ export default function MapPage() {
     setSelectedShop(null)
   }
 
-  const buildRoute = (lat: number, lon: number) => {
+  const buildRoute = (lat: number, lon: number, name: string) => {
     if (userLocation) {
-      // Open in 2GIS or Google Maps
-      const url = `https://2gis.kg/routeSearch/rsType/car/from/${userLocation.lon},${userLocation.lat}/to/${lon},${lat}`
-      window.open(url, '_blank')
+      setRouteDestination({ lat, lon, name })
+      setShowRoutePanel(true)
+      setSelectedShop(null)
+      setSelectedPost(null)
     }
+  }
+
+  const handleRouteCalculated = (route: RouteResponse) => {
+    setRouteCoordinates(route.coordinates)
+  }
+
+  const closeRoutePanel = () => {
+    setShowRoutePanel(false)
+    setRouteDestination(null)
+    setRouteCoordinates([])
   }
 
   return (
@@ -125,9 +141,23 @@ export default function MapPage() {
               posts={posts}
               onShopClick={handleShopClick}
               onPostClick={handlePostClick}
+              routeCoordinates={routeCoordinates}
             />
           )}
         </div>
+
+        {/* Route Panel */}
+        {showRoutePanel && routeDestination && userLocation && (
+          <RoutePanel
+            startLat={userLocation.lat}
+            startLon={userLocation.lon}
+            endLat={routeDestination.lat}
+            endLon={routeDestination.lon}
+            destinationName={routeDestination.name}
+            onClose={closeRoutePanel}
+            onRouteCalculated={handleRouteCalculated}
+          />
+        )}
 
         {/* Shop Detail Card */}
         {selectedShop && (
@@ -156,7 +186,7 @@ export default function MapPage() {
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => buildRoute(selectedShop.lat, selectedShop.lon)}
+                  onClick={() => buildRoute(selectedShop.lat, selectedShop.lon, selectedShop.name)}
                   className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                 >
                   <Navigation className="h-4 w-4" />

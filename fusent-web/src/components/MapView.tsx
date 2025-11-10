@@ -8,12 +8,14 @@ interface MapViewProps {
   posts: any[]
   onShopClick: (shop: any) => void
   onPostClick: (post: any) => void
+  routeCoordinates?: [number, number][] // [lon, lat] pairs from OpenRouteService
 }
 
-export default function MapView({ center, shops, posts, onShopClick, onPostClick }: MapViewProps) {
+export default function MapView({ center, shops, posts, onShopClick, onPostClick, routeCoordinates }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
+  const routeLayerRef = useRef<any>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapRef.current) return
@@ -161,8 +163,31 @@ export default function MapView({ center, shops, posts, onShopClick, onPostClick
         }
       })
 
-      // Add clustering for better performance
-      if (shops.length + posts.length > 50) {
+      // Draw route if coordinates are provided
+      if (routeLayerRef.current) {
+        routeLayerRef.current.remove()
+        routeLayerRef.current = null
+      }
+
+      if (routeCoordinates && routeCoordinates.length > 0) {
+        // Convert [lon, lat] to [lat, lon] for Leaflet
+        const latLngs = routeCoordinates.map(coord => [coord[1], coord[0]] as [number, number])
+
+        // Draw route polyline
+        const routeLayer = L.polyline(latLngs, {
+          color: '#2563eb',
+          weight: 5,
+          opacity: 0.8,
+          lineJoin: 'round',
+          lineCap: 'round',
+        }).addTo(map)
+
+        routeLayerRef.current = routeLayer
+
+        // Fit map to show the entire route
+        const routeBounds = routeLayer.getBounds()
+        map.fitBounds(routeBounds, { padding: [80, 80] })
+      } else if (shops.length + posts.length > 50) {
         // If we have many markers, fit bounds to show all
         const bounds = L.latLngBounds([])
         markersRef.current.forEach(marker => {
@@ -177,11 +202,15 @@ export default function MapView({ center, shops, posts, onShopClick, onPostClick
     initMap()
 
     return () => {
-      // Cleanup markers on unmount
+      // Cleanup markers and route on unmount
       markersRef.current.forEach(marker => marker.remove())
       markersRef.current = []
+      if (routeLayerRef.current) {
+        routeLayerRef.current.remove()
+        routeLayerRef.current = null
+      }
     }
-  }, [center, shops, posts, onShopClick, onPostClick])
+  }, [center, shops, posts, onShopClick, onPostClick, routeCoordinates])
 
   return <div ref={mapRef} className="w-full h-full" />
 }
