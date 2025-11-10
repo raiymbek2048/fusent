@@ -8,7 +8,7 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
     queryFn: async (): Promise<Category[]> => {
-      const response = await api.get<Category[]>('/catalog/categories')
+      const response = await api.get<Category[]>('/categories')
       return response.data
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -21,7 +21,7 @@ export const useCategory = (categoryId?: string) => {
     queryKey: ['category', categoryId],
     queryFn: async (): Promise<Category> => {
       if (!categoryId) throw new Error('Category ID required')
-      const response = await api.get<Category>(`/catalog/categories/${categoryId}`)
+      const response = await api.get<Category>(`/categories/${categoryId}`)
       return response.data
     },
     enabled: !!categoryId,
@@ -59,7 +59,7 @@ export const useCreateCategory = () => {
 
   return useMutation({
     mutationFn: async (data: Partial<Category>): Promise<Category> => {
-      const response = await api.post<Category>('/catalog/categories', data)
+      const response = await api.post<Category>('/categories', data)
       return response.data
     },
     onSuccess: () => {
@@ -68,6 +68,52 @@ export const useCreateCategory = () => {
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Ошибка создания категории'
+      toast.error(message)
+    },
+  })
+}
+
+// Update category (admin only)
+export const useUpdateCategory = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string
+      data: Partial<Category>
+    }): Promise<Category> => {
+      const response = await api.put<Category>(`/categories/${id}`, data)
+      return response.data
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['category', data.id] })
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      toast.success('Категория обновлена!')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Ошибка обновления категории'
+      toast.error(message)
+    },
+  })
+}
+
+// Delete category (admin only)
+export const useDeleteCategory = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      await api.delete(`/categories/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      toast.success('Категория удалена')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Ошибка удаления категории'
       toast.error(message)
     },
   })
