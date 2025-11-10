@@ -52,10 +52,10 @@ public class ShopController {
         }
     }
 
-    @Operation(summary = "Get shops by merchant ID")
+    @Operation(summary = "Get shops by seller user ID")
     @GetMapping("/seller/{sellerId}")
     public ResponseEntity<List<Shop>> getShopsBySeller(@PathVariable UUID sellerId) {
-        List<Shop> shops = shopRepository.findByMerchantId(sellerId);
+        List<Shop> shops = shopRepository.findByMerchantOwnerUserId(sellerId);
         return ResponseEntity.ok(shops);
     }
 

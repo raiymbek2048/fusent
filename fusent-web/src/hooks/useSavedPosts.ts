@@ -33,9 +33,11 @@ export function useSavePost(): UseMutationResult<SavedPostResponse, Error, strin
       const { data } = await api.post<SavedPostResponse>('/social/saved-posts', { postId });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, postId) => {
       // Invalidate saved posts queries to refetch
       queryClient.invalidateQueries({ queryKey: ['saved-posts'] });
+      // Invalidate the is-saved query for this specific post
+      queryClient.invalidateQueries({ queryKey: ['saved-posts', postId, 'is-saved'] });
     },
   });
 }
@@ -50,9 +52,11 @@ export function useUnsavePost(): UseMutationResult<void, Error, string> {
     mutationFn: async (postId: string) => {
       await api.delete(`/social/saved-posts/${postId}`);
     },
-    onSuccess: () => {
+    onSuccess: (_, postId) => {
       // Invalidate saved posts queries to refetch
       queryClient.invalidateQueries({ queryKey: ['saved-posts'] });
+      // Invalidate the is-saved query for this specific post
+      queryClient.invalidateQueries({ queryKey: ['saved-posts', postId, 'is-saved'] });
     },
   });
 }

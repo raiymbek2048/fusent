@@ -9,5 +9,6 @@ import java.util.UUID;
 
 public interface ShopRepository extends JpaRepository<Shop, UUID> {
     List<Shop> findByMerchantId(UUID merchantId);
+    List<Shop> findByMerchantOwnerUserId(UUID ownerUserId);
     Page<Shop> findByNameContainingIgnoreCase(String name, Pageable pageable);
 }
