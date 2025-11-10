@@ -100,13 +100,20 @@ export function useToggleSavePost() {
   const queryClient = useQueryClient();
 
   const toggleSave = async (postId: string, isSaved: boolean) => {
-    if (isSaved) {
-      await unsavePost.mutateAsync(postId);
-    } else {
-      await savePost.mutateAsync(postId);
+    // Optimistically update the cache
+    queryClient.setQueryData(['saved-posts', postId, 'is-saved'], !isSaved);
+
+    try {
+      if (isSaved) {
+        await unsavePost.mutateAsync(postId);
+      } else {
+        await savePost.mutateAsync(postId);
+      }
+    } catch (error) {
+      // Revert on error
+      queryClient.setQueryData(['saved-posts', postId, 'is-saved'], isSaved);
+      throw error;
     }
-    // Invalidate the is-saved query for this specific post
-    queryClient.invalidateQueries({ queryKey: ['saved-posts', postId, 'is-saved'] });
   };
 
   return {

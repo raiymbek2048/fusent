@@ -25,6 +25,7 @@ public class ShopDtos {
         UUID id,
         UUID merchantId,
         String merchantName,
+        UUID sellerId,  // Owner user ID for frontend filtering
         String name,
         String address,
         String phone,
