@@ -50,10 +50,9 @@ export interface ChangePasswordRequest {
 // Shop Types
 export interface Shop {
   id: string
-  merchantId?: string
+  merchantId: string  // Required field from backend
   merchantName?: string
   sellerId?: string
-  ownerId?: string
   name: string
   description?: string
   city?: string
