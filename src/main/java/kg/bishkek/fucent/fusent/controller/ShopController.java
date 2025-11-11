@@ -63,4 +63,30 @@ public class ShopController {
             Pageable pageable) {
         return ResponseEntity.ok(shopService.searchShops(query, pageable));
     }
+
+    @Operation(summary = "Update shop")
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ShopResponse> updateShop(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateShopRequest request) {
+        try {
+            ShopResponse response = shopService.updateShop(id, request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @Operation(summary = "Delete shop")
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteShop(@PathVariable UUID id) {
+        try {
+            shopService.deleteShop(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

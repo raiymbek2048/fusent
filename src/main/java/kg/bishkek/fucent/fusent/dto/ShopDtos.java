@@ -21,6 +21,16 @@ public class ShopDtos {
         Double lon
     ) {}
 
+    public record UpdateShopRequest(
+        @NotBlank(message = "Shop name is required")
+        String name,
+
+        String address,
+        String phone,
+        Double lat,
+        Double lon
+    ) {}
+
     public record ShopResponse(
         UUID id,
         UUID merchantId,

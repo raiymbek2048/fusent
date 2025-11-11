@@ -121,6 +121,53 @@ public class ShopServiceImpl implements ShopService {
             .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public ShopResponse updateShop(UUID id, UpdateShopRequest request) {
+        log.info("Updating shop with id: {}", id);
+
+        var currentUserId = SecurityUtil.currentUserId(users);
+
+        Shop shop = shops.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Shop not found with id: " + id));
+
+        // Verify ownership
+        if (!shop.getMerchant().getOwnerUserId().equals(currentUserId)) {
+            throw new IllegalArgumentException("Not authorized to update this shop");
+        }
+
+        // Update shop fields
+        shop.setName(request.name());
+        shop.setAddress(request.address());
+        shop.setPhone(request.phone());
+        shop.setLat(request.lat() != null ? BigDecimal.valueOf(request.lat()) : null);
+        shop.setLon(request.lon() != null ? BigDecimal.valueOf(request.lon()) : null);
+
+        shop = shops.save(shop);
+        log.info("Successfully updated shop: {}", id);
+
+        return toShopResponse(shop);
+    }
+
+    @Override
+    @Transactional
+    public void deleteShop(UUID id) {
+        log.info("Deleting shop with id: {}", id);
+
+        var currentUserId = SecurityUtil.currentUserId(users);
+
+        Shop shop = shops.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Shop not found with id: " + id));
+
+        // Verify ownership
+        if (!shop.getMerchant().getOwnerUserId().equals(currentUserId)) {
+            throw new IllegalArgumentException("Not authorized to delete this shop");
+        }
+
+        shops.delete(shop);
+        log.info("Successfully deleted shop: {}", id);
+    }
+
     private ShopResponse toShopResponse(Shop shop) {
         return new ShopResponse(
             shop.getId(),
