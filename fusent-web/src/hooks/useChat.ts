@@ -54,11 +54,15 @@ export const useCreateConversation = () => {
       const response = await api.post<Conversation>('/chat/conversations', { recipientId })
       return response.data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate and refetch conversations
       queryClient.invalidateQueries({ queryKey: ['conversations'] })
+      // Optionally set the conversation data directly in cache
+      queryClient.setQueryData(['conversation', data.conversationId], data)
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Ошибка создания чата'
+      console.error('Create conversation error:', error)
       toast.error(message)
     },
   })
