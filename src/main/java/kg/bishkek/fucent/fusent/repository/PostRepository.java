@@ -28,8 +28,12 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             SELECT 1 FROM Follow f
             WHERE f.follower = :follower
             AND (
-                (f.targetType = 'MERCHANT' AND p.ownerType = 'MERCHANT' AND p.ownerId = f.targetId)
-                OR (f.targetType = 'USER' AND p.ownerType = 'USER' AND p.ownerId = f.targetId)
+                (f.targetType = kg.bishkek.fucent.fusent.enums.FollowTargetType.MERCHANT
+                 AND p.ownerType = kg.bishkek.fucent.fusent.enums.OwnerType.MERCHANT
+                 AND p.ownerId = f.targetId)
+                OR (f.targetType = kg.bishkek.fucent.fusent.enums.FollowTargetType.USER
+                    AND p.ownerType = kg.bishkek.fucent.fusent.enums.OwnerType.USER
+                    AND p.ownerId = f.targetId)
             )
         )
         ORDER BY p.createdAt DESC
