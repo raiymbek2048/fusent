@@ -40,6 +40,14 @@ public class Shop {
     @Column(name = "last_heartbeat_at")
     private Instant lastHeartbeatAt;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private BigDecimal rating = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Column(name = "review_count", nullable = false)
+    private Integer reviewCount = 0;
+
     @Column(name = "created_at")
     @CreationTimestamp
     private Instant createdAt;
