@@ -20,7 +20,7 @@ function ChatPageContent() {
   const [messageText, setMessageText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const { data: conversations, isLoading: conversationsLoading } = useConversations(user?.id)
+  const { data: conversations, isLoading: conversationsLoading, isError: conversationsError } = useConversations(user?.id)
   const { data: messages, isLoading: messagesLoading } = useMessages(selectedConversationId || undefined)
   const sendMessage = useSendMessage()
   const createConversation = useCreateConversation()
@@ -31,14 +31,28 @@ function ChatPageContent() {
       // Validate that sellerId is a valid UUID format
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
       if (uuidRegex.test(sellerId)) {
-        createConversation.mutate(sellerId, {
-          onSuccess: (conv) => {
-            setSelectedConversationId(conv.conversationId)
-          },
-        })
+        // Check if conversation with this seller already exists
+        const existingConv = conversations?.find(c => c.otherUserId === sellerId)
+        if (existingConv) {
+          setSelectedConversationId(existingConv.conversationId)
+        } else {
+          createConversation.mutate(sellerId, {
+            onSuccess: (conv) => {
+              setSelectedConversationId(conv.conversationId)
+            },
+          })
+        }
       }
     }
-  }, [sellerId, conversationsLoading, user, createConversation])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sellerId, conversationsLoading, user])
+
+  // Auto-select first conversation if only one exists
+  useEffect(() => {
+    if (conversations && conversations.length === 1 && !selectedConversationId) {
+      setSelectedConversationId(conversations[0].conversationId)
+    }
+  }, [conversations, selectedConversationId])
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -52,6 +66,20 @@ function ChatPageContent() {
 
   if (conversationsLoading) {
     return <LoadingScreen message="Загрузка чатов..." />
+  }
+
+  if (conversationsError) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Ошибка загрузки чатов</h1>
+          <p className="text-gray-600 mb-4">Не удалось загрузить список чатов. Попробуйте перезагрузить страницу.</p>
+          <Button onClick={() => window.location.reload()}>
+            Перезагрузить
+          </Button>
+        </div>
+      </MainLayout>
+    )
   }
 
   const handleSendMessage = async (e: React.FormEvent) => {
