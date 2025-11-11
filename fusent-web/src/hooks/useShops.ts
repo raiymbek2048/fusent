@@ -108,3 +108,20 @@ export const useDeleteShop = () => {
     },
   })
 }
+
+// Get recommended shops (top rated shops for discovery)
+export const useRecommendedShops = (limit: number = 5) => {
+  return useQuery({
+    queryKey: ['shops', 'recommended', limit],
+    queryFn: async (): Promise<Shop[]> => {
+      const response = await api.get<PageResponse<Shop>>('/shops', {
+        params: {
+          page: 0,
+          size: limit,
+          sort: 'rating,desc'
+        }
+      })
+      return response.data.content
+    },
+  })
+}

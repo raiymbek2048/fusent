@@ -7,12 +7,80 @@ import PostModal from '@/components/PostModal'
 import SaveButton from '@/components/SaveButton'
 import { usePublicFeed, useFollowingFeed, useLikePost, useUnlikePost } from '@/hooks/usePosts'
 import { useAuth } from '@/hooks/useAuth'
+import { useRecommendedShops } from '@/hooks/useShops'
+import { useFollow, useUnfollow, useIsFollowing } from '@/hooks/useFollow'
 import { Heart, MessageCircle, Share2, MapPin, Plus } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { Post } from '@/types'
+import { Post, Shop } from '@/types'
 
 type FeedTab = 'explore' | 'following'
+
+interface ShopRecommendationProps {
+  shop: Shop
+  onFollow: (shopId: string) => void
+  onUnfollow: (shopId: string) => void
+  isLoggedIn: boolean
+}
+
+function ShopRecommendation({ shop, onFollow, onUnfollow, isLoggedIn }: ShopRecommendationProps) {
+  const merchantId = shop.merchantId || shop.ownerId
+  const { data: isFollowing } = useIsFollowing('MERCHANT', merchantId || '', { enabled: isLoggedIn && !!merchantId })
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const handleToggleFollow = async () => {
+    if (!merchantId || !isLoggedIn || isProcessing) return
+
+    setIsProcessing(true)
+    try {
+      if (isFollowing) {
+        onUnfollow(merchantId)
+      } else {
+        onFollow(merchantId)
+      }
+    } finally {
+      // Reset after a delay to prevent rapid clicks
+      setTimeout(() => setIsProcessing(false), 500)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {shop.logoUrl ? (
+          <img
+            src={shop.logoUrl}
+            alt={shop.name}
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs">
+            {shop.name[0]?.toUpperCase() || 'S'}
+          </div>
+        )}
+        <div>
+          <p className="text-sm font-semibold text-gray-900">{shop.name}</p>
+          <p className="text-xs text-gray-500">
+            {shop.rating ? `★ ${shop.rating.toFixed(1)}` : 'Новый продавец'}
+          </p>
+        </div>
+      </div>
+      {isLoggedIn && (
+        <button
+          onClick={handleToggleFollow}
+          disabled={isProcessing}
+          className={`text-xs font-semibold transition-colors disabled:opacity-50 ${
+            isFollowing
+              ? 'text-gray-600 hover:text-gray-800'
+              : 'text-blue-600 hover:text-blue-700'
+          }`}
+        >
+          {isFollowing ? 'Отписаться' : 'Подписаться'}
+        </button>
+      )}
+    </div>
+  )
+}
 
 export default function SocialPage() {
   const { user } = useAuth()
@@ -31,8 +99,12 @@ export default function SocialPage() {
     { enabled: activeTab === 'following' && !!user }
   )
 
+  const { data: recommendedShops, isLoading: isLoadingShops } = useRecommendedShops(3)
+
   const { mutate: likePost } = useLikePost()
   const { mutate: unlikePost } = useUnlikePost()
+  const { mutate: followShop } = useFollow()
+  const { mutate: unfollowShop } = useUnfollow()
 
   const data = activeTab === 'explore' ? exploreData : followingData
   const isLoading = activeTab === 'explore' ? isLoadingExplore : isLoadingFollowing
@@ -43,6 +115,22 @@ export default function SocialPage() {
     } else {
       likePost(postId)
     }
+  }
+
+  const handleFollowShop = (shopId: string) => {
+    if (!user) return
+    followShop({
+      targetType: 'MERCHANT',
+      targetId: shopId
+    })
+  }
+
+  const handleUnfollowShop = (shopId: string) => {
+    if (!user) return
+    unfollowShop({
+      targetType: 'MERCHANT',
+      targetId: shopId
+    })
   }
 
   return (
@@ -339,25 +427,37 @@ export default function SocialPage() {
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-semibold text-gray-500">Рекомендации для вас</p>
-                <button className="text-xs font-semibold text-blue-600 hover:text-blue-700">
-                  Показать все
-                </button>
               </div>
               <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full" />
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">Магазин {i}</p>
-                        <p className="text-xs text-gray-500">Популярный продавец</p>
+                {isLoadingShops ? (
+                  // Loading skeleton
+                  [...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between animate-pulse">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full" />
+                        <div>
+                          <div className="h-3 bg-gray-200 rounded w-20 mb-1" />
+                          <div className="h-2 bg-gray-200 rounded w-16" />
+                        </div>
                       </div>
+                      <div className="h-6 w-16 bg-gray-200 rounded" />
                     </div>
-                    <button className="text-xs font-semibold text-blue-600 hover:text-blue-700">
-                      Подписаться
-                    </button>
-                  </div>
-                ))}
+                  ))
+                ) : recommendedShops && recommendedShops.length > 0 ? (
+                  recommendedShops.map((shop) => (
+                    <ShopRecommendation
+                      key={shop.id}
+                      shop={shop}
+                      onFollow={handleFollowShop}
+                      onUnfollow={handleUnfollowShop}
+                      isLoggedIn={!!user}
+                    />
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-2">
+                    Нет доступных рекомендаций
+                  </p>
+                )}
               </div>
             </div>
 
