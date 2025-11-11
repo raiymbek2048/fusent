@@ -63,7 +63,7 @@ function ChatPageContent() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sellerId, conversationsLoading, user, conversations])
+  }, [sellerId, conversationsLoading, user])
 
   // Auto-select first conversation if only one exists
   useEffect(() => {
