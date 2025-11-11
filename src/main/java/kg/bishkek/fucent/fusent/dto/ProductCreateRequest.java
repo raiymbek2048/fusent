@@ -15,5 +15,6 @@ public record ProductCreateRequest(
         @NotBlank String name,
         String description,
         String imageUrl,
-        @NotNull @PositiveOrZero BigDecimal basePrice
+        @NotNull @PositiveOrZero BigDecimal basePrice,
+        Integer initialStock
 ) {}

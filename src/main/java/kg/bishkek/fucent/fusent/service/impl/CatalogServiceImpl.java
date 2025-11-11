@@ -51,7 +51,7 @@ public class CatalogServiceImpl implements CatalogService {
                 .product(p)
                 .sku("DEFAULT-" + p.getId())
                 .price(req.basePrice())
-                .stockQty(0)
+                .stockQty(req.initialStock() != null ? req.initialStock() : 0)
                 .build();
 
         variantRepository.save(defaultVariant);

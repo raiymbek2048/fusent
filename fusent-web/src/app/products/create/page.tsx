@@ -25,6 +25,7 @@ function CreateProductPageContent() {
     description: '',
     categoryId: '',
     basePrice: '',
+    initialStock: '',
     imageUrl: '',
   })
 
@@ -42,6 +43,7 @@ function CreateProductPageContent() {
         name: formData.name,
         description: formData.description || undefined,
         basePrice: parseFloat(formData.basePrice) || 0,
+        initialStock: formData.initialStock ? parseInt(formData.initialStock) : undefined,
       })
       router.push(`/shops/${shopId}`)
     } catch (error) {
@@ -161,6 +163,23 @@ function CreateProductPageContent() {
                 placeholder="0.00"
                 required
               />
+            </div>
+
+            <div>
+              <label htmlFor="initialStock" className="block text-sm font-medium text-gray-700 mb-2">
+                Количество на складе
+              </label>
+              <Input
+                id="initialStock"
+                type="number"
+                min="0"
+                value={formData.initialStock}
+                onChange={(e) => setFormData({ ...formData, initialStock: e.target.value })}
+                placeholder="0"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Оставьте пустым, если товар будет доступен через варианты
+              </p>
             </div>
 
             <div className="flex gap-4">
