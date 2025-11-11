@@ -10,9 +10,9 @@ import { Button, Card, CardContent, Input, LoadingScreen } from '@/components/ui
 import MainLayout from '@/components/MainLayout'
 import { Cart } from '@/types'
 import { MapPin } from 'lucide-react'
-import dynamic from 'next/dynamic'
+import dynamicImport from 'next/dynamic'
 
-const LocationPicker = dynamic(() => import('@/components/LocationPicker'), {
+const LocationPicker = dynamicImport(() => import('@/components/LocationPicker'), {
   ssr: false,
 })
 
