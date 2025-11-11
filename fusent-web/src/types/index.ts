@@ -125,6 +125,7 @@ export interface CreateProductRequest {
   name: string
   description?: string
   basePrice: number
+  initialStock?: number
 }
 
 // Category Types
