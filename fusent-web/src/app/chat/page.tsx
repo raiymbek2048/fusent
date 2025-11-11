@@ -27,14 +27,18 @@ function ChatPageContent() {
 
   // Auto-create conversation if sellerId is provided
   useEffect(() => {
-    if (sellerId && !conversationsLoading && user) {
-      createConversation.mutate(sellerId, {
-        onSuccess: (conv) => {
-          setSelectedConversationId(conv.conversationId)
-        },
-      })
+    if (sellerId && sellerId !== 'undefined' && !conversationsLoading && user) {
+      // Validate that sellerId is a valid UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (uuidRegex.test(sellerId)) {
+        createConversation.mutate(sellerId, {
+          onSuccess: (conv) => {
+            setSelectedConversationId(conv.conversationId)
+          },
+        })
+      }
     }
-  }, [sellerId, conversationsLoading])
+  }, [sellerId, conversationsLoading, user, createConversation])
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

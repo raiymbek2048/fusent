@@ -41,9 +41,12 @@ export default function ProductPage() {
     )
   }
 
+  const hasVariants = product.variants && product.variants.length > 0
   const currentVariant = product.variants?.find(v => v.id === selectedVariant) || product.variants?.[0]
   const currentPrice = currentVariant?.price || product.basePrice
-  const inStock = (currentVariant?.stockQuantity || 0) > 0
+  // If product has no variants, consider it in stock. Otherwise check variant stock.
+  const inStock = hasVariants ? (currentVariant?.stockQuantity || 0) > 0 : true
+  const maxQuantity = hasVariants ? (currentVariant?.stockQuantity || 0) : 999
 
   const handleAddToCart = () => {
     if (!user) {
@@ -67,7 +70,11 @@ export default function ProductPage() {
       router.push('/login')
       return
     }
-    router.push(`/chat?sellerId=${shop?.sellerId}`)
+    if (!shop?.sellerId) {
+      alert('Информация о продавце недоступна')
+      return
+    }
+    router.push(`/chat?sellerId=${shop.sellerId}`)
   }
 
   return (
@@ -209,6 +216,7 @@ export default function ProductPage() {
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  disabled={!inStock}
                 >
                   -
                 </button>
@@ -216,7 +224,7 @@ export default function ProductPage() {
                 <button
                   onClick={() => setQuantity(quantity + 1)}
                   className="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-100"
-                  disabled={!inStock || quantity >= (currentVariant?.stockQuantity || 0)}
+                  disabled={!inStock || quantity >= maxQuantity}
                 >
                   +
                 </button>
