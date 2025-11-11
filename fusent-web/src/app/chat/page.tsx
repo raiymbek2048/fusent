@@ -24,7 +24,7 @@ function ChatPageContent() {
   const { data: conversations, isLoading: conversationsLoading, isError: conversationsError } = useConversations(user?.id)
   const { data: messages, isLoading: messagesLoading } = useMessages(selectedConversationId || undefined)
   const sendMessage = useSendMessage()
-  const createConversation = useCreateConversation()
+  const createConversation = useCreateConversation(user?.id)
 
   // Auto-create conversation if sellerId is provided
   useEffect(() => {

@@ -46,7 +46,7 @@ export const useMessages = (conversationId?: string, params?: PageRequest) => {
 }
 
 // Create or get conversation
-export const useCreateConversation = () => {
+export const useCreateConversation = (userId?: string) => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -55,10 +55,25 @@ export const useCreateConversation = () => {
       return response.data
     },
     onSuccess: (data) => {
-      // Invalidate and refetch conversations
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
-      // Optionally set the conversation data directly in cache
+      // Manually add the new conversation to the cache immediately
+      if (userId) {
+        const queryKey = ['conversations', userId]
+        const existingConversations = queryClient.getQueryData<Conversation[]>(queryKey) || []
+
+        // Check if this conversation already exists
+        const conversationExists = existingConversations.some(c => c.conversationId === data.conversationId)
+
+        if (!conversationExists) {
+          // Add the new conversation to the cache
+          queryClient.setQueryData<Conversation[]>(queryKey, [...existingConversations, data])
+        }
+      }
+
+      // Also set the individual conversation in cache
       queryClient.setQueryData(['conversation', data.conversationId], data)
+
+      // Invalidate to refetch in background
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Ошибка создания чата'
