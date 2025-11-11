@@ -30,7 +30,7 @@ function ChatPageContent() {
     if (sellerId && !conversationsLoading && user) {
       createConversation.mutate(sellerId, {
         onSuccess: (conv) => {
-          setSelectedConversationId(conv.id)
+          setSelectedConversationId(conv.conversationId)
         },
       })
     }
@@ -55,10 +55,15 @@ function ChatPageContent() {
 
     if (!messageText.trim() || !selectedConversationId) return
 
+    // Find the other user's ID from the selected conversation
+    const otherUserId = conversations?.find(c => c.conversationId === selectedConversationId)?.otherUserId
+
+    if (!otherUserId) return
+
     sendMessage.mutate(
       {
-        conversationId: selectedConversationId,
-        content: messageText,
+        recipientId: otherUserId,
+        messageText: messageText,
       },
       {
         onSuccess: () => {
@@ -68,7 +73,7 @@ function ChatPageContent() {
     )
   }
 
-  const selectedConversation = conversations?.find(c => c.id === selectedConversationId)
+  const selectedConversation = conversations?.find(c => c.conversationId === selectedConversationId)
 
   return (
     <MainLayout>
@@ -83,18 +88,17 @@ function ChatPageContent() {
               {conversations && conversations.length > 0 ? (
                 <div className="divide-y divide-gray-200">
                   {conversations.map((conv) => {
-                    const otherUser = user.role === 'BUYER' ? conv.seller : conv.buyer
                     return (
                       <button
-                        key={conv.id}
-                        onClick={() => setSelectedConversationId(conv.id)}
+                        key={conv.conversationId}
+                        onClick={() => setSelectedConversationId(conv.conversationId)}
                         className={`w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors ${
-                          selectedConversationId === conv.id ? 'bg-blue-50' : ''
+                          selectedConversationId === conv.conversationId ? 'bg-blue-50' : ''
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <p className="font-medium text-gray-900">
-                            {otherUser?.email || 'Пользователь'}
+                            {conv.otherUserName || 'Пользователь'}
                           </p>
                           {conv.unreadCount > 0 && (
                             <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
@@ -103,7 +107,7 @@ function ChatPageContent() {
                           )}
                         </div>
                         <p className="text-sm text-gray-500">
-                          {new Date(conv.lastMessageAt).toLocaleDateString('ru-RU')}
+                          {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleDateString('ru-RU') : 'Новый чат'}
                         </p>
                       </button>
                     )
@@ -125,9 +129,7 @@ function ChatPageContent() {
                 {/* Chat Header */}
                 <div className="px-6 py-4 border-b border-gray-200">
                   <h3 className="font-semibold text-gray-900">
-                    {user.role === 'BUYER'
-                      ? selectedConversation.seller?.email
-                      : selectedConversation.buyer?.email}
+                    {selectedConversation.otherUserName}
                   </h3>
                 </div>
 
@@ -153,7 +155,7 @@ function ChatPageContent() {
                                   : 'bg-white text-gray-900 border border-gray-200'
                               }`}
                             >
-                              <p className="whitespace-pre-wrap">{message.content}</p>
+                              <p className="whitespace-pre-wrap">{message.messageText}</p>
                               <p
                                 className={`text-xs mt-1 ${
                                   isOwnMessage ? 'text-blue-100' : 'text-gray-500'

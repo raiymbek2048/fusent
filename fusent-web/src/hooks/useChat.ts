@@ -50,8 +50,8 @@ export const useCreateConversation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (sellerId: string): Promise<Conversation> => {
-      const response = await api.post<Conversation>('/chat/conversations', { sellerId })
+    mutationFn: async (recipientId: string): Promise<Conversation> => {
+      const response = await api.post<Conversation>('/chat/conversations', { recipientId })
       return response.data
     },
     onSuccess: () => {

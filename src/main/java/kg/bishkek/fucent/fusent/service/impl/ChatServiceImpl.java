@@ -22,6 +22,48 @@ public class ChatServiceImpl implements ChatService {
     private final AppUserRepository userRepository;
 
     @Override
+    @Transactional(readOnly = true)
+    public ConversationResponse createOrGetConversation(CreateConversationRequest request) {
+        var currentUserId = SecurityUtil.currentUserId(userRepository);
+        var currentUser = userRepository.findById(currentUserId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        var recipient = userRepository.findById(request.recipientId())
+            .orElseThrow(() -> new IllegalArgumentException("Recipient not found"));
+
+        // Generate conversation ID
+        UUID conversationId = generateConversationId(currentUserId, request.recipientId());
+
+        // Try to find existing conversation
+        var existingMessages = chatMessageRepository.findByConversationIdOrderByCreatedAtDesc(conversationId);
+
+        if (!existingMessages.isEmpty()) {
+            // Return existing conversation
+            var latestMessage = existingMessages.get(0);
+            long unreadCount = chatMessageRepository.countUnreadInConversation(conversationId, currentUserId);
+
+            return new ConversationResponse(
+                conversationId,
+                request.recipientId(),
+                recipient.getEmail(),
+                latestMessage.getMessageText(),
+                latestMessage.getCreatedAt(),
+                (int) unreadCount
+            );
+        }
+
+        // Return new conversation (no messages yet)
+        return new ConversationResponse(
+            conversationId,
+            request.recipientId(),
+            recipient.getEmail(),
+            null,
+            null,
+            0
+        );
+    }
+
+    @Override
     @Transactional
     public ChatMessageResponse sendMessage(SendMessageRequest request) {
         var currentUserId = SecurityUtil.currentUserId(userRepository);

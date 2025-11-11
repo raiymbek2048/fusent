@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChatService {
+    ConversationResponse createOrGetConversation(CreateConversationRequest request);
+
     ChatMessageResponse sendMessage(SendMessageRequest request);
 
     Page<ChatMessageResponse> getConversation(UUID conversationId, Pageable pageable);
