@@ -40,9 +40,23 @@ public class CatalogServiceImpl implements CatalogService {
                 .category(cat)
                 .name(req.name())
                 .description(req.description())
+                .imageUrl(req.imageUrl())
+                .basePrice(req.basePrice())
                 .build();
 
-        return productRepository.save(p);
+        p = productRepository.save(p);
+
+        // Автоматически создаем вариант по умолчанию с базовой ценой
+        var defaultVariant = ProductVariant.builder()
+                .product(p)
+                .sku("DEFAULT-" + p.getId())
+                .price(req.basePrice())
+                .stockQty(0)
+                .build();
+
+        variantRepository.save(defaultVariant);
+
+        return p;
     }
 
     @Override

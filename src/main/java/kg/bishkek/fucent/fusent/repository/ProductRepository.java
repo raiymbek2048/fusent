@@ -2,6 +2,7 @@ package kg.bishkek.fucent.fusent.repository;
 
 
 
+import kg.bishkek.fucent.fusent.model.AppUser;
 import kg.bishkek.fucent.fusent.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -46,4 +47,25 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
            "LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "ORDER BY p.name")
     Page<Product> searchForAutocomplete(@Param("query") String query, Pageable pageable);
+
+    /**
+     * Get products from merchants that the user follows
+     */
+    @Query("""
+        SELECT DISTINCT p FROM Product p
+        INNER JOIN p.shop s
+        INNER JOIN s.merchant m
+        WHERE EXISTS (
+            SELECT 1 FROM Follow f
+            WHERE f.follower = :follower
+            AND f.targetType = 'MERCHANT'
+            AND f.targetId = m.id
+        )
+        AND p.active = true
+        ORDER BY p.createdAt DESC
+        """)
+    Page<Product> findProductsFromFollowedMerchants(
+        @Param("follower") AppUser follower,
+        Pageable pageable
+    );
 }
