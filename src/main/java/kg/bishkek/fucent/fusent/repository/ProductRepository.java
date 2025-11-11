@@ -19,26 +19,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     Page<Product> findAllByCategoryId(UUID categoryId, Pageable pageable);
     Page<Product> findAllByNameContainingIgnoreCase(String q, Pageable pageable);
 
-    // Methods with JOIN FETCH to eagerly load variants (fixes LazyInitializationException)
-    @Query(value = "SELECT p FROM Product p LEFT JOIN FETCH p.variants",
-           countQuery = "SELECT COUNT(p) FROM Product p")
-    Page<Product> findAllWithVariants(Pageable pageable);
-
-    @Query(value = "SELECT p FROM Product p LEFT JOIN FETCH p.variants WHERE p.shop.id = :shopId",
-           countQuery = "SELECT COUNT(p) FROM Product p WHERE p.shop.id = :shopId")
-    Page<Product> findAllByShopIdWithVariants(@Param("shopId") UUID shopId, Pageable pageable);
-
-    @Query(value = "SELECT p FROM Product p LEFT JOIN FETCH p.variants WHERE p.category.id = :categoryId",
-           countQuery = "SELECT COUNT(p) FROM Product p WHERE p.category.id = :categoryId")
-    Page<Product> findAllByCategoryIdWithVariants(@Param("categoryId") UUID categoryId, Pageable pageable);
-
-    @Query(value = "SELECT p FROM Product p LEFT JOIN FETCH p.variants WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :q, '%'))",
-           countQuery = "SELECT COUNT(p) FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :q, '%'))")
-    Page<Product> findAllByNameContainingIgnoreCaseWithVariants(@Param("q") String q, Pageable pageable);
-
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.variants WHERE p.id = :id")
-    java.util.Optional<Product> findByIdWithVariants(@Param("id") UUID id);
-
     /**
      * Full-text search using PostgreSQL tsvector
      * Searches in both Russian and English with weighted ranking
@@ -85,40 +65,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
         ORDER BY p.createdAt DESC
         """)
     Page<Product> findProductsFromFollowedMerchants(
-        @Param("follower") AppUser follower,
-        Pageable pageable
-    );
-
-    /**
-     * Get products with variants from merchants that the user follows
-     */
-    @Query(value = """
-        SELECT DISTINCT p FROM Product p
-        LEFT JOIN FETCH p.variants
-        INNER JOIN p.shop s
-        INNER JOIN s.merchant m
-        WHERE EXISTS (
-            SELECT 1 FROM Follow f
-            WHERE f.follower = :follower
-            AND f.targetType = 'MERCHANT'
-            AND f.targetId = m.id
-        )
-        AND p.active = true
-        ORDER BY p.createdAt DESC
-        """,
-        countQuery = """
-        SELECT COUNT(DISTINCT p) FROM Product p
-        INNER JOIN p.shop s
-        INNER JOIN s.merchant m
-        WHERE EXISTS (
-            SELECT 1 FROM Follow f
-            WHERE f.follower = :follower
-            AND f.targetType = 'MERCHANT'
-            AND f.targetId = m.id
-        )
-        AND p.active = true
-        """)
-    Page<Product> findProductsFromFollowedMerchantsWithVariants(
         @Param("follower") AppUser follower,
         Pageable pageable
     );
