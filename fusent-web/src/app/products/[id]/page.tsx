@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ShoppingCart, Heart, Star, MapPin, MessageCircle } from 'lucide-react'
@@ -18,11 +18,21 @@ export default function ProductPage() {
   const user = useAuthStore((state) => state.user)
 
   const { data: product, isLoading } = useProduct(productId)
-  const { data: shop } = useShop(product?.shopId || '')
+  const { data: shop, isLoading: shopLoading } = useShop(product?.shopId || '')
   const addToCart = useAddToCart(user?.id)
 
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+
+  // Auto-select first available variant when product loads
+  useEffect(() => {
+    if (product?.variants && product.variants.length > 0 && !selectedVariant) {
+      // Try to select first variant with stock, otherwise select first variant
+      const variantWithStock = product.variants.find(v => v.stockQuantity > 0)
+      const firstVariant = variantWithStock || product.variants[0]
+      setSelectedVariant(firstVariant.id)
+    }
+  }, [product, selectedVariant])
 
   if (isLoading) {
     return <LoadingScreen message="Загрузка товара..." />
@@ -81,6 +91,13 @@ export default function ProductPage() {
       router.push('/login')
       return
     }
+
+    // Check if shop data is still loading
+    if (shopLoading || !shop) {
+      alert('Загрузка информации о магазине. Пожалуйста, подождите.')
+      return
+    }
+
     // Try to get sellerId from different possible sources
     const sellerId = shop?.sellerId || shop?.merchantId
     if (!sellerId) {
@@ -265,6 +282,8 @@ export default function ProductPage() {
               fullWidth
               variant="outline"
               onClick={handleContactSeller}
+              disabled={shopLoading || !shop}
+              isLoading={shopLoading}
             >
               <MessageCircle className="w-5 h-5 mr-2" />
               Написать продавцу
