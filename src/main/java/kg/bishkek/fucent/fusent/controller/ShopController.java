@@ -4,8 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kg.bishkek.fucent.fusent.dto.ShopDtos.*;
-import kg.bishkek.fucent.fusent.model.Shop;
-import kg.bishkek.fucent.fusent.repository.ShopRepository;
 import kg.bishkek.fucent.fusent.service.ShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,7 +22,6 @@ import java.util.UUID;
 @Tag(name = "Shops", description = "Shop browsing and search")
 public class ShopController {
 
-    private final ShopRepository shopRepository;
     private final ShopService shopService;
 
     @Operation(summary = "Create a new shop")
@@ -37,8 +34,8 @@ public class ShopController {
 
     @Operation(summary = "Get all shops with pagination")
     @GetMapping
-    public ResponseEntity<Page<Shop>> getAllShops(Pageable pageable) {
-        return ResponseEntity.ok(shopRepository.findAll(pageable));
+    public ResponseEntity<Page<ShopResponse>> getAllShops(Pageable pageable) {
+        return ResponseEntity.ok(shopService.getAllShops(pageable));
     }
 
     @Operation(summary = "Get shop by ID")
@@ -54,16 +51,16 @@ public class ShopController {
 
     @Operation(summary = "Get shops by seller user ID")
     @GetMapping("/seller/{sellerId}")
-    public ResponseEntity<List<Shop>> getShopsBySeller(@PathVariable UUID sellerId) {
-        List<Shop> shops = shopRepository.findByMerchantOwnerUserId(sellerId);
+    public ResponseEntity<List<ShopResponse>> getShopsBySeller(@PathVariable UUID sellerId) {
+        List<ShopResponse> shops = shopService.getShopsBySeller(sellerId);
         return ResponseEntity.ok(shops);
     }
 
     @Operation(summary = "Search shops by name")
     @GetMapping("/search")
-    public ResponseEntity<Page<Shop>> searchShops(
+    public ResponseEntity<Page<ShopResponse>> searchShops(
             @RequestParam String query,
             Pageable pageable) {
-        return ResponseEntity.ok(shopRepository.findByNameContainingIgnoreCase(query, pageable));
+        return ResponseEntity.ok(shopService.searchShops(query, pageable));
     }
 }

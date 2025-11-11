@@ -10,11 +10,15 @@ import kg.bishkek.fucent.fusent.security.SecurityUtil;
 import kg.bishkek.fucent.fusent.service.ShopService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -93,6 +97,26 @@ public class ShopServiceImpl implements ShopService {
         return toShopResponse(shop);
     }
 
+    @Override
+    public Page<ShopResponse> getAllShops(Pageable pageable) {
+        Page<Shop> shopsPage = shops.findAll(pageable);
+        return shopsPage.map(this::toShopResponse);
+    }
+
+    @Override
+    public Page<ShopResponse> searchShops(String query, Pageable pageable) {
+        Page<Shop> shopsPage = shops.findByNameContainingIgnoreCase(query, pageable);
+        return shopsPage.map(this::toShopResponse);
+    }
+
+    @Override
+    public List<ShopResponse> getShopsBySeller(UUID sellerId) {
+        List<Shop> shopsList = shops.findByMerchantOwnerUserId(sellerId);
+        return shopsList.stream()
+            .map(this::toShopResponse)
+            .collect(Collectors.toList());
+    }
+
     private ShopResponse toShopResponse(Shop shop) {
         return new ShopResponse(
             shop.getId(),
@@ -107,8 +131,8 @@ public class ShopServiceImpl implements ShopService {
             shop.getPosStatus(),
             shop.getLastHeartbeatAt(),
             shop.getCreatedAt(),
-            0.0,  // rating - placeholder until review system is implemented
-            0     // totalReviews - placeholder until review system is implemented
+            shop.getRating() != null ? shop.getRating().doubleValue() : 0.0,
+            shop.getReviewCount() != null ? shop.getReviewCount() : 0
         );
     }
 }
