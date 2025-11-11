@@ -30,6 +30,7 @@ public class ProductVariant {
     @Column(nullable = false)
     private String sku;
 
+    private String name; // Variant display name (e.g., "Стандартный", "Размер M", etc.)
 
     private String barcode; // required for online purchase later
 
