@@ -6,6 +6,7 @@ import ProductCard from '@/components/ProductCard'
 import PostCard from '@/components/PostCard'
 import { useShop, useUpdateShop, useDeleteShop } from '@/hooks/useShops'
 import { useShopProducts } from '@/hooks/useProducts'
+import { useDeleteProduct } from '@/hooks/useProducts'
 import { useShopPosts } from '@/hooks/usePosts'
 import { useAuthStore } from '@/store/authStore'
 import { Button, Input } from '@/components/ui'
@@ -29,6 +30,8 @@ export default function ShopDetailPage() {
   // Edit and delete state
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showDeleteProductModal, setShowDeleteProductModal] = useState(false)
+  const [productToDelete, setProductToDelete] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({
     name: '',
     address: '',
@@ -37,6 +40,7 @@ export default function ShopDetailPage() {
 
   const updateShopMutation = useUpdateShop()
   const deleteShopMutation = useDeleteShop()
+  const deleteProductMutation = useDeleteProduct()
 
   // Check if shopId is a valid UUID
   const isValid = isValidUUID(shopId)
@@ -94,6 +98,29 @@ export default function ShopDetailPage() {
       await deleteShopMutation.mutateAsync(shopId)
       setShowDeleteModal(false)
       router.push('/shops')
+    } catch (error) {
+      // Error handled by mutation
+    }
+  }
+
+  // Handle edit product
+  const handleEditProduct = (productId: string) => {
+    router.push(`/products/${productId}/edit`)
+  }
+
+  // Handle delete product
+  const handleDeleteProduct = (productId: string) => {
+    setProductToDelete(productId)
+    setShowDeleteProductModal(true)
+  }
+
+  const handleConfirmDeleteProduct = async () => {
+    if (!productToDelete) return
+
+    try {
+      await deleteProductMutation.mutateAsync(productToDelete)
+      setShowDeleteProductModal(false)
+      setProductToDelete(null)
     } catch (error) {
       // Error handled by mutation
     }
@@ -248,7 +275,13 @@ export default function ShopDetailPage() {
             ) : productsData && productsData.content.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {productsData.content.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isOwner={user?.id === shop?.sellerId}
+                    onEdit={handleEditProduct}
+                    onDelete={handleDeleteProduct}
+                  />
                 ))}
               </div>
             ) : (
@@ -383,6 +416,50 @@ export default function ShopDetailPage() {
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteModal(false)}
+              >
+                Отмена
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Product Confirmation Modal */}
+      {showDeleteProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-red-600">Подтверждение удаления</h2>
+              <button
+                onClick={() => setShowDeleteProductModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-gray-700 mb-6">
+              Вы действительно хотите удалить этот товар?
+              <br />
+              <span className="text-red-600 text-sm">
+                Это действие нельзя отменить!
+              </span>
+            </p>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleConfirmDeleteProduct}
+                disabled={deleteProductMutation.isPending}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                {deleteProductMutation.isPending ? 'Удаление...' : 'Удалить'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteProductModal(false)
+                  setProductToDelete(null)
+                }}
               >
                 Отмена
               </Button>

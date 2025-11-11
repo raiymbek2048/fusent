@@ -89,6 +89,48 @@ public class CatalogServiceImpl implements CatalogService {
     }
 
     @Override
+    @Transactional
+    public Product updateProduct(String id, ProductCreateRequest req) {
+        var product = productRepository.findById(java.util.UUID.fromString(id))
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        var currentUserId = SecurityUtil.currentUserId(users);
+
+        // Проверка владельца магазина
+        if (!product.getShop().getMerchant().getOwnerUserId().equals(currentUserId)) {
+            throw new IllegalArgumentException("Not an owner of this product's shop");
+        }
+
+        // Update product fields
+        if (req.name() != null) product.setName(req.name());
+        if (req.description() != null) product.setDescription(req.description());
+        if (req.imageUrl() != null) product.setImageUrl(req.imageUrl());
+        if (req.basePrice() != null) product.setBasePrice(req.basePrice());
+        if (req.categoryId() != null) {
+            var cat = categoryRepository.findById(req.categoryId()).orElseThrow();
+            product.setCategory(cat);
+        }
+
+        return productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public void deleteProduct(String id) {
+        var product = productRepository.findById(java.util.UUID.fromString(id))
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        var currentUserId = SecurityUtil.currentUserId(users);
+
+        // Проверка владельца магазина
+        if (!product.getShop().getMerchant().getOwnerUserId().equals(currentUserId)) {
+            throw new IllegalArgumentException("Not an owner of this product's shop");
+        }
+
+        productRepository.delete(product);
+    }
+
+    @Override
     public Page<Product> searchProducts(String query, Pageable pageable) {
         // Prepare search query for PostgreSQL full-text search
         // Replace spaces with & for AND operation in tsquery
