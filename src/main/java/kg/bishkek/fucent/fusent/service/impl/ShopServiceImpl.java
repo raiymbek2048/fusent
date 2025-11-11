@@ -91,6 +91,7 @@ public class ShopServiceImpl implements ShopService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ShopResponse getShopById(UUID id) {
         Shop shop = shops.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Shop not found with id: " + id));
@@ -98,18 +99,21 @@ public class ShopServiceImpl implements ShopService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ShopResponse> getAllShops(Pageable pageable) {
         Page<Shop> shopsPage = shops.findAll(pageable);
         return shopsPage.map(this::toShopResponse);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ShopResponse> searchShops(String query, Pageable pageable) {
         Page<Shop> shopsPage = shops.findByNameContainingIgnoreCase(query, pageable);
         return shopsPage.map(this::toShopResponse);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ShopResponse> getShopsBySeller(UUID sellerId) {
         List<Shop> shopsList = shops.findByMerchantOwnerUserId(sellerId);
         return shopsList.stream()

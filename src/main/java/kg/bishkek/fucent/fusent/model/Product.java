@@ -2,6 +2,7 @@ package kg.bishkek.fucent.fusent.model;
 
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -52,4 +53,15 @@ public class Product {
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<ProductVariant> variants;
+
+    // Add shopId and categoryId for JSON serialization
+    @JsonProperty("shopId")
+    public UUID getShopId() {
+        return shop != null ? shop.getId() : null;
+    }
+
+    @JsonProperty("categoryId")
+    public UUID getCategoryId() {
+        return category != null ? category.getId() : null;
+    }
 }
