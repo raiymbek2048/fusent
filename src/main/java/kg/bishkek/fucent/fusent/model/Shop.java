@@ -2,6 +2,7 @@ package kg.bishkek.fucent.fusent.model;
 
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -55,4 +56,15 @@ public class Shop {
     @Column(name = "updated_at")
     @UpdateTimestamp
     private Instant updatedAt;
+
+    // Add merchantId and sellerId for JSON serialization
+    @JsonProperty("merchantId")
+    public UUID getMerchantId() {
+        return merchant != null ? merchant.getId() : null;
+    }
+
+    @JsonProperty("sellerId")
+    public UUID getSellerId() {
+        return merchant != null ? merchant.getOwnerUserId() : null;
+    }
 }
