@@ -14,30 +14,32 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PostRepository extends JpaRepository<Post, UUID> {
-    Page<Post> findByStatusOrderByCreatedAtDesc(PostStatus status, Pageable pageable);
+    Page<Post> findByStatus(PostStatus status, Pageable pageable);
 
-    Page<Post> findByOwnerTypeAndOwnerIdAndStatusOrderByCreatedAtDesc(
+    Page<Post> findByOwnerTypeAndOwnerIdAndStatus(
         OwnerType ownerType, UUID ownerId, PostStatus status, Pageable pageable);
 
     List<Post> findByOwnerTypeAndOwnerId(OwnerType ownerType, UUID ownerId);
 
     @Query("""
-        SELECT DISTINCT p FROM Post p, Follow f
-        WHERE f.follower = :follower
-        AND (
-            (f.targetType = kg.bishkek.fucent.fusent.enums.FollowTargetType.MERCHANT
-             AND p.ownerType = kg.bishkek.fucent.fusent.enums.OwnerType.MERCHANT
-             AND p.ownerId = f.targetId)
-            OR
-            (f.targetType = kg.bishkek.fucent.fusent.enums.FollowTargetType.USER
-             AND p.ownerType = kg.bishkek.fucent.fusent.enums.OwnerType.USER
-             AND p.ownerId = f.targetId)
+        SELECT DISTINCT p FROM Post p
+        WHERE EXISTS (
+            SELECT 1 FROM Follow f
+            WHERE f.follower.id = :followerId
+            AND (
+                (f.targetType = kg.bishkek.fucent.fusent.enums.FollowTargetType.MERCHANT
+                 AND p.ownerType = kg.bishkek.fucent.fusent.enums.OwnerType.MERCHANT
+                 AND p.ownerId = f.targetId)
+                OR
+                (f.targetType = kg.bishkek.fucent.fusent.enums.FollowTargetType.USER
+                 AND p.ownerType = kg.bishkek.fucent.fusent.enums.OwnerType.USER
+                 AND p.ownerId = f.targetId)
+            )
         )
         AND p.status = :status
-        ORDER BY p.createdAt DESC
         """)
     Page<Post> findFollowingFeedByUser(
-        @Param("follower") AppUser follower,
+        @Param("followerId") UUID followerId,
         @Param("status") PostStatus status,
         Pageable pageable
     );
