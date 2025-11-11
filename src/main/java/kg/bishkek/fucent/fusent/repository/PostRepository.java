@@ -22,20 +22,13 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Post> findByOwnerTypeAndOwnerId(OwnerType ownerType, UUID ownerId);
 
     @Query("""
-        SELECT p FROM Post p
-        WHERE p.status = :status
-        AND EXISTS (
-            SELECT 1 FROM Follow f
-            WHERE f.follower = :follower
-            AND (
-                (f.targetType = kg.bishkek.fucent.fusent.enums.FollowTargetType.MERCHANT
-                 AND p.ownerType = kg.bishkek.fucent.fusent.enums.OwnerType.MERCHANT
-                 AND p.ownerId = f.targetId)
-                OR (f.targetType = kg.bishkek.fucent.fusent.enums.FollowTargetType.USER
-                    AND p.ownerType = kg.bishkek.fucent.fusent.enums.OwnerType.USER
-                    AND p.ownerId = f.targetId)
-            )
+        SELECT DISTINCT p FROM Post p
+        JOIN Follow f ON (
+            (f.targetType = 'MERCHANT' AND p.ownerType = 'MERCHANT' AND p.ownerId = f.targetId)
+            OR (f.targetType = 'USER' AND p.ownerType = 'USER' AND p.ownerId = f.targetId)
         )
+        WHERE f.follower = :follower
+        AND p.status = :status
         ORDER BY p.createdAt DESC
         """)
     Page<Post> findFollowingFeedByUser(
