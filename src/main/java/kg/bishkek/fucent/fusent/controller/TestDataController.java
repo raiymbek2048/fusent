@@ -47,7 +47,7 @@ public class TestDataController {
 
             // Находим merchant продавца
             var merchant = merchantRepository.findAll().stream()
-                .filter(m -> m.getOwner().getId().equals(seller.getId()))
+                .filter(m -> m.getOwnerUserId().equals(seller.getId()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Merchant not found"));
 
@@ -124,7 +124,7 @@ public class TestDataController {
 
             // Находим merchant
             var merchant = merchantRepository.findAll().stream()
-                .filter(m -> m.getOwner().getId().equals(seller.getId()))
+                .filter(m -> m.getOwnerUserId().equals(seller.getId()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Merchant not found"));
 
