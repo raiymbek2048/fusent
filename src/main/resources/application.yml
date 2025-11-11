@@ -100,7 +100,8 @@ logging:
   level:
     root: INFO
     kg.bishkek.fucent: ${LOG_LEVEL:DEBUG}
-    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN}
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:DEBUG}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${SQL_LOG_LEVEL:TRACE}
     org.springframework: INFO
     org.springframework.kafka: INFO
   pattern:

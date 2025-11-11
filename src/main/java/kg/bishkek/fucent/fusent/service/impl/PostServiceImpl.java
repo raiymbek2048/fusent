@@ -134,7 +134,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public Page<PostResponse> getPublicFeed(Pageable pageable) {
-        return postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.ACTIVE, pageable)
+        return postRepository.findByStatus(PostStatus.ACTIVE, pageable)
             .map(this::toPostResponse);
     }
 
@@ -142,18 +142,16 @@ public class PostServiceImpl implements PostService {
     @Transactional(readOnly = true)
     public Page<PostResponse> getFollowingFeed(Pageable pageable) {
         var currentUserId = SecurityUtil.currentUserId(userRepository);
-        var currentUser = userRepository.findById(currentUserId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         // Get posts from users and merchants the current user follows
-        return postRepository.findFollowingFeedByUser(currentUser, PostStatus.ACTIVE, pageable)
+        return postRepository.findFollowingFeedByUser(currentUserId, PostStatus.ACTIVE, pageable)
             .map(this::toPostResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PostResponse> getPostsByOwner(OwnerType ownerType, UUID ownerId, Pageable pageable) {
-        return postRepository.findByOwnerTypeAndOwnerIdAndStatusOrderByCreatedAtDesc(
+        return postRepository.findByOwnerTypeAndOwnerIdAndStatus(
             ownerType, ownerId, PostStatus.ACTIVE, pageable
         ).map(this::toPostResponse);
     }
@@ -169,7 +167,7 @@ public class PostServiceImpl implements PostService {
         UUID merchantId = shop.getMerchant().getId();
 
         // Return posts owned by the merchant
-        return postRepository.findByOwnerTypeAndOwnerIdAndStatusOrderByCreatedAtDesc(
+        return postRepository.findByOwnerTypeAndOwnerIdAndStatus(
             OwnerType.MERCHANT, merchantId, PostStatus.ACTIVE, pageable
         ).map(this::toPostResponse);
     }
