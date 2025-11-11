@@ -54,13 +54,24 @@ export default function ProductPage() {
       return
     }
 
-    if (!selectedVariant && product.variants && product.variants.length > 0) {
+    // Check if product has variants
+    if (!product.variants || product.variants.length === 0) {
+      alert('Этот товар временно недоступен для покупки. Пожалуйста, свяжитесь с продавцом.')
+      return
+    }
+
+    if (!selectedVariant && product.variants.length > 0) {
+      alert('Выберите вариант товара')
+      return
+    }
+
+    if (!selectedVariant) {
       alert('Выберите вариант товара')
       return
     }
 
     addToCart.mutate({
-      variantId: selectedVariant || product.id,
+      variantId: selectedVariant,
       qty: quantity,
     })
   }
@@ -70,11 +81,14 @@ export default function ProductPage() {
       router.push('/login')
       return
     }
-    if (!shop?.sellerId) {
-      alert('Информация о продавце недоступна')
+    // Try to get sellerId from different possible sources
+    const sellerId = shop?.sellerId || shop?.merchantId
+    if (!sellerId) {
+      console.error('Shop data:', shop)
+      alert('Информация о продавце недоступна. Пожалуйста, попробуйте позже.')
       return
     }
-    router.push(`/chat?sellerId=${shop.sellerId}`)
+    router.push(`/chat?sellerId=${sellerId}`)
   }
 
   return (
@@ -236,11 +250,11 @@ export default function ProductPage() {
               <Button
                 fullWidth
                 onClick={handleAddToCart}
-                disabled={!inStock || addToCart.isPending}
+                disabled={!inStock || addToCart.isPending || !hasVariants || (hasVariants && !selectedVariant)}
                 isLoading={addToCart.isPending}
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                Добавить в корзину
+                {!hasVariants ? 'Товар недоступен' : 'Добавить в корзину'}
               </Button>
               <Button variant="outline" size="md">
                 <Heart className="w-5 h-5" />
