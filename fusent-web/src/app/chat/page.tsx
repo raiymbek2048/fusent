@@ -42,8 +42,8 @@ function ChatPageContent() {
             onSuccess: (conv) => {
               setSelectedConversationId(conv.conversationId)
               setIsCreatingConversation(false)
-              // Remove sellerId from URL to prevent re-triggering
-              router.replace('/chat')
+              // Don't remove sellerId from URL immediately - keep it until user sends first message
+              // This ensures the conversation stays visible even if it's not in the list yet
             },
             onError: () => {
               setIsCreatingConversation(false)
@@ -95,8 +95,13 @@ function ChatPageContent() {
 
     if (!messageText.trim() || !selectedConversationId) return
 
-    // Find the other user's ID from the selected conversation
-    const otherUserId = conversations?.find(c => c.conversationId === selectedConversationId)?.otherUserId
+    // Find the other user's ID from the selected conversation or use sellerId from URL
+    let otherUserId = conversations?.find(c => c.conversationId === selectedConversationId)?.otherUserId
+
+    // If conversation not found in list but sellerId is in URL, use that
+    if (!otherUserId && sellerId) {
+      otherUserId = sellerId
+    }
 
     if (!otherUserId) return
 
@@ -108,12 +113,19 @@ function ChatPageContent() {
       {
         onSuccess: () => {
           setMessageText('')
+          // After first message is sent, remove sellerId from URL
+          if (sellerId) {
+            router.replace('/chat')
+          }
         },
       }
     )
   }
 
   const selectedConversation = conversations?.find(c => c.conversationId === selectedConversationId)
+
+  // Show chat interface if either conversation is selected OR new chat is being created with sellerId
+  const showChatInterface = selectedConversation || (selectedConversationId && sellerId)
 
   return (
     <MainLayout>
@@ -125,6 +137,17 @@ function ChatPageContent() {
               <h2 className="text-xl font-semibold">Сообщения</h2>
             </div>
             <div className="flex-grow overflow-y-auto">
+              {/* Show new conversation at the top if it's being created */}
+              {selectedConversationId && sellerId && !selectedConversation && (
+                <div className="border-b border-gray-200">
+                  <div className="w-full px-6 py-4 bg-blue-50">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-medium text-gray-900">Новый чат с продавцом</p>
+                    </div>
+                    <p className="text-sm text-gray-500">Начните диалог</p>
+                  </div>
+                </div>
+              )}
               {conversations && conversations.length > 0 ? (
                 <div className="divide-y divide-gray-200">
                   {conversations.map((conv) => {
@@ -153,7 +176,7 @@ function ChatPageContent() {
                     )
                   })}
                 </div>
-              ) : (
+              ) : !sellerId && (
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
                   <MessageCircle className="w-16 h-16 text-gray-300 mb-4" />
                   <p className="text-gray-600 mb-2">Нет активных чатов</p>
@@ -167,12 +190,12 @@ function ChatPageContent() {
 
           {/* Messages */}
           <Card className="md:col-span-2 overflow-hidden flex flex-col">
-            {selectedConversation ? (
+            {showChatInterface ? (
               <>
                 {/* Chat Header */}
                 <div className="px-6 py-4 border-b border-gray-200">
                   <h3 className="font-semibold text-gray-900">
-                    {selectedConversation.otherUserName}
+                    {selectedConversation ? selectedConversation.otherUserName : 'Новый чат с продавцом'}
                   </h3>
                 </div>
 
