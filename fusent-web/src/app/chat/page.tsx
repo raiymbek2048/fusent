@@ -18,16 +18,17 @@ function ChatPageContent() {
   const user = useAuthStore((state) => state.user)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [messageText, setMessageText] = useState('')
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { data: conversations, isLoading: conversationsLoading, isError: conversationsError } = useConversations(user?.id)
   const { data: messages, isLoading: messagesLoading } = useMessages(selectedConversationId || undefined)
   const sendMessage = useSendMessage()
-  const createConversation = useCreateConversation()
+  const createConversation = useCreateConversation(user?.id)
 
   // Auto-create conversation if sellerId is provided
   useEffect(() => {
-    if (sellerId && sellerId !== 'undefined' && !conversationsLoading && user) {
+    if (sellerId && sellerId !== 'undefined' && !conversationsLoading && user && !isCreatingConversation) {
       // Validate that sellerId is a valid UUID format
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
       if (uuidRegex.test(sellerId)) {
@@ -35,17 +36,24 @@ function ChatPageContent() {
         const existingConv = conversations?.find(c => c.otherUserId === sellerId)
         if (existingConv) {
           setSelectedConversationId(existingConv.conversationId)
-        } else {
+        } else if (!isCreatingConversation) {
+          setIsCreatingConversation(true)
           createConversation.mutate(sellerId, {
             onSuccess: (conv) => {
               setSelectedConversationId(conv.conversationId)
+              setIsCreatingConversation(false)
+              // Remove sellerId from URL to prevent re-triggering
+              router.replace('/chat')
             },
+            onError: () => {
+              setIsCreatingConversation(false)
+            }
           })
         }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sellerId, conversationsLoading, user])
+  }, [sellerId, conversationsLoading, user, conversations])
 
   // Auto-select first conversation if only one exists
   useEffect(() => {
@@ -64,8 +72,8 @@ function ChatPageContent() {
     return null
   }
 
-  if (conversationsLoading) {
-    return <LoadingScreen message="Загрузка чатов..." />
+  if (conversationsLoading || isCreatingConversation) {
+    return <LoadingScreen message={isCreatingConversation ? "Создание чата..." : "Загрузка чатов..."} />
   }
 
   if (conversationsError) {
@@ -148,7 +156,10 @@ function ChatPageContent() {
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
                   <MessageCircle className="w-16 h-16 text-gray-300 mb-4" />
-                  <p className="text-gray-600">Нет активных чатов</p>
+                  <p className="text-gray-600 mb-2">Нет активных чатов</p>
+                  <p className="text-sm text-gray-500">
+                    Чтобы начать общение с продавцом, перейдите на страницу товара и нажмите "Написать продавцу"
+                  </p>
                 </div>
               )}
             </div>
