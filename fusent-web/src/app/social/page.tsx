@@ -23,7 +23,12 @@ interface ShopRecommendationProps {
 }
 
 function ShopRecommendation({ shop, isLoggedIn }: ShopRecommendationProps) {
+  // Debug: log the shop data
+  console.log('ShopRecommendation received shop:', shop)
+  console.log('Shop merchantId:', shop.merchantId, 'Type:', typeof shop.merchantId)
+
   const merchantId = shop.merchantId
+  // Only enable following check if merchantId exists
   const { data: isFollowing } = useIsFollowing('MERCHANT', merchantId, { enabled: isLoggedIn && !!merchantId })
   const { mutate: followShop, isPending: isFollowPending } = useFollow()
   const { mutate: unfollowShop, isPending: isUnfollowPending } = useUnfollow()
@@ -35,8 +40,11 @@ function ShopRecommendation({ shop, isLoggedIn }: ShopRecommendationProps) {
     }
 
     if (!merchantId) {
-      toast.error('Ошибка: не указан ID продавца')
+      // Log error but don't show toast to avoid annoying users
       console.error('Missing merchantId for shop:', shop)
+      console.error('Shop object keys:', Object.keys(shop))
+      console.error('Full shop data:', JSON.stringify(shop, null, 2))
+      toast.error('Не удалось подписаться на этот магазин')
       return
     }
 
@@ -54,6 +62,9 @@ function ShopRecommendation({ shop, isLoggedIn }: ShopRecommendationProps) {
   }
 
   const isPending = isFollowPending || isUnfollowPending
+
+  // Don't show follow button if merchantId is missing
+  const canFollow = isLoggedIn && !!merchantId
 
   return (
     <div className="flex items-center justify-between">
@@ -76,7 +87,7 @@ function ShopRecommendation({ shop, isLoggedIn }: ShopRecommendationProps) {
           </p>
         </div>
       </div>
-      {isLoggedIn && (
+      {canFollow && (
         <button
           onClick={handleToggleFollow}
           disabled={isPending}

@@ -121,7 +121,15 @@ export const useRecommendedShops = (limit: number = 5) => {
           sort: 'rating,desc'
         }
       })
-      return response.data.content
+      // Filter out shops without merchantId (shouldn't happen, but just in case)
+      const shops = response.data.content.filter(shop => {
+        if (!shop.merchantId) {
+          console.warn('Shop without merchantId found:', shop)
+          return false
+        }
+        return true
+      })
+      return shops
     },
   })
 }
