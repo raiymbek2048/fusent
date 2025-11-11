@@ -18,31 +18,32 @@ type FeedTab = 'explore' | 'following'
 
 interface ShopRecommendationProps {
   shop: Shop
-  onFollow: (shopId: string) => void
-  onUnfollow: (shopId: string) => void
   isLoggedIn: boolean
 }
 
-function ShopRecommendation({ shop, onFollow, onUnfollow, isLoggedIn }: ShopRecommendationProps) {
+function ShopRecommendation({ shop, isLoggedIn }: ShopRecommendationProps) {
   const merchantId = shop.merchantId || shop.ownerId
   const { data: isFollowing } = useIsFollowing('MERCHANT', merchantId || '', { enabled: isLoggedIn && !!merchantId })
-  const [isProcessing, setIsProcessing] = useState(false)
+  const { mutate: followShop, isPending: isFollowPending } = useFollow()
+  const { mutate: unfollowShop, isPending: isUnfollowPending } = useUnfollow()
 
-  const handleToggleFollow = async () => {
-    if (!merchantId || !isLoggedIn || isProcessing) return
+  const handleToggleFollow = () => {
+    if (!merchantId || !isLoggedIn) return
 
-    setIsProcessing(true)
-    try {
-      if (isFollowing) {
-        onUnfollow(merchantId)
-      } else {
-        onFollow(merchantId)
-      }
-    } finally {
-      // Reset after a delay to prevent rapid clicks
-      setTimeout(() => setIsProcessing(false), 500)
+    if (isFollowing) {
+      unfollowShop({
+        targetType: 'MERCHANT',
+        targetId: merchantId
+      })
+    } else {
+      followShop({
+        targetType: 'MERCHANT',
+        targetId: merchantId
+      })
     }
   }
+
+  const isPending = isFollowPending || isUnfollowPending
 
   return (
     <div className="flex items-center justify-between">
@@ -68,14 +69,14 @@ function ShopRecommendation({ shop, onFollow, onUnfollow, isLoggedIn }: ShopReco
       {isLoggedIn && (
         <button
           onClick={handleToggleFollow}
-          disabled={isProcessing}
-          className={`text-xs font-semibold transition-colors disabled:opacity-50 ${
+          disabled={isPending}
+          className={`text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
             isFollowing
               ? 'text-gray-600 hover:text-gray-800'
               : 'text-blue-600 hover:text-blue-700'
           }`}
         >
-          {isFollowing ? 'Отписаться' : 'Подписаться'}
+          {isPending ? 'Загрузка...' : isFollowing ? 'Отписаться' : 'Подписаться'}
         </button>
       )}
     </div>
@@ -103,8 +104,6 @@ export default function SocialPage() {
 
   const { mutate: likePost } = useLikePost()
   const { mutate: unlikePost } = useUnlikePost()
-  const { mutate: followShop } = useFollow()
-  const { mutate: unfollowShop } = useUnfollow()
 
   const data = activeTab === 'explore' ? exploreData : followingData
   const isLoading = activeTab === 'explore' ? isLoadingExplore : isLoadingFollowing
@@ -115,22 +114,6 @@ export default function SocialPage() {
     } else {
       likePost(postId)
     }
-  }
-
-  const handleFollowShop = (shopId: string) => {
-    if (!user) return
-    followShop({
-      targetType: 'MERCHANT',
-      targetId: shopId
-    })
-  }
-
-  const handleUnfollowShop = (shopId: string) => {
-    if (!user) return
-    unfollowShop({
-      targetType: 'MERCHANT',
-      targetId: shopId
-    })
   }
 
   return (
@@ -448,8 +431,6 @@ export default function SocialPage() {
                     <ShopRecommendation
                       key={shop.id}
                       shop={shop}
-                      onFollow={handleFollowShop}
-                      onUnfollow={handleUnfollowShop}
                       isLoggedIn={!!user}
                     />
                   ))
