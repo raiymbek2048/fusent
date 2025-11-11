@@ -19,6 +19,7 @@ function ChatPageContent() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [messageText, setMessageText] = useState('')
   const [isCreatingConversation, setIsCreatingConversation] = useState(false)
+  const [newChatOtherUserId, setNewChatOtherUserId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { data: conversations, isLoading: conversationsLoading, isError: conversationsError } = useConversations(user?.id)
@@ -29,27 +30,36 @@ function ChatPageContent() {
   // Auto-create conversation if sellerId is provided
   useEffect(() => {
     if (sellerId && sellerId !== 'undefined' && !conversationsLoading && user && !isCreatingConversation) {
+      console.log('Processing sellerId:', sellerId)
       // Validate that sellerId is a valid UUID format
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
       if (uuidRegex.test(sellerId)) {
         // Check if conversation with this seller already exists
         const existingConv = conversations?.find(c => c.otherUserId === sellerId)
         if (existingConv) {
+          console.log('Found existing conversation:', existingConv.conversationId)
           setSelectedConversationId(existingConv.conversationId)
+          setNewChatOtherUserId(null) // Clear newChat state
         } else if (!isCreatingConversation) {
+          console.log('Creating new conversation with seller:', sellerId)
           setIsCreatingConversation(true)
+          setNewChatOtherUserId(sellerId) // Store the seller ID for new chat
           createConversation.mutate(sellerId, {
             onSuccess: (conv) => {
+              console.log('Conversation created successfully:', conv)
               setSelectedConversationId(conv.conversationId)
               setIsCreatingConversation(false)
-              // Don't remove sellerId from URL immediately - keep it until user sends first message
-              // This ensures the conversation stays visible even if it's not in the list yet
+              // Keep newChatOtherUserId set so interface stays visible
             },
-            onError: () => {
+            onError: (error) => {
+              console.error('Failed to create conversation:', error)
               setIsCreatingConversation(false)
+              setNewChatOtherUserId(null)
             }
           })
         }
+      } else {
+        console.error('Invalid sellerId format:', sellerId)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,13 +105,15 @@ function ChatPageContent() {
 
     if (!messageText.trim() || !selectedConversationId) return
 
-    // Find the other user's ID from the selected conversation or use sellerId from URL
+    // Find the other user's ID from the selected conversation or use newChatOtherUserId
     let otherUserId = conversations?.find(c => c.conversationId === selectedConversationId)?.otherUserId
 
-    // If conversation not found in list but sellerId is in URL, use that
-    if (!otherUserId && sellerId) {
-      otherUserId = sellerId
+    // If conversation not found in list but we have newChatOtherUserId, use that
+    if (!otherUserId && newChatOtherUserId) {
+      otherUserId = newChatOtherUserId
     }
+
+    console.log('Sending message to:', otherUserId)
 
     if (!otherUserId) return
 
@@ -112,8 +124,10 @@ function ChatPageContent() {
       },
       {
         onSuccess: () => {
+          console.log('Message sent successfully')
           setMessageText('')
-          // After first message is sent, remove sellerId from URL
+          // After first message is sent, clear newChatOtherUserId and remove sellerId from URL
+          setNewChatOtherUserId(null)
           if (sellerId) {
             router.replace('/chat')
           }
@@ -124,8 +138,16 @@ function ChatPageContent() {
 
   const selectedConversation = conversations?.find(c => c.conversationId === selectedConversationId)
 
-  // Show chat interface if either conversation is selected OR new chat is being created with sellerId
-  const showChatInterface = selectedConversation || (selectedConversationId && sellerId)
+  // Show chat interface if either conversation is selected OR we have a new chat
+  const showChatInterface = selectedConversation || (selectedConversationId && newChatOtherUserId)
+
+  console.log('Chat state:', {
+    selectedConversationId,
+    newChatOtherUserId,
+    showChatInterface,
+    conversationsCount: conversations?.length,
+    sellerId
+  })
 
   return (
     <MainLayout>
@@ -138,7 +160,7 @@ function ChatPageContent() {
             </div>
             <div className="flex-grow overflow-y-auto">
               {/* Show new conversation at the top if it's being created */}
-              {selectedConversationId && sellerId && !selectedConversation && (
+              {newChatOtherUserId && !selectedConversation && (
                 <div className="border-b border-gray-200">
                   <div className="w-full px-6 py-4 bg-blue-50">
                     <div className="flex items-center justify-between mb-1">
@@ -176,7 +198,7 @@ function ChatPageContent() {
                     )
                   })}
                 </div>
-              ) : !sellerId && (
+              ) : !newChatOtherUserId && (
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
                   <MessageCircle className="w-16 h-16 text-gray-300 mb-4" />
                   <p className="text-gray-600 mb-2">Нет активных чатов</p>
