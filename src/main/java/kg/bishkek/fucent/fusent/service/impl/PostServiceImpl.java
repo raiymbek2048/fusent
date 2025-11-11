@@ -34,9 +34,30 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public PostResponse createPost(CreatePostRequest request) {
+        // Determine owner type and ID based on current user's role
+        var currentUserId = SecurityUtil.currentUserId(userRepository);
+        var currentUser = userRepository.findById(currentUserId)
+            .orElseThrow(() -> new IllegalArgumentException("Current user not found"));
+
+        OwnerType ownerType;
+        UUID ownerId;
+
+        if (currentUser.getRole() == kg.bishkek.fucent.fusent.enums.Role.SELLER) {
+            // Sellers post as MERCHANT
+            var merchant = merchantRepository.findByOwnerUserId(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Merchant not found for seller"));
+
+            ownerType = OwnerType.MERCHANT;
+            ownerId = merchant.getId();
+        } else {
+            // BUYER and ADMIN post as USER
+            ownerType = OwnerType.USER;
+            ownerId = currentUserId;
+        }
+
         var post = Post.builder()
-            .ownerType(request.ownerType())
-            .ownerId(request.ownerId())
+            .ownerType(ownerType)
+            .ownerId(ownerId)
             .text(request.text())
             .postType(request.postType())
             .geoLat(request.geoLat())

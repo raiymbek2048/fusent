@@ -13,8 +13,8 @@ public class SocialDtos {
 
     // Post DTOs
     public record CreatePostRequest(
-        @NotNull OwnerType ownerType,
-        @NotNull UUID ownerId,
+        OwnerType ownerType, // Optional - automatically determined from user role
+        UUID ownerId, // Optional - automatically determined from user role
         String text,
         @NotNull PostType postType,
         BigDecimal geoLat,
