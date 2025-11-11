@@ -2,6 +2,7 @@ package kg.bishkek.fucent.fusent.model;
 
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,7 +23,7 @@ public class ProductVariant {
     @Id @GeneratedValue
     private UUID id;
 
-
+    @JsonIgnore // Prevent infinite recursion during JSON serialization
     @ManyToOne(optional = false)
     private Product product;
 
