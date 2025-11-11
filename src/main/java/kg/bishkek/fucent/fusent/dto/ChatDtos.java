@@ -8,6 +8,10 @@ import java.util.UUID;
 
 public class ChatDtos {
 
+    public record CreateConversationRequest(
+        @NotNull UUID recipientId
+    ) {}
+
     public record SendMessageRequest(
         @NotNull UUID recipientId,
         @NotBlank String messageText

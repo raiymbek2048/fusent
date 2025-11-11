@@ -303,29 +303,30 @@ export interface FollowRequest {
 
 // Chat Types
 export interface Conversation {
-  id: string
-  buyerId: string
-  sellerId: string
-  lastMessageAt: string
+  conversationId: string
+  otherUserId: string
+  otherUserName: string
+  lastMessage?: string
+  lastMessageAt?: string
   unreadCount: number
-  buyer?: User
-  seller?: User
 }
 
 export interface Message {
   id: string
   conversationId: string
   senderId: string
-  content: string
-  mediaUrl?: string
+  senderName: string
+  recipientId: string
+  recipientName: string
+  messageText: string
   isRead: boolean
+  isFlagged: boolean
   createdAt: string
 }
 
 export interface SendMessageRequest {
-  conversationId: string
-  content: string
-  mediaUrl?: string
+  recipientId: string
+  messageText: string
 }
 
 // Pagination Types

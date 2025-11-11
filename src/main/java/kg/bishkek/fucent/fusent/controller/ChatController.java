@@ -23,6 +23,13 @@ import java.util.UUID;
 public class ChatController {
     private final ChatService chatService;
 
+    @PostMapping("/conversations")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Create or get a conversation with another user")
+    public ConversationResponse createConversation(@Valid @RequestBody CreateConversationRequest request) {
+        return chatService.createOrGetConversation(request);
+    }
+
     @PostMapping("/messages")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Send a chat message")

@@ -2,6 +2,7 @@ package kg.bishkek.fucent.fusent.model;
 
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -44,6 +45,7 @@ public class ProductVariant {
 
     @Column(nullable = false)
     @Builder.Default
+    @JsonProperty("stockQuantity")
     private Integer stockQty = 0;
 
 
