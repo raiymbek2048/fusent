@@ -13,4 +13,6 @@ public interface ShopService {
     Page<ShopResponse> getAllShops(Pageable pageable);
     Page<ShopResponse> searchShops(String query, Pageable pageable);
     List<ShopResponse> getShopsBySeller(UUID sellerId);
+    ShopResponse updateShop(UUID id, UpdateShopRequest request);
+    void deleteShop(UUID id);
 }
