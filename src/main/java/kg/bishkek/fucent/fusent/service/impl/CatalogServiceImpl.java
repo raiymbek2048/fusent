@@ -50,6 +50,7 @@ public class CatalogServiceImpl implements CatalogService {
         var defaultVariant = ProductVariant.builder()
                 .product(p)
                 .sku("DEFAULT-" + p.getId())
+                .name("Стандартный")
                 .price(req.basePrice())
                 .stockQty(req.initialStock() != null ? req.initialStock() : 0)
                 .build();

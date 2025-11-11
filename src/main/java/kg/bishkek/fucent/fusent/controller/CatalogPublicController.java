@@ -38,7 +38,14 @@ public class CatalogPublicController {
     }
 
     @GetMapping("/products/{id}")
-    public Product product(@PathVariable UUID id) { return products.findById(id).orElseThrow(); }
+    public Product product(@PathVariable UUID id) {
+        Product product = products.findById(id).orElseThrow();
+        // Force load variants to avoid lazy loading issues
+        if (product.getVariants() != null) {
+            product.getVariants().size();
+        }
+        return product;
+    }
 
     @GetMapping("/products/{id}/variants")
     public org.springframework.data.domain.Page<ProductVariant> variants(
