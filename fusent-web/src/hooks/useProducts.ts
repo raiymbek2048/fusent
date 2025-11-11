@@ -74,3 +74,44 @@ export const useCreateProduct = () => {
     },
   })
 }
+
+// Update product
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateProductRequest> }): Promise<Product> => {
+      const response = await api.put<Product>(`/catalog/products/${id}`, data)
+      return response.data
+    },
+    onSuccess: (product) => {
+      queryClient.invalidateQueries({ queryKey: ['product', product.id] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      queryClient.invalidateQueries({ queryKey: ['products', 'shop', product.shopId] })
+      toast.success('Товар обновлен!')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Ошибка обновления товара'
+      toast.error(message)
+    },
+  })
+}
+
+// Delete product
+export const useDeleteProduct = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (productId: string): Promise<void> => {
+      await api.delete(`/catalog/products/${productId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success('Товар удален!')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Ошибка удаления товара'
+      toast.error(message)
+    },
+  })
+}

@@ -41,6 +41,17 @@ public class CatalogController {
     @Operation(summary = "Create a new product")
     public Product createProduct(@Valid @RequestBody ProductCreateRequest req) { return service.createProduct(req); }
 
+    @PutMapping("/products/{id}")
+    @Operation(summary = "Update a product")
+    public Product updateProduct(@PathVariable String id, @Valid @RequestBody ProductCreateRequest req) {
+        return service.updateProduct(id, req);
+    }
+
+    @DeleteMapping("/products/{id}")
+    @Operation(summary = "Delete a product")
+    public void deleteProduct(@PathVariable String id) {
+        service.deleteProduct(id);
+    }
 
     @PostMapping("/variants")
     @Operation(summary = "Create a new product variant")

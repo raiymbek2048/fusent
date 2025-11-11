@@ -10,6 +10,10 @@ import org.springframework.data.domain.Pageable;
 public interface CatalogService {
     Product createProduct(ProductCreateRequest req);
 
+    Product updateProduct(String id, ProductCreateRequest req);
+
+    void deleteProduct(String id);
+
     ProductVariant createVariant(VariantCreateRequest req);
 
     Page<Product> searchProducts(String query, Pageable pageable);
