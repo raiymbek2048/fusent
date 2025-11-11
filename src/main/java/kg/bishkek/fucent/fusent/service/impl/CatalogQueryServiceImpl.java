@@ -16,10 +16,11 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     public Page<Product> search(ProductFilter f) {
         var pageable = PageRequest.of(Math.max(f.page(),0), Math.max(f.size(),1), Sort.by("name").ascending());
         Page<Product> page;
-        if (f.shopId()!=null)      page = products.findAllByShopId(f.shopId(), pageable);
-        else if (f.categoryId()!=null) page = products.findAllByCategoryId(f.categoryId(), pageable);
-        else if (f.q()!=null && !f.q().isBlank()) page = products.findAllByNameContainingIgnoreCase(f.q(), pageable);
-        else page = products.findAll(pageable);
+        // Use methods with JOIN FETCH to eagerly load variants and avoid LazyInitializationException
+        if (f.shopId()!=null)      page = products.findAllByShopIdWithVariants(f.shopId(), pageable);
+        else if (f.categoryId()!=null) page = products.findAllByCategoryIdWithVariants(f.categoryId(), pageable);
+        else if (f.q()!=null && !f.q().isBlank()) page = products.findAllByNameContainingIgnoreCaseWithVariants(f.q(), pageable);
+        else page = products.findAllWithVariants(pageable);
         return page;
     }
 }
