@@ -48,9 +48,10 @@ export const useShopPosts = (shopId: string, params?: PageRequest) => {
     queryFn: async (): Promise<PageResponse<Post>> => {
       // First get the shop to find its merchant_id
       const shopResponse = await api.get(`/shops/${shopId}`)
-      const merchantId = shopResponse.data.merchantId || shopResponse.data.ownerId
+      const merchantId = shopResponse.data.merchantId
 
       if (!merchantId) {
+        console.error('Shop has no merchantId:', shopResponse.data)
         return {
           content: [],
           totalElements: 0,

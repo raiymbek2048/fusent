@@ -13,6 +13,7 @@ import { Heart, MessageCircle, Share2, MapPin, Plus } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import { Post, Shop } from '@/types'
+import toast from 'react-hot-toast'
 
 type FeedTab = 'explore' | 'following'
 
@@ -22,13 +23,22 @@ interface ShopRecommendationProps {
 }
 
 function ShopRecommendation({ shop, isLoggedIn }: ShopRecommendationProps) {
-  const merchantId = shop.merchantId || shop.ownerId
-  const { data: isFollowing } = useIsFollowing('MERCHANT', merchantId || '', { enabled: isLoggedIn && !!merchantId })
+  const merchantId = shop.merchantId
+  const { data: isFollowing } = useIsFollowing('MERCHANT', merchantId, { enabled: isLoggedIn && !!merchantId })
   const { mutate: followShop, isPending: isFollowPending } = useFollow()
   const { mutate: unfollowShop, isPending: isUnfollowPending } = useUnfollow()
 
   const handleToggleFollow = () => {
-    if (!merchantId || !isLoggedIn) return
+    if (!isLoggedIn) {
+      toast.error('Войдите, чтобы подписаться')
+      return
+    }
+
+    if (!merchantId) {
+      toast.error('Ошибка: не указан ID продавца')
+      console.error('Missing merchantId for shop:', shop)
+      return
+    }
 
     if (isFollowing) {
       unfollowShop({

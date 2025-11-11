@@ -96,7 +96,7 @@ export default function ShopDetailPage() {
               <div className="flex items-start justify-between mb-2">
                 <h1 className="text-3xl font-bold text-gray-900">{shop.name}</h1>
                 {/* Show Add Product button if user is the shop owner */}
-                {user && (user.id === shop.ownerId || user.id === shop.sellerId) && (
+                {user && user.id === shop.sellerId && (
                   <Button
                     onClick={() => router.push(`/products/create?shopId=${shopId}`)}
                     className="flex items-center gap-2"
