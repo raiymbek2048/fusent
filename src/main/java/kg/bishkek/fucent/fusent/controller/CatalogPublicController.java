@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class CatalogPublicController {
     private final AppUserRepository users;
 
     @GetMapping("/products")
+    @Transactional(readOnly = true)
     public Page<Product> products(
             @RequestParam(required=false) UUID shopId,
             @RequestParam(required=false) UUID categoryId,
@@ -38,9 +40,14 @@ public class CatalogPublicController {
     }
 
     @GetMapping("/products/{id}")
+    @Transactional(readOnly = true)
     public Product product(@PathVariable UUID id) {
-        // Use JOIN FETCH to eagerly load variants
-        return products.findByIdWithVariants(id).orElseThrow();
+        Product p = products.findById(id).orElseThrow();
+        // Force load variants within transaction
+        if (p.getVariants() != null) {
+            p.getVariants().size();
+        }
+        return p;
     }
 
     @GetMapping("/products/{id}/variants")
@@ -54,6 +61,7 @@ public class CatalogPublicController {
 
     @GetMapping("/products/following")
     @PreAuthorize("isAuthenticated()")
+    @Transactional(readOnly = true)
     public Page<Product> followingProducts(
             @RequestParam(defaultValue="0") int page,
             @RequestParam(defaultValue="20") int size
@@ -62,11 +70,19 @@ public class CatalogPublicController {
         var currentUser = users.findById(currentUserId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Use JOIN FETCH to eagerly load variants
-        return products.findProductsFromFollowedMerchantsWithVariants(
+        Page<Product> productPage = products.findProductsFromFollowedMerchants(
             currentUser,
             PageRequest.of(page, size, Sort.by("createdAt").descending())
         );
+
+        // Force load variants within transaction
+        productPage.getContent().forEach(product -> {
+            if (product.getVariants() != null) {
+                product.getVariants().size();
+            }
+        });
+
+        return productPage;
     }
 }
 
