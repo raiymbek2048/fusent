@@ -39,12 +39,8 @@ public class CatalogPublicController {
 
     @GetMapping("/products/{id}")
     public Product product(@PathVariable UUID id) {
-        Product product = products.findById(id).orElseThrow();
-        // Force load variants to avoid lazy loading issues
-        if (product.getVariants() != null) {
-            product.getVariants().size();
-        }
-        return product;
+        // Use JOIN FETCH to eagerly load variants
+        return products.findByIdWithVariants(id).orElseThrow();
     }
 
     @GetMapping("/products/{id}/variants")
@@ -66,7 +62,8 @@ public class CatalogPublicController {
         var currentUser = users.findById(currentUserId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        return products.findProductsFromFollowedMerchants(
+        // Use JOIN FETCH to eagerly load variants
+        return products.findProductsFromFollowedMerchantsWithVariants(
             currentUser,
             PageRequest.of(page, size, Sort.by("createdAt").descending())
         );
