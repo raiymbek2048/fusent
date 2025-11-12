@@ -53,4 +53,10 @@ public class ProductVariant {
 
     @UpdateTimestamp
     private Instant updatedAt;
+
+    // Add productId for JSON serialization
+    @JsonProperty("productId")
+    public UUID getProductId() {
+        return product != null ? product.getId() : null;
+    }
 }

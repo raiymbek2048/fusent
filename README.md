@@ -40,7 +40,7 @@ cd fusent
 ### 2. Запуск инфраструктуры (PostgreSQL, Redis, Kafka, MinIO)
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Это запустит:
@@ -53,7 +53,7 @@ docker-compose up -d
 ### 3. Проверка статуса контейнеров
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 Все контейнеры должны быть в статусе `Up` и `healthy`.
@@ -142,7 +142,7 @@ fusent/
 │   │       ├── application.yml    # Основные настройки
 │   │       └── db/migration/      # Flyway миграции
 │   └── test/                      # Тесты
-├── docker-compose.yml             # Docker инфраструктура
+├── docker-compose.yml             # Docker инфраструктура (используйте docker compose)
 ├── .env.example                   # Пример переменных окружения
 ├── pom.xml                        # Maven конфигурация
 └── README.md                      # Этот файл
@@ -302,7 +302,7 @@ export SPRING_PROFILE=prod
 
 1. Импортируйте проект как Maven проект
 2. Убедитесь, что используется Java 21
-3. Запустите `docker-compose up -d` для инфраструктуры
+3. Запустите `docker compose up -d` для инфраструктуры
 4. Запустите `FusentApplication.java`
 
 ### Горячая перезагрузка (Spring DevTools)
@@ -338,13 +338,13 @@ export SQL_LOG_LEVEL=DEBUG
 ### Остановка инфраструктуры
 ```bash
 # Остановить контейнеры
-docker-compose stop
+docker compose stop
 
 # Остановить и удалить контейнеры
-docker-compose down
+docker compose down
 
 # Удалить все (включая volumes с данными)
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Troubleshooting
@@ -354,14 +354,14 @@ docker-compose down -v
 **Решение:**
 ```bash
 # Проверьте статус контейнера
-docker-compose ps postgres
+docker compose ps postgres
 
 # Проверьте логи
-docker-compose logs postgres
+docker compose logs postgres
 
 # Пересоздайте контейнер
-docker-compose down
-docker-compose up -d postgres
+docker compose down
+docker compose up -d postgres
 ```
 
 ### Проблема: Flyway миграции не применяются
@@ -372,8 +372,8 @@ docker-compose up -d postgres
 # Убедитесь что spring.flyway.enabled=true
 
 # Очистите БД и примените миграции заново
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 ./mvnw spring-boot:run
 ```
 
@@ -382,12 +382,12 @@ docker-compose up -d
 **Решение:**
 ```bash
 # Kafka требует Zookeeper
-docker-compose up -d zookeeper
+docker compose up -d zookeeper
 # Подождите 10-15 секунд
-docker-compose up -d kafka
+docker compose up -d kafka
 
 # Проверьте логи
-docker-compose logs kafka
+docker compose logs kafka
 ```
 
 ### Проблема: MinIO buckets не создаются
@@ -395,8 +395,8 @@ docker-compose logs kafka
 **Решение:**
 ```bash
 # Пересоздайте minio-init
-docker-compose restart minio-init
-docker-compose logs minio-init
+docker compose restart minio-init
+docker compose logs minio-init
 ```
 
 ## Участие в разработке

@@ -53,7 +53,6 @@ public class Product {
     private Instant createdAt;
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
-    @JsonIgnore
     private List<ProductVariant> variants;
 
     // Add shopId and categoryId for JSON serialization
