@@ -56,7 +56,7 @@ public class CatalogPublicController {
             @RequestParam(defaultValue="0") int page,
             @RequestParam(defaultValue="20") int size
     ) {
-        return variants.findAllByProductId(id, PageRequest.of(page, size));
+        return variants.findAllByProduct_Id(id, PageRequest.of(page, size));
     }
 
     @GetMapping("/products/following")
