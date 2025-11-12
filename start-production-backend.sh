@@ -2,47 +2,45 @@
 
 set -e
 
-echo "=== Starting Production Backend ==="
+echo "=== Starting Production Backend (Docker) ==="
 echo ""
 
 # Navigate to the project directory
 cd ~/fusent
 
-echo "1. Loading environment variables..."
-export $(grep -v '^#' .env.production | grep -v '^$' | xargs)
-
-# Set JAVA_HOME
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-export PATH=$JAVA_HOME/bin:$PATH
+echo "1. Stopping existing backend container..."
+docker-compose stop backend || echo "Backend container not running"
+docker-compose rm -f backend || echo "No backend container to remove"
 
 echo ""
-echo "2. Building the application..."
-./mvnw clean package -DskipTests
+echo "2. Rebuilding backend Docker image..."
+docker-compose build backend
 
 echo ""
-echo "3. Stopping existing backend if running..."
-pkill -f "fusent-0.0.1-SNAPSHOT.jar" || echo "No existing backend process found"
+echo "3. Starting backend container..."
+docker-compose up -d backend
 
 echo ""
-echo "4. Starting the backend..."
-nohup java -jar target/fusent-0.0.1-SNAPSHOT.jar \
-  --spring.profiles.active=production \
-  > backend.log 2>&1 &
-
-echo "Backend started with PID: $!"
+echo "4. Waiting for backend to start..."
+sleep 15
 
 echo ""
-echo "5. Waiting for backend to start..."
-sleep 10
+echo "5. Checking backend container status..."
+docker-compose ps backend
 
 echo ""
-echo "6. Checking if backend is running..."
-ps aux | grep "fusent-0.0.1-SNAPSHOT.jar" | grep -v grep
+echo "6. Checking backend health..."
+docker inspect fusent-backend --format='{{.State.Health.Status}}' || echo "Health check not ready yet"
 
 echo ""
 echo "7. Checking backend logs..."
-tail -n 30 backend.log
+docker-compose logs --tail=30 backend
 
 echo ""
 echo "=== Production backend start complete! ==="
-echo "Backend should be accessible at http://85.113.27.42:901"
+echo "Backend should be accessible at http://85.113.27.42:8080"
+echo ""
+echo "Useful commands:"
+echo "  - View logs: docker-compose logs -f backend"
+echo "  - Check status: docker-compose ps"
+echo "  - Restart: docker-compose restart backend"
