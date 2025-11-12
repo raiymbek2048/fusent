@@ -10,7 +10,7 @@ import java.util.UUID;
 
 
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, UUID> {
-    boolean existsByProductIdAndSkuIgnoreCase(UUID productId, String sku);
-    Page<ProductVariant> findAllByProductId(UUID productId, Pageable pageable);
+    boolean existsByProduct_IdAndSkuIgnoreCase(UUID productId, String sku);
+    Page<ProductVariant> findAllByProduct_Id(UUID productId, Pageable pageable);
 
 }
