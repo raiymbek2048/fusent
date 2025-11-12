@@ -13,7 +13,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, isOwner, onEdit, onDelete }: ProductCardProps) {
   const user = useAuthStore((state) => state.user)
-  const mainImage = product.images?.[0]?.imageUrl
+  const mainImage = product.imageUrl
   const [showActions, setShowActions] = useState(false)
 
   // Check if current user is the owner (via shop)

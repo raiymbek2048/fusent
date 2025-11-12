@@ -44,6 +44,7 @@ function CreateProductPageContent() {
         description: formData.description || undefined,
         basePrice: parseFloat(formData.basePrice) || 0,
         initialStock: formData.initialStock ? parseInt(formData.initialStock) : undefined,
+        imageUrl: formData.imageUrl || undefined,
       })
       router.push(`/shops/${shopId}`)
     } catch (error) {

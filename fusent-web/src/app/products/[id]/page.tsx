@@ -115,9 +115,9 @@ export default function ProductPage() {
           {/* Product Images */}
           <div>
             <div className="aspect-square relative bg-gray-100 rounded-lg overflow-hidden">
-              {product.images && product.images.length > 0 ? (
+              {product.imageUrl ? (
                 <Image
-                  src={product.images[0].imageUrl}
+                  src={product.imageUrl}
                   alt={product.name}
                   fill
                   className="object-cover"
@@ -128,22 +128,6 @@ export default function ProductPage() {
                 </div>
               )}
             </div>
-
-            {/* Thumbnails */}
-            {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2 mt-4">
-                {product.images.slice(0, 4).map((img) => (
-                  <div key={img.id} className="aspect-square relative bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-75">
-                    <Image
-                      src={img.imageUrl}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Product Info */}
