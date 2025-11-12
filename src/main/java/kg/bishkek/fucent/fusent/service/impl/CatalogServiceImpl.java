@@ -72,7 +72,7 @@ public class CatalogServiceImpl implements CatalogService {
         }
 
         // (Опционально) Проверка уникальности SKU в рамках продукта
-        // if (variantRepository.existsByProductIdAndSkuIgnoreCase(product.getId(), req.sku())) {
+        // if (variantRepository.existsByProduct_IdAndSkuIgnoreCase(product.getId(), req.sku())) {
         //     throw new IllegalArgumentException("SKU already exists for this product");
         // }
 
