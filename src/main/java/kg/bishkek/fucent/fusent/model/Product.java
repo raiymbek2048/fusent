@@ -2,6 +2,7 @@ package kg.bishkek.fucent.fusent.model;
 
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
@@ -52,6 +53,7 @@ public class Product {
     private Instant createdAt;
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<ProductVariant> variants;
 
     // Add shopId and categoryId for JSON serialization
