@@ -37,7 +37,7 @@ function EditProductPageContent() {
         description: product.description || '',
         categoryId: product.categoryId || '',
         basePrice: product.basePrice?.toString() || '',
-        imageUrl: product.images?.[0]?.imageUrl || '',
+        imageUrl: product.imageUrl || '',
       })
     }
   }, [product])
@@ -57,6 +57,7 @@ function EditProductPageContent() {
           description: formData.description || undefined,
           categoryId: formData.categoryId,
           basePrice: parseFloat(formData.basePrice) || 0,
+          imageUrl: formData.imageUrl || undefined,
           shopId: product!.shopId, // Required field
         },
       })
