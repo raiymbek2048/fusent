@@ -98,15 +98,8 @@ export interface Product {
   totalReviews: number
   totalSales: number
   createdAt: string
-  images?: ProductImage[]
+  imageUrl?: string  // Single image URL instead of array
   variants?: ProductVariant[]
-}
-
-export interface ProductImage {
-  id: string
-  productId: string
-  imageUrl: string
-  displayOrder: number
 }
 
 export interface ProductVariant {
@@ -126,6 +119,7 @@ export interface CreateProductRequest {
   description?: string
   basePrice: number
   initialStock?: number
+  imageUrl?: string
 }
 
 // Category Types
