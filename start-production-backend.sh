@@ -9,7 +9,11 @@ echo ""
 cd ~/fusent
 
 echo "1. Loading environment variables..."
-export $(cat .env.production | xargs)
+export $(grep -v '^#' .env.production | grep -v '^$' | xargs)
+
+# Set JAVA_HOME
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
 
 echo ""
 echo "2. Building the application..."
