@@ -8,8 +8,7 @@ echo ""
 # Navigate to the project directory
 cd ~/fusent/fusent-web
 
-echo "1. Pulling latest changes..."
-git pull origin claude/prod-setup-011CUv2vMSa4Nc2m8dkts4fX
+echo "1. Using current local version (skipping git pull)..."
 
 echo ""
 echo "2. Installing dependencies..."

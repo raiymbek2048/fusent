@@ -5,10 +5,9 @@ set -e
 echo "=== Full Production Restart ==="
 echo ""
 
-# Pull latest changes
-echo "1. Pulling latest changes..."
+# Skip git pull to avoid overwriting local changes
+echo "1. Using current local version (skipping git pull)..."
 cd ~/fusent
-git pull origin claude/prod-setup-011CUv2vMSa4Nc2m8dkts4fX
 
 echo ""
 echo "2. Restarting Backend..."
