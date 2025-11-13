@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { Trash2, ShoppingBag } from 'lucide-react'
 import { useCart, useUpdateCartItem, useRemoveFromCart, useClearCart } from '@/hooks/useCart'
 import { useAuthStore } from '@/store/authStore'
@@ -116,11 +115,9 @@ export default function CartPage() {
                       {/* Product Image */}
                       <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                         {item.productImage ? (
-                          <Image
+                          <img
                             src={item.productImage}
                             alt={item.productName}
-                            width={96}
-                            height={96}
                             className="w-full h-full object-cover"
                           />
                         ) : (

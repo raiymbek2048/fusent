@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { useCart } from '@/hooks/useCart'
 import { useCheckout } from '@/hooks/useOrders'
 import { useAuthStore } from '@/store/authStore'
@@ -346,11 +345,9 @@ export default function CheckoutPage() {
                     <div key={item.id} className="py-3 flex gap-4">
                       <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                         {item.productImage && (
-                          <Image
+                          <img
                             src={item.productImage}
                             alt={item.productName}
-                            width={64}
-                            height={64}
                             className="w-full h-full object-cover"
                           />
                         )}

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { ShoppingCart, Heart, Star, MapPin, MessageCircle } from 'lucide-react'
 import { useProduct } from '@/hooks/useProducts'
 import { useShop } from '@/hooks/useShops'
@@ -116,11 +115,10 @@ export default function ProductPage() {
           <div>
             <div className="aspect-square relative bg-gray-100 rounded-lg overflow-hidden">
               {product.imageUrl ? (
-                <Image
+                <img
                   src={product.imageUrl}
                   alt={product.name}
-                  fill
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-400">
@@ -157,12 +155,10 @@ export default function ProductPage() {
                 <CardContent className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {shop.logoUrl && (
-                      <Image
+                      <img
                         src={shop.logoUrl}
                         alt={shop.name}
-                        width={48}
-                        height={48}
-                        className="rounded-full"
+                        className="w-12 h-12 rounded-full object-cover"
                       />
                     )}
                     <div>
