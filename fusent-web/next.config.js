@@ -16,6 +16,12 @@ const nextConfig = {
         pathname: '/**',
       },
       {
+        protocol: 'http',
+        hostname: '85.113.27.42',
+        port: '902',
+        pathname: '/**',
+      },
+      {
         protocol: 'https',
         hostname: 'minio.fusent.kg',
         pathname: '/**',
