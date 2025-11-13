@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'http',
@@ -18,6 +19,12 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'minio.fusent.kg',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '85.113.27.42',
+        port: '902',
         pathname: '/**',
       },
       {
