@@ -23,6 +23,8 @@ export default function ProductPage() {
 
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [imageError, setImageError] = useState(false)
+  const [shopLogoError, setShopLogoError] = useState(false)
 
   // Auto-select first available variant when product loads
   useEffect(() => {
@@ -115,16 +117,19 @@ export default function ProductPage() {
           {/* Product Images */}
           <div>
             <div className="aspect-square relative bg-gray-100 rounded-lg overflow-hidden">
-              {product.imageUrl ? (
+              {product.imageUrl && !imageError ? (
                 <Image
                   src={product.imageUrl}
                   alt={product.name}
                   fill
                   className="object-cover"
+                  onError={() => setImageError(true)}
+                  unoptimized
                 />
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-400">
-                  Нет изображения
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                  <ShoppingCart className="h-16 w-16 mb-2" />
+                  <span className="text-sm">Изображение недоступно</span>
                 </div>
               )}
             </div>
@@ -156,14 +161,20 @@ export default function ProductPage() {
               <Card className="mb-4">
                 <CardContent className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {shop.logoUrl && (
+                    {shop.logoUrl && !shopLogoError ? (
                       <Image
                         src={shop.logoUrl}
                         alt={shop.name}
                         width={48}
                         height={48}
                         className="rounded-full"
+                        onError={() => setShopLogoError(true)}
+                        unoptimized
                       />
+                    ) : (
+                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                        <MapPin className="w-6 h-6 text-gray-400" />
+                      </div>
                     )}
                     <div>
                       <h3 className="font-semibold text-gray-900">{shop.name}</h3>
