@@ -142,8 +142,8 @@ app:
     allow-credentials: true
 
   s3:
-    endpoint: ${S3_ENDPOINT:http://localhost:9000}
-    public-endpoint: ${S3_PUBLIC_ENDPOINT:http://localhost:9000}
+    endpoint: ${S3_ENDPOINT:http://85.113.27.42:902}
+    public-endpoint: ${S3_PUBLIC_ENDPOINT:http://85.113.27.42:902}
     access-key: ${S3_ACCESS_KEY:minioadmin}
     secret-key: ${S3_SECRET_KEY:minioadmin123}
     bucket-media: ${S3_BUCKET_MEDIA:fucent-media}
