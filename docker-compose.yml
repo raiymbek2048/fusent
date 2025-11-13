@@ -151,6 +151,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       MINIO_URL: http://minio:9000
+      MINIO_PUBLIC_URL: http://85.113.27.42:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: fucent-media
