@@ -242,6 +242,7 @@ export interface Post {
   ownerName?: string
   text?: string
   postType: PostType
+  productId?: string
   geoLat?: number
   geoLon?: number
   visibility: PostVisibility
@@ -262,6 +263,7 @@ export interface CreatePostRequest {
   ownerId: string
   text?: string
   postType: PostType
+  productId?: string
   geoLat?: number
   geoLon?: number
   visibility?: PostVisibility

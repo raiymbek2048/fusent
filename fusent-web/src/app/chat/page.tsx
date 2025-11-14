@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Send, MessageCircle } from 'lucide-react'
+import { Send, MessageCircle, Search, UserPlus } from 'lucide-react'
 import { useConversations, useMessages, useSendMessage, useCreateConversation } from '@/hooks/useChat'
 import { useAuthStore } from '@/store/authStore'
 import { Button, Card, CardContent, Input, LoadingScreen } from '@/components/ui'
@@ -20,6 +20,9 @@ function ChatPageContent() {
   const [messageText, setMessageText] = useState('')
   const [isCreatingConversation, setIsCreatingConversation] = useState(false)
   const [newChatOtherUserId, setNewChatOtherUserId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
+  const [activeTab, setActiveTab] = useState<'chats' | 'requests'>('chats')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { data: conversations, isLoading: conversationsLoading, isError: conversationsError } = useConversations(user?.id)
@@ -155,8 +158,53 @@ function ChatPageContent() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-200px)]">
           {/* Conversations List */}
           <Card className="md:col-span-1 overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold">Сообщения</h2>
+            <div className="border-b border-gray-200">
+              <div className="px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Сообщения</h2>
+                <button
+                  onClick={() => setShowSearch(!showSearch)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <Search className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              {showSearch && (
+                <div className="px-6 pb-3">
+                  <Input
+                    type="text"
+                    placeholder="Поиск пользователей и магазинов..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              {/* Tabs */}
+              <div className="flex border-t border-gray-200">
+                <button
+                  onClick={() => setActiveTab('chats')}
+                  className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'chats'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Чаты
+                </button>
+                <button
+                  onClick={() => setActiveTab('requests')}
+                  className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'requests'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Запросы
+                </button>
+              </div>
             </div>
             <div className="flex-grow overflow-y-auto">
               {/* Show new conversation at the top if it's being created */}
@@ -170,40 +218,57 @@ function ChatPageContent() {
                   </div>
                 </div>
               )}
-              {conversations && conversations.length > 0 ? (
-                <div className="divide-y divide-gray-200">
-                  {conversations.map((conv) => {
-                    return (
-                      <button
-                        key={conv.conversationId}
-                        onClick={() => setSelectedConversationId(conv.conversationId)}
-                        className={`w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors ${
-                          selectedConversationId === conv.conversationId ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-medium text-gray-900">
-                            {conv.otherUserName || 'Пользователь'}
-                          </p>
-                          {conv.unreadCount > 0 && (
-                            <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                              {conv.unreadCount}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-500">
-                          {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleDateString('ru-RU') : 'Новый чат'}
-                        </p>
-                      </button>
-                    )
-                  })}
-                </div>
-              ) : !newChatOtherUserId && (
+              {activeTab === 'chats' ? (
+                <>
+                  {conversations && conversations.length > 0 ? (
+                    <div className="divide-y divide-gray-200">
+                      {conversations
+                        .filter((conv) => {
+                          if (!searchQuery) return true
+                          return conv.otherUserName?.toLowerCase().includes(searchQuery.toLowerCase())
+                        })
+                        .map((conv) => {
+                          return (
+                            <button
+                              key={conv.conversationId}
+                              onClick={() => setSelectedConversationId(conv.conversationId)}
+                              className={`w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors ${
+                                selectedConversationId === conv.conversationId ? 'bg-blue-50' : ''
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="font-medium text-gray-900">
+                                  {conv.otherUserName || 'Пользователь'}
+                                </p>
+                                {conv.unreadCount > 0 && (
+                                  <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                                    {conv.unreadCount}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-500">
+                                {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleDateString('ru-RU') : 'Новый чат'}
+                              </p>
+                            </button>
+                          )
+                        })}
+                    </div>
+                  ) : !newChatOtherUserId && (
+                    <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                      <MessageCircle className="w-16 h-16 text-gray-300 mb-4" />
+                      <p className="text-gray-600 mb-2">Нет активных чатов</p>
+                      <p className="text-sm text-gray-500">
+                        Чтобы начать общение с продавцом, перейдите на страницу товара и нажмите "Написать продавцу"
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                  <MessageCircle className="w-16 h-16 text-gray-300 mb-4" />
-                  <p className="text-gray-600 mb-2">Нет активных чатов</p>
+                  <UserPlus className="w-16 h-16 text-gray-300 mb-4" />
+                  <p className="text-gray-600 mb-2">Нет запросов на переписку</p>
                   <p className="text-sm text-gray-500">
-                    Чтобы начать общение с продавцом, перейдите на страницу товара и нажмите "Написать продавцу"
+                    Здесь будут отображаться запросы на переписку от других пользователей
                   </p>
                 </div>
               )}

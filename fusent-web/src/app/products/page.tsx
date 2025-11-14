@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, MapPin } from 'lucide-react'
 import { useProducts, useSearchProducts } from '@/hooks/useProducts'
 import { useCategories } from '@/hooks/useCategories'
 import { Button, Input, Card, LoadingScreen } from '@/components/ui'
@@ -63,6 +63,14 @@ function ProductsPageContent() {
             <Button type="submit">
               <Search className="w-5 h-5 mr-2" />
               Найти
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push('/shops/map')}
+            >
+              <MapPin className="w-5 h-5 mr-2" />
+              Карта
             </Button>
             <Button
               type="button"

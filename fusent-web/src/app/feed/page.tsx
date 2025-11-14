@@ -1,167 +1,184 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import MainLayout from '@/components/MainLayout'
+import StoriesBar from '@/components/StoriesBar'
+import FeedPost from '@/components/FeedPost'
 import { usePublicFeed, useLikePost, useUnlikePost } from '@/hooks/usePosts'
-import { Heart, MessageCircle, Share2, MapPin } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { ru } from 'date-fns/locale'
+import { useToggleSavePost, useIsPostSaved } from '@/hooks/useSavedPosts'
+import { useToggleSharePost } from '@/hooks/useShares'
+import { Search } from 'lucide-react'
 
 export default function FeedPage() {
-  const [page, setPage] = useState(0)
-  const { data, isLoading } = usePublicFeed({ page, size: 20 })
-  const { mutate: likePost } = useLikePost()
-  const { mutate: unlikePost } = useUnlikePost()
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'recommendations' | 'trending'>('recommendations')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
+  const [currentPostIndex, setCurrentPostIndex] = useState(0)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  const handleLike = (postId: string, isLiked?: boolean) => {
-    if (isLiked) {
-      unlikePost(postId)
-    } else {
-      likePost(postId)
-    }
+  // Fetch feed based on active tab
+  const { data, isLoading } = usePublicFeed({ page: 0, size: 50 })
+  const likeMutation = useLikePost()
+  const unlikeMutation = useUnlikePost()
+  const { toggleSave } = useToggleSavePost()
+  const { toggleShare } = useToggleSharePost()
+
+  // Mock stories data (replace with real API call)
+  const mockStories = [
+    {
+      id: '1',
+      shopId: 'shop1',
+      shopName: 'Магазин 1',
+      hasLive: true,
+      hasStories: true,
+    },
+    {
+      id: '2',
+      shopId: 'shop2',
+      shopName: 'Магазин 2',
+      hasLive: false,
+      hasStories: true,
+    },
+  ]
+
+  const handleLike = (postId: string) => {
+    likeMutation.mutate(postId)
   }
+
+  const handleSave = async (postId: string, isSaved: boolean) => {
+    await toggleSave(postId, isSaved)
+  }
+
+  const handleShare = async (postId: string, isShared: boolean) => {
+    await toggleShare(postId, isShared)
+  }
+
+  const tabs = [
+    { id: 'subscriptions', label: 'Подписки' },
+    { id: 'recommendations', label: 'Рекомендации' },
+    { id: 'trending', label: 'Тренды' },
+  ] as const
+
+  const posts = data?.content || []
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        if (currentPostIndex < posts.length - 1) {
+          setCurrentPostIndex(currentPostIndex + 1)
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        if (currentPostIndex > 0) {
+          setCurrentPostIndex(currentPostIndex - 1)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentPostIndex, posts.length])
+
+  // Scroll to current post
+  useEffect(() => {
+    if (scrollContainerRef.current && posts.length > 0) {
+      const postElements = scrollContainerRef.current.children
+      if (postElements[currentPostIndex]) {
+        postElements[currentPostIndex].scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+  }, [currentPostIndex, posts.length])
 
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Лента публикаций</h1>
+      <div className="h-screen flex flex-col" style={{ backgroundColor: '#e9d5ff' }}>
+        {/* Top Bar with Tabs - Compact Header */}
+        <div className="flex-shrink-0 bg-white absolute top-0 left-0 right-0 z-20">
+          <div className="flex items-center justify-between px-4 py-2">
+            <h1 className="text-lg font-bold text-gray-900">Fucent</h1>
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <Search className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
 
-        {isLoading ? (
-          <div className="space-y-6">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow p-6 animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-                <div className="h-20 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </div>
+          {/* Search Bar (показывается только когда активен) */}
+          {showSearch && activeTab === 'recommendations' && (
+            <div className="px-4 pb-2">
+              <input
+                type="text"
+                placeholder="Поиск магазинов..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
-        ) : data?.content && data.content.length > 0 ? (
-          <div className="space-y-6">
-            {data.content.map((post) => (
-              <div key={post.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-                {/* Post Header */}
-                <div className="p-6 pb-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{post.ownerName || 'Пользователь'}</h3>
-                      <p className="text-sm text-gray-500">
-                        {formatDistanceToNow(new Date(post.createdAt), {
-                          addSuffix: true,
-                          locale: ru,
-                        })}
-                      </p>
-                    </div>
-                    {post.geoLat && post.geoLon && (
-                      <div className="flex items-center text-gray-500">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        <span className="text-sm">Геолокация</span>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Post Content */}
-                  {post.text && (
-                    <p className="text-gray-800 mb-4 whitespace-pre-wrap">{post.text}</p>
-                  )}
+          {/* Stories Bar */}
+          <StoriesBar stories={mockStories} />
+        </div>
 
-                  {/* Post Media */}
-                  {post.media && post.media.length > 0 && (
-                    <div className="mb-4 grid grid-cols-2 gap-2">
-                      {post.media.map((media, idx) => (
-                        <div key={media.id || idx} className="relative">
-                          {media.mediaType === 'IMAGE' ? (
-                            <img
-                              src={media.url}
-                              alt=""
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
-                          ) : (
-                            <video
-                              src={media.url}
-                              controls
-                              className="w-full h-48 object-cover rounded-lg"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Post Tags */}
-                  {post.tags && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {post.tags.map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="text-sm text-blue-600 hover:text-blue-700 cursor-pointer"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Post Actions */}
-                <div className="border-t border-gray-200 px-6 py-3">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => handleLike(post.id, post.isLikedByCurrentUser)}
-                      className={`flex items-center space-x-2 hover:text-red-600 transition-colors ${
-                        post.isLikedByCurrentUser ? 'text-red-600' : 'text-gray-600'
-                      }`}
-                    >
-                      <Heart
-                        className={`h-5 w-5 ${post.isLikedByCurrentUser ? 'fill-current' : ''}`}
-                      />
-                      <span className="text-sm">{post.likesCount}</span>
-                    </button>
-
-                    <button className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors">
-                      <MessageCircle className="h-5 w-5" />
-                      <span className="text-sm">{post.commentsCount}</span>
-                    </button>
-
-                    <button className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
-                      <Share2 className="h-5 w-5" />
-                      <span className="text-sm">{post.sharesCount || 0}</span>
-                    </button>
-                  </div>
-                </div>
+        {/* Feed Content - Full screen vertical scroll */}
+        <div className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide" ref={scrollContainerRef}>
+          {isLoading ? (
+            <div className="h-screen flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
+            </div>
+          ) : posts.length > 0 ? (
+            posts.map((post, index) => (
+              <FeedPost
+                key={post.id}
+                post={post}
+                onLike={() => handleLike(post.id)}
+                onSave={() => handleSave(post.id, false)}
+                onShare={() => handleShare(post.id, false)}
+                isLiked={post.isLikedByCurrentUser || false}
+                isSaved={false}
+              />
+            ))
+          ) : (
+            <div className="h-screen flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-lg mb-2 text-gray-800">Нет публикаций</p>
+                <p className="text-sm text-gray-600">Подпишитесь на магазины, чтобы видеть их публикации</p>
               </div>
-            ))}
-
-            {/* Pagination */}
-            {data.totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-4 mt-8">
-                <button
-                  onClick={() => setPage(Math.max(0, page - 1))}
-                  disabled={page === 0}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Предыдущая
-                </button>
-                <span className="text-gray-600">
-                  Страница {page + 1} из {data.totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(Math.min(data.totalPages - 1, page + 1))}
-                  disabled={page >= data.totalPages - 1}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Следующая
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <p className="text-gray-500 text-lg">Пока нет публикаций</p>
-            <p className="text-gray-400 mt-2">Создайте первую публикацию!</p>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* CSS for hiding scrollbar */}
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </MainLayout>
   )
 }

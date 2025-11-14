@@ -1,0 +1,63 @@
+
+# Production Environment Configuration for Fusent Backend
+
+# Database Configuration
+DB_URL=jdbc:postgresql://localhost:5432/fusent
+DB_USERNAME=fusent_user
+DB_PASSWORD=your_secure_password
+
+# MinIO Configuration
+MINIO_URL=http://85.113.27.42:902
+MINIO_BUCKET_NAME=fucent-media
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin123
+
+# S3 Configuration (for S3ServiceImpl if used)
+S3_ENDPOINT=http://85.113.27.42:902
+S3_PUBLIC_ENDPOINT=http://85.113.27.42:902
+S3_ACCESS_KEY=minioadmin
+S3_SECRET_KEY=minioadmin123
+S3_BUCKET_MEDIA=fucent-media
+S3_BUCKET_THUMBNAILS=fucent-thumbnails
+
+# Storage Configuration
+STORAGE_TYPE=minio
+
+# Server Configuration
+SERVER_PORT=8080
+
+
+
+
+# API Configuration
+# For local development: http://localhost:8080/api/v1
+# For production: https://api.yourdomain.com/api/v1
+NEXT_PUBLIC_API_URL=http://85.113.27.42:901/api/v1
+
+# App Configuration
+NEXT_PUBLIC_APP_NAME=Fusent
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+.env.production
+fusent-web/.env.local.backup
+# MinIO/S3 Configuration
+NEXT_PUBLIC_MINIO_URL=http://localhost:9000
+NEXT_PUBLIC_MINIO_BUCKET=fucent-media
+
+
+  383  bash check-production.sh
+  384  bash restart-production.sh
+
+  370  git pull
+  371  npm run build
+  372  pm2 restart fusent-web
+  373  pm2 status
+  374  git fetch
+  375  git pull
+  376  pm2 restart fusent-web
+  377  pm2 status
+  378  git pull origin claude/prod-setup-011CUv2vMSa4Nc2m8dkts4fX
+  379  bash restart-production.sh
+  380  св юю.
+  381  bash check-production.sh
+  382  cd ../
+  383  bash check-production.sh

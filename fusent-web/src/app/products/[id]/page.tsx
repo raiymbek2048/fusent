@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ShoppingCart, Heart, Star, MapPin, MessageCircle } from 'lucide-react'
+import { ShoppingCart, Heart, Star, MapPin, MessageCircle, Share2 } from 'lucide-react'
 import { useProduct } from '@/hooks/useProducts'
 import { useShop } from '@/hooks/useShops'
 import { useAddToCart } from '@/hooks/useCart'
 import { useAuthStore } from '@/store/authStore'
 import { Button, Badge, Card, CardContent, LoadingScreen } from '@/components/ui'
 import MainLayout from '@/components/MainLayout'
+import ShareModal from '@/components/ShareModal'
 
 export default function ProductPage() {
   const params = useParams()
@@ -22,6 +23,7 @@ export default function ProductPage() {
 
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   // Auto-select first available variant when product loads
   useEffect(() => {
@@ -256,6 +258,9 @@ export default function ProductPage() {
               <Button variant="outline" size="md">
                 <Heart className="w-5 h-5" />
               </Button>
+              <Button variant="outline" size="md" onClick={() => setShowShareModal(true)}>
+                <Share2 className="w-5 h-5" />
+              </Button>
             </div>
 
             <Button
@@ -281,6 +286,15 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        shareUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/products/${productId}`}
+        shareType="product"
+        title={product.name}
+      />
     </MainLayout>
   )
 }
