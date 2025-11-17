@@ -195,7 +195,12 @@ class _EditProductPageState extends State<EditProductPage> {
             backgroundColor: AppColors.success,
           ),
         );
-        context.go('/seller/dashboard');
+        // Navigate back to previous page
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/seller/dashboard');
+        }
       }
     } on DioException catch (e) {
       String errorMessage = 'Ошибка при удалении товара';
