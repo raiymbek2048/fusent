@@ -134,8 +134,12 @@ class _AddProductPageState extends State<AddProductPage> {
             backgroundColor: AppColors.success,
           ),
         );
-        // Navigate back to seller dashboard instead of pop
-        context.go('/seller/dashboard');
+        // Navigate back to previous page (seller dashboard)
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/seller/dashboard');
+        }
       }
     } on DioException catch (e) {
       String errorMessage = 'Ошибка при создании товара';
