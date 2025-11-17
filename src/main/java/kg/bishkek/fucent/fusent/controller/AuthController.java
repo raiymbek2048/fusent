@@ -44,6 +44,15 @@ public class AuthController {
         authService.changePassword(request);
     }
 
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Logout user", description = "Logout the current user (client should clear tokens)")
+    public void logout() {
+        // В JWT-based аутентификации, logout происходит на клиенте путём удаления токенов
+        // Этот эндпоинт существует для совместимости с API
+        // В будущем здесь можно добавить blacklist токенов в Redis
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Get current user", description = "Get the currently authenticated user's information")
     public ResponseEntity<UserInfo> getCurrentUser() {
@@ -59,8 +68,13 @@ public class AuthController {
 
         var userInfo = new UserInfo(
                 user.getId().toString(),
+                user.getFullName(),
                 user.getEmail(),
+                user.getUsername(),
+                user.getPhone(),
                 user.getRole().name(),
+                user.getShopAddress(),
+                user.getHasSmartPOS(),
                 user.getCreatedAt()
         );
 

@@ -26,17 +26,30 @@ public class AppUser implements UserDetails {
     private UUID id;
 
 
+    @Column(nullable = false)
+    private String fullName;
+
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(unique = true)
+    private String username;
+
+    @Column
+    private String phone;
 
     @Column(nullable = false)
     private String passwordHash;
 
-
     @Column(nullable = false)
     @Builder.Default
     private Role role = Role.BUYER;
+
+    @Column
+    private String shopAddress;
+
+    @Column
+    private Boolean hasSmartPOS;
 
 
     @CreationTimestamp

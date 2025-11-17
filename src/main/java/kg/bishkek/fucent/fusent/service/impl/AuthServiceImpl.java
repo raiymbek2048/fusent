@@ -38,19 +38,25 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Email already registered");
         }
 
-        // Validate role
+        // Validate account type and convert to role
         Role role;
         try {
-            role = Role.valueOf(request.role().toUpperCase());
+            // Mobile app sends "buyer" or "seller", need to convert to uppercase
+            role = Role.valueOf(request.accountType().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid role. Must be BUYER, SELLER, or ADMIN");
+            throw new IllegalArgumentException("Invalid account type. Must be buyer or seller");
         }
 
         // Create new user
         var user = AppUser.builder()
+                .fullName(request.fullName())
                 .email(request.email())
+                .username(request.username())
+                .phone(request.phone())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(role)
+                .shopAddress(request.shopAddress())
+                .hasSmartPOS(request.hasSmartPOS())
                 .build();
 
         user = userRepository.save(user);
@@ -59,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
         var accessToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
 
-        log.info("New user registered: email={}, role={}", user.getEmail(), user.getRole());
+        log.info("New user registered: email={}, role={}, username={}", user.getEmail(), user.getRole(), user.getUsername());
 
         return new AuthResponse(
                 accessToken,
@@ -163,8 +169,13 @@ public class AuthServiceImpl implements AuthService {
     private UserInfo toUserInfo(AppUser user) {
         return new UserInfo(
                 user.getId().toString(),
+                user.getFullName(),
                 user.getEmail(),
+                user.getUsername(),
+                user.getPhone(),
                 user.getRole().name(),
+                user.getShopAddress(),
+                user.getHasSmartPOS(),
                 user.getCreatedAt()
         );
     }

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -18,6 +19,17 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     Page<Product> findAllByShop_Id(UUID shopId, Pageable pageable);
     Page<Product> findAllByCategory_Id(UUID categoryId, Pageable pageable);
     Page<Product> findAllByNameContainingIgnoreCase(String q, Pageable pageable);
+
+    // Find all products by seller's user ID with variants eagerly loaded
+    @Query("""
+        SELECT DISTINCT p FROM Product p
+        LEFT JOIN FETCH p.variants
+        INNER JOIN p.shop s
+        INNER JOIN s.merchant m
+        WHERE m.ownerUserId = :userId
+        ORDER BY p.createdAt DESC
+        """)
+    List<Product> findByShopMerchantOwnerUserId(@Param("userId") UUID userId);
 
     /**
      * Full-text search using PostgreSQL tsvector

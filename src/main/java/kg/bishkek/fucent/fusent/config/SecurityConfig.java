@@ -50,6 +50,7 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers(
                                 "/api/v1/auth/**",
+                                "/api/auth/**",  // Mobile app endpoints
                                 "/api/v1/public/**",
                                 "/api/v1/catalog/categories",
                                 "/api/v1/shops/**",
@@ -77,7 +78,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:5173", "http://85.113.27.42:900"));
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));  // Allow mobile apps
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

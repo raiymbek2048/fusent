@@ -38,7 +38,7 @@ public class Product {
     @Column(length = 4000)
     private String description;
 
-    @Column(name = "image_url", length = 500)
+    @Column(name = "image_url", columnDefinition = "TEXT", length = 9000)
     private String imageUrl;
 
     @Column(name = "base_price", precision = 12, scale = 2)
@@ -52,6 +52,7 @@ public class Product {
     @CreationTimestamp
     private Instant createdAt;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<ProductVariant> variants;
 

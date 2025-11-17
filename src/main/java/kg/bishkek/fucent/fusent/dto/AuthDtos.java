@@ -9,16 +9,29 @@ import java.time.Instant;
 public class AuthDtos {
 
     public record RegisterRequest(
+            @NotBlank(message = "Full name is required")
+            String fullName,
+
             @NotBlank(message = "Email is required")
             @Email(message = "Email must be valid")
             String email,
+
+            @NotBlank(message = "Username is required")
+            String username,
+
+            @NotBlank(message = "Phone is required")
+            String phone,
 
             @NotBlank(message = "Password is required")
             @Size(min = 6, message = "Password must be at least 6 characters")
             String password,
 
-            @NotBlank(message = "Role is required")
-            String role // BUYER, SELLER, ADMIN
+            @NotBlank(message = "Account type is required")
+            String accountType, // buyer, seller
+
+            String shopAddress, // Optional, for sellers
+
+            Boolean hasSmartPOS // Optional, for sellers
     ) {}
 
     public record LoginRequest(
@@ -49,8 +62,13 @@ public class AuthDtos {
 
     public record UserInfo(
             String id,
+            String fullName,
             String email,
+            String username,
+            String phone,
             String role,
+            String shopAddress,
+            Boolean hasSmartPOS,
             Instant createdAt
     ) {}
 

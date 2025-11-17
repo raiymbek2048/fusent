@@ -73,10 +73,19 @@ public class LikeServiceImpl implements LikeService {
     @Override
     @Transactional(readOnly = true)
     public boolean isPostLikedByCurrentUser(UUID postId) {
-        var currentUserId = SecurityUtil.currentUserId(userRepository);
-        var user = userRepository.findById(currentUserId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        var email = SecurityUtil.currentEmail();
 
+        // If user is not authenticated (anonymous), return false
+        if (email == null || "anonymousUser".equals(email)) {
+            return false;
+        }
+
+        var userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+
+        var user = userOpt.get();
         var post = postRepository.findById(postId)
             .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
