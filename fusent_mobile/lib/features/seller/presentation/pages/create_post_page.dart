@@ -172,6 +172,17 @@ class _CreatePostPageState extends State<CreatePostPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Создать пост'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Use GoRouter navigation instead of default Navigator.pop
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/seller/my-posts');
+            }
+          },
+        ),
       ),
       body: Form(
         key: _formKey,

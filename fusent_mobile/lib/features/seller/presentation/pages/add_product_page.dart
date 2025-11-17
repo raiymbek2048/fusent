@@ -188,6 +188,17 @@ class _AddProductPageState extends State<AddProductPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Добавить товар'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Use GoRouter navigation instead of default Navigator.pop
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/seller/products');
+            }
+          },
+        ),
       ),
       body: Form(
         key: _formKey,

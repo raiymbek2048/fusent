@@ -397,6 +397,17 @@ class _EditProductPageState extends State<EditProductPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Редактировать товар'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Use GoRouter navigation instead of default Navigator.pop
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/seller/products');
+            }
+          },
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
