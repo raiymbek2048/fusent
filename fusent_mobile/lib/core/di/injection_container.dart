@@ -12,6 +12,8 @@ import 'package:fusent_mobile/features/feed/data/datasources/feed_remote_datasou
 import 'package:fusent_mobile/features/feed/data/repositories/feed_repository_impl.dart';
 import 'package:fusent_mobile/features/feed/domain/repositories/feed_repository.dart';
 import 'package:fusent_mobile/features/feed/presentation/bloc/feed_bloc.dart';
+import 'package:fusent_mobile/features/seller/data/services/shop_service.dart';
+import 'package:fusent_mobile/features/seller/data/services/employee_service.dart';
 
 final sl = GetIt.instance;
 
@@ -67,4 +69,8 @@ Future<void> init() async {
   sl.registerLazySingleton<FeedRemoteDataSource>(
     () => FeedRemoteDataSourceImpl(apiClient: sl()),
   );
+
+  // Seller Services
+  sl.registerLazySingleton(() => ShopService(sl()));
+  sl.registerLazySingleton(() => EmployeeService(sl()));
 }

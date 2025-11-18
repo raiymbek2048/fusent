@@ -324,11 +324,7 @@ class _EditProductPageState extends State<EditProductPage> {
             backgroundColor: AppColors.success,
           ),
         );
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go('/seller/products');
-        }
+        context.go('/seller/products');
 
         // context.pop(); // Return to previous page instead of going to dashboard
       } else {

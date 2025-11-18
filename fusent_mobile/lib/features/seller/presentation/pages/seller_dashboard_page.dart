@@ -110,6 +110,32 @@ class SellerDashboardPage extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: Icons.storefront,
+                    title: 'Филиалы',
+                    color: Color(0xFF00BCD4), // Cyan color
+                    onTap: () {
+                      context.push('/seller/shops');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: Icons.people_outline,
+                    title: 'Сотрудники',
+                    color: Color(0xFFFF5722), // Deep Orange color
+                    onTap: () {
+                      context.push('/seller/employees');
+                    },
+                  ),
+                ),
+              ],
+            ),
 
             const SizedBox(height: 32),
 

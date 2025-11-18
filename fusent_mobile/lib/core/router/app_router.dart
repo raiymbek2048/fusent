@@ -6,7 +6,9 @@ import '../../features/feed/presentation/pages/feed_page.dart';
 import '../../features/feed/presentation/pages/reels_page.dart';
 import '../../features/catalog/presentation/pages/catalog_page.dart';
 import '../../features/chat/presentation/pages/chat_list_page.dart';
+import '../../features/chat/presentation/pages/chat_conversation_page.dart';
 import '../../features/cart/presentation/pages/cart_page.dart';
+import '../../features/cart/presentation/pages/checkout_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/product/presentation/pages/product_detail_page.dart';
 import '../../features/search/presentation/pages/search_page.dart';
@@ -16,6 +18,8 @@ import '../../features/seller/presentation/pages/edit_product_page.dart';
 import '../../features/seller/presentation/pages/my_products_page.dart';
 import '../../features/seller/presentation/pages/create_post_page.dart';
 import '../../features/seller/presentation/pages/my_posts_page.dart';
+import '../../features/seller/presentation/pages/shops_management_page.dart';
+import '../../features/seller/presentation/pages/employees_management_page.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -95,6 +99,39 @@ class AppRouter {
         builder: (context, state) => const SearchPage(),
       ),
 
+      // Chat Conversation
+      GoRoute(
+        path: '/chat/:id',
+        name: 'chat-conversation',
+        builder: (context, state) {
+          final chatId = state.pathParameters['id']!;
+          final shopName = state.uri.queryParameters['shopName'] ?? 'Chat';
+          final isShop = state.uri.queryParameters['isShop'] == 'true';
+          return ChatConversationPage(
+            chatId: chatId,
+            shopName: shopName,
+            isShop: isShop,
+          );
+        },
+      ),
+
+      // Checkout
+      GoRoute(
+        path: '/checkout',
+        name: 'checkout',
+        builder: (context, state) {
+          final totalAmount = double.tryParse(
+                state.uri.queryParameters['totalAmount'] ?? '0') ??
+              0.0;
+          final itemCount =
+              int.tryParse(state.uri.queryParameters['itemCount'] ?? '0') ?? 0;
+          return CheckoutPage(
+            totalAmount: totalAmount,
+            itemCount: itemCount,
+          );
+        },
+      ),
+
       // Seller Routes
       GoRoute(
         path: '/seller/dashboard',
@@ -128,6 +165,16 @@ class AppRouter {
         path: '/seller/my-posts',
         name: 'my-posts',
         builder: (context, state) => const MyPostsPage(),
+      ),
+      GoRoute(
+        path: '/seller/shops',
+        name: 'seller-shops',
+        builder: (context, state) => const ShopsManagementPage(),
+      ),
+      GoRoute(
+        path: '/seller/employees',
+        name: 'seller-employees',
+        builder: (context, state) => const EmployeesManagementPage(),
       ),
     ],
   );

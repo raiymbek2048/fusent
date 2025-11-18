@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:fusent_mobile/features/auth/presentation/pages/register_page.dart';
-import 'package:fusent_mobile/features/home/presentation/pages/home_page.dart';
-import 'package:fusent_mobile/features/seller/presentation/pages/seller_dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -53,15 +51,11 @@ class _LoginPageState extends State<LoginPage> {
           } else if (state is AuthAuthenticated) {
             // Navigate based on user role
             final userRole = state.user.role;
-            final Widget destination = userRole == 'SELLER'
-                ? const SellerDashboardPage()
-                : const HomePage();
+            final String destination = userRole == 'SELLER'
+                ? '/seller/dashboard'
+                : '/home';
 
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => destination,
-              ),
-            );
+            context.go(destination);
           }
         },
         builder: (context, state) {
@@ -330,11 +324,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterPage(),
-                          ),
-                        );
+                        context.push('/register');
                       },
                       child: const Text('Зарегистрироваться'),
                     ),

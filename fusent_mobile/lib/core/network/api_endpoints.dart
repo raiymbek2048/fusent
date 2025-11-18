@@ -1,6 +1,6 @@
 class ApiEndpoints {
   // Base URL - change this to your backend URL
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'http://192.168.1.217:8080';
 
   // Auth Endpoints
   static const String login = '/api/v1/auth/login';
@@ -87,8 +87,12 @@ class ApiEndpoints {
 
   // Shop/Merchant Endpoints
   static const String shops = '/api/v1/shops';
+  static const String myShops = '/api/v1/shops/my';
   static const String shopDetail = '/api/v1/shops/{id}';
   static const String shopProducts = '/api/v1/shops/{id}/products';
+  static const String createShop = '/api/v1/shops';
+  static const String updateShop = '/api/v1/shops/{id}';
+  static const String deleteShop = '/api/v1/shops/{id}';
 
   // Seller Catalog Endpoints
   static const String getMyProducts = '/api/v1/seller/catalog/products';
@@ -110,6 +114,14 @@ class ApiEndpoints {
   static const String uploadAvatar = '/api/v1/media/upload/avatar';
   static const String uploadShopMedia = '/api/v1/media/upload/shop';
   static const String deleteMedia = '/api/v1/media';
+
+  // Employee Endpoints
+  static const String employees = '/api/v1/employees';
+  static const String createEmployee = '/api/v1/employees';
+  static const String employeeDetail = '/api/v1/employees/{id}';
+  static const String updateEmployeeShop = '/api/v1/employees/{id}/shop';
+  static const String deleteEmployee = '/api/v1/employees/{id}';
+  static const String employeesByShop = '/api/v1/employees/shop/{shopId}';
 
   // Helper method to replace path parameters
   static String replacePathParams(String path, Map<String, String> params) {

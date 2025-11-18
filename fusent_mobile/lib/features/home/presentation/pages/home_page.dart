@@ -4,6 +4,7 @@ import 'package:fusent_mobile/features/feed/presentation/pages/feed_page.dart';
 import 'package:fusent_mobile/features/catalog/presentation/pages/catalog_page.dart';
 import 'package:fusent_mobile/features/profile/presentation/pages/profile_page.dart';
 import 'package:fusent_mobile/features/chat/presentation/pages/chat_list_page.dart';
+import 'package:fusent_mobile/features/cart/presentation/pages/cart_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,8 +19,8 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _screens = [
     const FeedPage(),
     const CatalogPage(),
-    const CreateScreen(),
-    const ChatScreen(),
+    const ChatListPage(),
+    const CartPage(),
     const ProfilePage(),
   ];
 
@@ -50,7 +51,7 @@ class _HomePageState extends State<HomePage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home),
-              label: 'Главная',
+              label: 'Лента',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.grid_view_outlined),
@@ -58,20 +59,26 @@ class _HomePageState extends State<HomePage> {
               label: 'Каталог',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle_outline, size: 32),
-              activeIcon: Icon(Icons.add_circle, size: 32),
-              label: '',
+              icon: Badge(
+                label: Text('2'),
+                child: Icon(Icons.chat_bubble_outline),
+              ),
+              activeIcon: Badge(
+                label: Text('2'),
+                child: Icon(Icons.chat_bubble),
+              ),
+              label: 'Чат',
             ),
             BottomNavigationBarItem(
               icon: Badge(
                 label: Text('3'),
-                child: Icon(Icons.chat_bubble_outline),
+                child: Icon(Icons.shopping_cart_outlined),
               ),
               activeIcon: Badge(
                 label: Text('3'),
-                child: Icon(Icons.chat_bubble),
+                child: Icon(Icons.shopping_cart),
               ),
-              label: 'Чаты',
+              label: 'Корзина',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
@@ -82,63 +89,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-  }
-}
-
-// Placeholder screens
-class CreateScreen extends StatelessWidget {
-  const CreateScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Создать'),
-        centerTitle: false,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.photo_camera),
-              label: const Text('Сделать фото'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(200, 50),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.photo_library),
-              label: const Text('Выбрать из галереи'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(200, 50),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.videocam),
-              label: const Text('Записать видео'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(200, 50),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ChatScreen extends StatelessWidget {
-  const ChatScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const ChatListPage();
   }
 }
 

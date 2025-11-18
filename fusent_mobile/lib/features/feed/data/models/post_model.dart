@@ -101,6 +101,7 @@ class PostModel extends Equatable {
   final String ownerName;
   final String? text;
   final PostType postType;
+  final String? linkedProductId; // ID привязанного товара
   final double? geoLat;
   final double? geoLon;
   final PostVisibility visibility;
@@ -121,6 +122,7 @@ class PostModel extends Equatable {
     required this.ownerName,
     this.text,
     required this.postType,
+    this.linkedProductId,
     this.geoLat,
     this.geoLon,
     required this.visibility,
@@ -149,6 +151,7 @@ class PostModel extends Equatable {
         (e) => e.name == json['postType'],
         orElse: () => PostType.STORY,
       ),
+      linkedProductId: json['linkedProductId'] as String?,
       geoLat: json['geoLat'] != null
           ? double.parse(json['geoLat'].toString())
           : null,
@@ -185,6 +188,7 @@ class PostModel extends Equatable {
       'ownerName': ownerName,
       if (text != null) 'text': text,
       'postType': postType.name,
+      if (linkedProductId != null) 'linkedProductId': linkedProductId,
       if (geoLat != null) 'geoLat': geoLat,
       if (geoLon != null) 'geoLon': geoLon,
       'visibility': visibility.name,
@@ -207,6 +211,7 @@ class PostModel extends Equatable {
     String? ownerName,
     String? text,
     PostType? postType,
+    String? linkedProductId,
     double? geoLat,
     double? geoLon,
     PostVisibility? visibility,
@@ -227,6 +232,7 @@ class PostModel extends Equatable {
       ownerName: ownerName ?? this.ownerName,
       text: text ?? this.text,
       postType: postType ?? this.postType,
+      linkedProductId: linkedProductId ?? this.linkedProductId,
       geoLat: geoLat ?? this.geoLat,
       geoLon: geoLon ?? this.geoLon,
       visibility: visibility ?? this.visibility,
@@ -250,6 +256,7 @@ class PostModel extends Equatable {
         ownerName,
         text,
         postType,
+        linkedProductId,
         geoLat,
         geoLon,
         visibility,

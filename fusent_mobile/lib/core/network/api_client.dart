@@ -60,6 +60,23 @@ class ApiClient {
     _accessToken = null;
   }
 
+  // Generic HTTP methods
+  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+    return await _dio.get(path, queryParameters: queryParameters);
+  }
+
+  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await _dio.post(path, data: data, queryParameters: queryParameters);
+  }
+
+  Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await _dio.put(path, data: data, queryParameters: queryParameters);
+  }
+
+  Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await _dio.delete(path, data: data, queryParameters: queryParameters);
+  }
+
   // Auth endpoints
   Future<Response> login({
     required String email,
@@ -358,6 +375,7 @@ class ApiClient {
     required String postType, // TEXT, PHOTO, VIDEO, PRODUCT
     String? visibility, // PUBLIC, FOLLOWERS, PRIVATE
     List<Map<String, dynamic>>? media,
+    String? linkedProductId,
   }) async {
     return await _dio.post(
       ApiEndpoints.createPost,
@@ -366,6 +384,7 @@ class ApiClient {
         'postType': postType,
         if (visibility != null) 'visibility': visibility,
         if (media != null && media.isNotEmpty) 'media': media,
+        if (linkedProductId != null) 'linkedProductId': linkedProductId,
       },
     );
   }

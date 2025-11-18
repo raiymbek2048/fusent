@@ -1,8 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:go_router/go_router.dart';
 
 class ChatListPage extends StatelessWidget {
   const ChatListPage({super.key});
+
+  // Mock data for shop chats
+  final List<Map<String, dynamic>> _mockChats = const [
+    {
+      'shopName': 'Fashion Store',
+      'lastMessage': 'Спасибо за заказ!',
+      'time': '2 мин',
+      'unreadCount': 1,
+      'avatarUrl': 'https://via.placeholder.com/150',
+    },
+    {
+      'shopName': 'Tech Paradise',
+      'lastMessage': 'Товар уже в пути',
+      'time': '1 ч',
+      'unreadCount': 0,
+      'avatarUrl': 'https://via.placeholder.com/150',
+    },
+    {
+      'shopName': 'Анна Иванова',
+      'lastMessage': 'Отлично!',
+      'time': '3 ч',
+      'unreadCount': 0,
+      'avatarUrl': 'https://via.placeholder.com/150',
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -37,20 +63,24 @@ class ChatListPage extends StatelessWidget {
           // Chat list
           Expanded(
             child: ListView.separated(
-        itemCount: 10, // Mock data
-        separatorBuilder: (context, index) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          return _buildChatItem(
-            context,
-            name: 'User ${index + 1}',
-            lastMessage: 'Последнее сообщение...',
-            time: '${index + 1}ч',
-            unreadCount: index % 3 == 0 ? index + 1 : 0,
-            avatarUrl: 'https://via.placeholder.com/150',
-            isOnline: index % 2 == 0,
-              );
-            },
-          ),
+              itemCount: _mockChats.length,
+              separatorBuilder: (context, index) => const Divider(
+                height: 1,
+                color: AppColors.divider,
+              ),
+              itemBuilder: (context, index) {
+                final chat = _mockChats[index];
+                return _buildChatItem(
+                  context,
+                  shopName: chat['shopName'] as String,
+                  lastMessage: chat['lastMessage'] as String,
+                  time: chat['time'] as String,
+                  unreadCount: chat['unreadCount'] as int,
+                  avatarUrl: chat['avatarUrl'] as String,
+                  isShop: index < 2, // First two are shops
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -59,98 +89,134 @@ class ChatListPage extends StatelessWidget {
 
   Widget _buildChatItem(
     BuildContext context, {
-    required String name,
+    required String shopName,
     required String lastMessage,
     required String time,
     required int unreadCount,
     required String avatarUrl,
-    required bool isOnline,
+    required bool isShop,
   }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      leading: Stack(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: AppColors.surface,
-            backgroundImage: NetworkImage(avatarUrl),
-          ),
-          if (isOnline)
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                width: 16,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: AppColors.success,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.background,
-                    width: 2,
+    return InkWell(
+      onTap: () {
+        context.push(
+          '/chat/${shopName.hashCode}?shopName=$shopName&isShop=$isShop',
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            // Avatar
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: AppColors.surface,
+              child: Icon(
+                isShop ? Icons.store : Icons.person,
+                color: AppColors.textSecondary,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Chat details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Shop name with badge and time
+                  Row(
+                    children: [
+                      // Shop name
+                      Text(
+                        shopName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Shop badge
+                      if (isShop)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'Магазин',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+
+                      const Spacer(),
+
+                      // Time
+                      Text(
+                        time,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ),
-        ],
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              name,
-              style: TextStyle(
-                fontWeight: unreadCount > 0 ? FontWeight.w600 : FontWeight.w400,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(
-            time,
-            style: TextStyle(
-              fontSize: 12,
-              color: unreadCount > 0 ? AppColors.primary : AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-      subtitle: Row(
-        children: [
-          Expanded(
-            child: Text(
-              lastMessage,
-              style: TextStyle(
-                color: unreadCount > 0 ? AppColors.textPrimary : AppColors.textSecondary,
-                fontWeight: unreadCount > 0 ? FontWeight.w500 : FontWeight.w400,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (unreadCount > 0) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                unreadCount > 99 ? '99+' : '$unreadCount',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
+                  const SizedBox(height: 6),
+
+                  // Last message and unread count
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          lastMessage,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+
+                      // Unread count badge
+                      if (unreadCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            unreadCount > 99 ? '99+' : '$unreadCount',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
-        ],
+        ),
       ),
-      onTap: () {
-        // TODO: Open chat conversation
-      },
     );
   }
 }

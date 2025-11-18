@@ -5,8 +5,8 @@ class AppColors {
   AppColors._();
 
   // Основные цвета
-  static const Color primary = Color(0xFF6366F1); // Индиго/фиолетовый из дизайна
-  static const Color secondary = Color(0xFF8B5CF6);
+  static const Color primary = Color(0xFF5B7CFF); // Синий из макета
+  static const Color secondary = Color(0xFFE91E63); // Розовый/магента акцент
 
   // Фоновые цвета (темная тема)
   static const Color background = Color(0xFF1C1C1E); // Основной фон

@@ -246,6 +246,7 @@ class _FeedPageState extends State<FeedPage> with SingleTickerProviderStateMixin
                   likes: post.likesCount,
                   comments: post.commentsCount,
                   isLiked: post.isLikedByCurrentUser,
+                  linkedProductId: post.linkedProductId,
                   onLike: () {
                     bloc.add(LikePostEvent(
                       postId: post.id,

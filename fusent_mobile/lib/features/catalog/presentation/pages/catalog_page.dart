@@ -5,6 +5,7 @@ import 'package:fusent_mobile/features/map/presentation/pages/shops_map_page.dar
 import 'package:fusent_mobile/core/di/injection_container.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
 import 'package:dio/dio.dart';
+import 'package:fusent_mobile/features/catalog/presentation/widgets/filter_bottom_sheet.dart';
 
 class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
@@ -106,13 +107,35 @@ class _CatalogPageState extends State<CatalogPage> {
             // rating may be in product['rating'] or absent
             final rating = _toDouble(product['rating']);
 
+            // Get shop name if available
+            String shopName = 'Магазин';
+            if (product.containsKey('shop')) {
+              final shop = product['shop'];
+              if (shop is Map && shop.containsKey('name')) {
+                shopName = shop['name']?.toString() ?? 'Магазин';
+              }
+            }
+
+            // Calculate discount percentage if there's an old price
+            int? discountPercent;
+            double? oldPrice;
+            if (product.containsKey('oldPrice')) {
+              oldPrice = _toDouble(product['oldPrice']);
+              if (oldPrice > price && price > 0) {
+                discountPercent = (((oldPrice - price) / oldPrice) * 100).round();
+              }
+            }
+
             return {
               'id': id,
               'name': name,
               'price': price,
+              'oldPrice': oldPrice,
+              'discountPercent': discountPercent,
               'stock': stock,
               'imageUrl': imageUrl,
               'rating': rating,
+              'shopName': shopName,
             };
           }).toList();
 
@@ -192,7 +215,12 @@ class _CatalogPageState extends State<CatalogPage> {
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
-              // TODO: Open filter modal
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const FilterBottomSheet(),
+              );
             },
           ),
         ],
@@ -346,9 +374,12 @@ class _CatalogPageState extends State<CatalogPage> {
           return _buildProductCard(
             productId: product['id'],
             name: product['name'],
-            price: '${product['price']} сом',
+            price: product['price'],
+            oldPrice: product['oldPrice'],
+            discountPercent: product['discountPercent'],
             imageUrl: product['imageUrl'] ?? '',
             rating: product['rating'] ?? 0.0,
+            shopName: product['shopName'] ?? 'Магазин',
           );
         },
       ),
@@ -444,9 +475,12 @@ class _CatalogPageState extends State<CatalogPage> {
   Widget _buildProductCard({
     required String productId,
     required String name,
-    required String price,
+    required double price,
+    required double? oldPrice,
+    required int? discountPercent,
     required String imageUrl,
     required double rating,
+    required String shopName,
   }) {
     return GestureDetector(
       onTap: () {
@@ -460,29 +494,63 @@ class _CatalogPageState extends State<CatalogPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Image
+            // Product Image with discount badge
             Expanded(
               flex: 3,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      color: AppColors.background,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(
+                              Icons.image,
+                              size: 48,
+                              color: AppColors.textSecondary,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                  color: AppColors.background,
-                ),
-                child: Center(
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(
-                        Icons.image,
-                        size: 48,
-                        color: AppColors.textSecondary,
-                      );
-                    },
-                  ),
-                ),
+                  // Discount badge
+                  if (discountPercent != null && discountPercent > 0)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.error,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '-$discountPercent%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
 
@@ -490,23 +558,27 @@ class _CatalogPageState extends State<CatalogPage> {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Product name
                     Text(
                       name,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Rating and shop name
                         Row(
                           children: [
                             const Icon(
@@ -516,7 +588,7 @@ class _CatalogPageState extends State<CatalogPage> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              rating.toString(),
+                              rating.toStringAsFixed(1),
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
@@ -524,14 +596,43 @@ class _CatalogPageState extends State<CatalogPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
+
+                        // Shop name
                         Text(
-                          price,
+                          shopName,
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Price (with old price if available)
+                        Row(
+                          children: [
+                            if (oldPrice != null && oldPrice > 0) ...[
+                              Text(
+                                '${oldPrice.round()} сом',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Text(
+                              '${price.round()} сом',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

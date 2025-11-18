@@ -22,7 +22,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
   String _selectedPostType = 'TEXT';
   String _selectedVisibility = 'PUBLIC';
   bool _isLoading = false;
+  bool _isLoadingProducts = false;
   List<XFile> _selectedImages = [];
+  List<Map<String, dynamic>> _products = [];
+  String? _selectedProductId;
 
   final List<Map<String, String>> _postTypes = [
     {'value': 'TEXT', 'label': 'Текст'},
@@ -39,6 +42,45 @@ class _CreatePostPageState extends State<CreatePostPage> {
   void dispose() {
     _textController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadProducts() async {
+    setState(() {
+      _isLoadingProducts = true;
+    });
+
+    try {
+      final apiClient = sl<ApiClient>();
+      final response = await apiClient.getMyProducts();
+
+      if (response.statusCode == 200 && response.data != null) {
+        final List<dynamic> productsData = response.data as List<dynamic>;
+
+        setState(() {
+          _products = productsData.map((product) {
+            return {
+              'id': product['id'],
+              'name': product['name'] ?? 'Без названия',
+              'price': (product['basePrice'] ?? 0).toDouble(),
+              'imageUrl': product['imageUrl'],
+            };
+          }).toList();
+          _isLoadingProducts = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingProducts = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка загрузки товаров: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _pickImages() async {
@@ -115,6 +157,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         postType: _selectedPostType,
         visibility: _selectedVisibility,
         media: mediaList,
+        linkedProductId: _selectedProductId,
       );
 
       if (mounted && response.statusCode == 200) {
@@ -197,6 +240,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 onChanged: (value) {
                   setState(() {
                     _selectedPostType = value!;
+                    // Load products if PRODUCT type is selected
+                    if (value == 'PRODUCT' && _products.isEmpty) {
+                      _loadProducts();
+                    }
                   });
                 },
               ),
@@ -223,6 +270,77 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 },
               ),
               const SizedBox(height: 16),
+
+              // Product Selection (only for PRODUCT type)
+              if (_selectedPostType == 'PRODUCT') ...[
+                _isLoadingProducts
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : DropdownButtonFormField<String>(
+                        value: _selectedProductId,
+                        decoration: const InputDecoration(
+                          labelText: 'Выберите товар *',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.inventory_2),
+                        ),
+                        items: _products.map((product) {
+                          return DropdownMenuItem(
+                            value: product['id'] as String,
+                            child: Row(
+                              children: [
+                                if (product['imageUrl'] != null && product['imageUrl'] != '')
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(4),
+                                      image: DecorationImage(
+                                        image: NetworkImage(product['imageUrl']),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        product['name'] as String,
+                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                                      ),
+                                      Text(
+                                        '${product['price']} сом',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedProductId = value;
+                          });
+                        },
+                        validator: (value) {
+                          if (_selectedPostType == 'PRODUCT' && value == null) {
+                            return 'Выберите товар для публикации';
+                          }
+                          return null;
+                        },
+                      ),
+                const SizedBox(height: 16),
+              ],
 
               // Post Text
               TextFormField(
