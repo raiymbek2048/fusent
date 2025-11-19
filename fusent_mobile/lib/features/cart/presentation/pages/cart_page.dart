@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -10,34 +11,138 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  final List<CartItem> _cartItems = [
-    CartItem(
-      id: '1',
-      name: 'Беспроводные наушники',
-      shopName: 'Tech Paradise',
-      price: 2500,
-      quantity: 1,
-      imageUrl: 'https://via.placeholder.com/150',
-    ),
-    CartItem(
-      id: '2',
-      name: 'Стильное платье',
-      shopName: 'Fashion Store',
-      price: 3600,
-      quantity: 2,
-      imageUrl: 'https://via.placeholder.com/150',
-    ),
-    CartItem(
-      id: '3',
-      name: 'Спортивные кроссовки',
-      shopName: 'Sport Zone',
-      price: 3500,
-      quantity: 1,
-      imageUrl: 'https://via.placeholder.com/150',
-      isAvailable: false,
-      errorMessage: 'Товар недоступен для онлайн покупки',
-    ),
-  ];
+  final ApiClient _apiClient = ApiClient();
+  List<CartItem> _cartItems = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCart();
+  }
+
+  Future<void> _loadCart() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _apiClient.getCart();
+
+      if (mounted && response.statusCode == 200) {
+        final Map<String, dynamic> cartData = response.data as Map<String, dynamic>;
+        final List<dynamic> items = cartData['items'] as List<dynamic>? ?? [];
+
+        setState(() {
+          _cartItems = items.map((item) {
+            final itemMap = item as Map<String, dynamic>;
+            final product = itemMap['product'] as Map<String, dynamic>?;
+            final shop = product?['shop'] as Map<String, dynamic>?;
+            final variants = product?['variants'] as List<dynamic>?;
+            final firstVariant = variants?.isNotEmpty == true ? variants!.first as Map<String, dynamic> : null;
+
+            return CartItem(
+              id: itemMap['id'] ?? product?['id'] ?? '',
+              productId: product?['id'] ?? '',
+              name: product?['name'] ?? 'Товар',
+              shopName: shop?['name'] ?? 'Магазин',
+              price: (firstVariant?['price'] ?? product?['currentPrice'] ?? 0).toDouble().toInt(),
+              quantity: itemMap['quantity'] ?? 1,
+              imageUrl: (product?['images'] as List<dynamic>?)?.isNotEmpty == true
+                  ? (product!['images'] as List<dynamic>).first as String
+                  : '',
+              isAvailable: product?['isActive'] ?? true,
+              errorMessage: (product?['isActive'] == false) ? 'Товар недоступен' : null,
+            );
+          }).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading cart: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Не удалось загрузить корзину: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _removeItem(String productId, int index) async {
+    try {
+      final response = await _apiClient.removeFromCart(productId: productId);
+
+      if (mounted && response.statusCode == 200) {
+        setState(() {
+          _cartItems.removeAt(index);
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Товар удален из корзины'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error removing item: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Не удалось удалить товар: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateQuantity(String productId, int newQuantity, int index) async {
+    // Optimistic update
+    final oldQuantity = _cartItems[index].quantity;
+    setState(() {
+      _cartItems[index].quantity = newQuantity;
+    });
+
+    try {
+      final response = await _apiClient.updateCartItem(
+        productId: productId,
+        quantity: newQuantity,
+      );
+
+      if (response.statusCode != 200) {
+        // Revert on error
+        if (mounted) {
+          setState(() {
+            _cartItems[index].quantity = oldQuantity;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error updating quantity: $e');
+      // Revert on error
+      if (mounted) {
+        setState(() {
+          _cartItems[index].quantity = oldQuantity;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Не удалось обновить количество: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   double get _totalPrice {
     return _cartItems.fold(0, (sum, item) => sum + (item.price * item.quantity));
@@ -66,9 +171,11 @@ class _CartPageState extends State<CartPage> {
             ),
         ],
       ),
-      body: _cartItems.isEmpty
-          ? _buildEmptyCart()
-          : Column(
+      body: _isLoading && _cartItems.isEmpty
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : _cartItems.isEmpty
+              ? _buildEmptyCart()
+              : Column(
               children: [
                 Expanded(
                   child: ListView.separated(
@@ -226,11 +333,7 @@ class _CartPageState extends State<CartPage> {
                     IconButton(
                       icon: const Icon(Icons.delete_outline, size: 20),
                       color: AppColors.error,
-                      onPressed: () {
-                        setState(() {
-                          _cartItems.removeAt(index);
-                        });
-                      },
+                      onPressed: () => _removeItem(item.productId, index),
                       constraints: const BoxConstraints(
                         minWidth: 32,
                         minHeight: 32,
@@ -279,14 +382,8 @@ class _CartPageState extends State<CartPage> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.remove, size: 18),
-                            onPressed: item.isAvailable
-                                ? () {
-                                    setState(() {
-                                      if (item.quantity > 1) {
-                                        item.quantity--;
-                                      }
-                                    });
-                                  }
+                            onPressed: item.isAvailable && item.quantity > 1
+                                ? () => _updateQuantity(item.productId, item.quantity - 1, index)
                                 : null,
                             constraints: const BoxConstraints(
                               minWidth: 32,
@@ -311,11 +408,7 @@ class _CartPageState extends State<CartPage> {
                           IconButton(
                             icon: const Icon(Icons.add, size: 18),
                             onPressed: item.isAvailable
-                                ? () {
-                                    setState(() {
-                                      item.quantity++;
-                                    });
-                                  }
+                                ? () => _updateQuantity(item.productId, item.quantity + 1, index)
                                 : null,
                             constraints: const BoxConstraints(
                               minWidth: 32,
@@ -598,6 +691,7 @@ class _CartPageState extends State<CartPage> {
 
 class CartItem {
   final String id;
+  final String productId;
   final String name;
   final String shopName;
   final int price;
@@ -608,6 +702,7 @@ class CartItem {
 
   CartItem({
     required this.id,
+    required this.productId,
     required this.name,
     required this.shopName,
     required this.price,

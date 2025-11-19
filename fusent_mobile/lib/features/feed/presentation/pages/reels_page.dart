@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
+import 'package:fusent_mobile/features/feed/data/models/post_model.dart';
 
 class ReelsPage extends StatefulWidget {
   final String? initialPostId;
@@ -17,35 +19,69 @@ class ReelsPage extends StatefulWidget {
 }
 
 class _ReelsPageState extends State<ReelsPage> {
+  final ApiClient _apiClient = ApiClient();
   late PageController _pageController;
   int _currentPage = 0;
-
-  // Mock video URLs
-  final List<ReelItem> _reels = [
-    ReelItem(
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      username: 'fashion_store',
-      description: 'Новая коллекция весна 2025 🔥 #fashion #style',
-      likes: 1234,
-      comments: 89,
-      shares: 45,
-      avatarUrl: 'https://via.placeholder.com/150',
-    ),
-    ReelItem(
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-      username: 'tech_shop',
-      description: 'Обзор новых гаджетов 📱 #tech #gadgets',
-      likes: 2345,
-      comments: 156,
-      shares: 78,
-      avatarUrl: 'https://via.placeholder.com/150',
-    ),
-  ];
+  List<ReelItem> _reels = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _loadReels();
+  }
+
+  Future<void> _loadReels() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _apiClient.getFeed(type: 'public', size: 50);
+
+      if (mounted && response.statusCode == 200) {
+        final Map<String, dynamic> data = response.data as Map<String, dynamic>;
+        final List<dynamic> content = data['content'] as List<dynamic>? ?? [];
+
+        final List<PostModel> posts = content
+            .map((json) => PostModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        // Filter for posts with video media
+        final videoPosts = posts.where((post) {
+          return post.media.any((media) => media.mediaType == MediaType.VIDEO);
+        }).toList();
+
+        setState(() {
+          _reels = videoPosts.map((post) {
+            final videoMedia = post.media.firstWhere(
+              (media) => media.mediaType == MediaType.VIDEO,
+            );
+
+            return ReelItem(
+              postId: post.id,
+              videoUrl: videoMedia.url,
+              username: post.owner.username ?? post.owner.fullName,
+              description: post.content ?? '',
+              likes: post.likesCount,
+              comments: post.commentsCount,
+              shares: post.sharesCount,
+              avatarUrl: post.owner.avatarUrl ?? '',
+              isLiked: post.isLiked,
+            );
+          }).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading reels: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -58,34 +94,87 @@ class _ReelsPageState extends State<ReelsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: PageView.builder(
-        controller: _pageController,
-        scrollDirection: Axis.vertical,
-        itemCount: _reels.length,
-        onPageChanged: (index) {
-          setState(() {
-            _currentPage = index;
-          });
-        },
-        itemBuilder: (context, index) {
-          return ReelVideoPlayer(
-            reel: _reels[index],
-            isActive: index == _currentPage,
-          );
-        },
-      ),
+      body: _isLoading && _reels.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            )
+          : _reels.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.videocam_off,
+                        size: 80,
+                        color: Colors.white54,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Нет видео',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : PageView.builder(
+                  controller: _pageController,
+                  scrollDirection: Axis.vertical,
+                  itemCount: _reels.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    return ReelVideoPlayer(
+                      reel: _reels[index],
+                      isActive: index == _currentPage,
+                      onLikeToggle: (postId, isLiked) => _toggleLike(postId, isLiked, index),
+                    );
+                  },
+                ),
     );
+  }
+
+  Future<void> _toggleLike(String postId, bool currentlyLiked, int index) async {
+    // Optimistic update
+    setState(() {
+      _reels[index].isLiked = !currentlyLiked;
+      _reels[index].likes += currentlyLiked ? -1 : 1;
+    });
+
+    try {
+      if (currentlyLiked) {
+        await _apiClient.unlikePost(postId);
+      } else {
+        await _apiClient.likePost(postId);
+      }
+    } catch (e) {
+      debugPrint('Error toggling like: $e');
+      // Revert on error
+      if (mounted) {
+        setState(() {
+          _reels[index].isLiked = currentlyLiked;
+          _reels[index].likes += currentlyLiked ? 1 : -1;
+        });
+      }
+    }
   }
 }
 
 class ReelVideoPlayer extends StatefulWidget {
   final ReelItem reel;
   final bool isActive;
+  final Function(String, bool) onLikeToggle;
 
   const ReelVideoPlayer({
     super.key,
     required this.reel,
     required this.isActive,
+    required this.onLikeToggle,
   });
 
   @override
@@ -95,7 +184,6 @@ class ReelVideoPlayer extends StatefulWidget {
 class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
   late VideoPlayerController _controller;
   bool _isInitialized = false;
-  bool _isLiked = false;
   bool _showPlayPause = false;
 
   @override
@@ -222,13 +310,11 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
 
               // Like Button
               _buildActionButton(
-                icon: _isLiked ? Icons.favorite : Icons.favorite_border,
+                icon: widget.reel.isLiked ? Icons.favorite : Icons.favorite_border,
                 label: _formatNumber(widget.reel.likes),
-                color: _isLiked ? Colors.red : Colors.white,
+                color: widget.reel.isLiked ? Colors.red : Colors.white,
                 onTap: () {
-                  setState(() {
-                    _isLiked = !_isLiked;
-                  });
+                  widget.onLikeToggle(widget.reel.postId, widget.reel.isLiked);
                 },
               ),
               const SizedBox(height: 24),
@@ -405,15 +491,18 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
 }
 
 class ReelItem {
+  final String postId;
   final String videoUrl;
   final String username;
   final String description;
-  final int likes;
+  int likes;
   final int comments;
   final int shares;
   final String avatarUrl;
+  bool isLiked;
 
   ReelItem({
+    required this.postId,
     required this.videoUrl,
     required this.username,
     required this.description,
@@ -421,5 +510,6 @@ class ReelItem {
     required this.comments,
     required this.shares,
     required this.avatarUrl,
+    required this.isLiked,
   });
 }
