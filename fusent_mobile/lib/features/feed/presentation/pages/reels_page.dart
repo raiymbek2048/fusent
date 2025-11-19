@@ -69,6 +69,8 @@ class _ReelsPageState extends State<ReelsPage> {
               shares: post.sharesCount,
               avatarUrl: '',
               isLiked: post.isLikedByCurrentUser,
+              ownerId: post.ownerId,
+              ownerType: post.ownerType.toString().split('.').last,
             );
           }).toList();
         });
@@ -182,9 +184,12 @@ class ReelVideoPlayer extends StatefulWidget {
 }
 
 class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
+  final ApiClient _apiClient = ApiClient();
   late VideoPlayerController _controller;
   bool _isInitialized = false;
   bool _showPlayPause = false;
+  bool _isFollowing = false;
+  bool _isSaved = false;
 
   @override
   void initState() {
@@ -246,6 +251,52 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
         });
       }
     });
+  }
+
+  Future<void> _toggleFollow() async {
+    setState(() {
+      _isFollowing = !_isFollowing;
+    });
+
+    try {
+      if (_isFollowing) {
+        await _apiClient.followTarget(
+          targetId: widget.reel.ownerId,
+          targetType: widget.reel.ownerType,
+        );
+      } else {
+        await _apiClient.unfollowTarget(
+          targetId: widget.reel.ownerId,
+          targetType: widget.reel.ownerType,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error toggling follow: $e');
+      // Revert on error
+      setState(() {
+        _isFollowing = !_isFollowing;
+      });
+    }
+  }
+
+  Future<void> _toggleSave() async {
+    setState(() {
+      _isSaved = !_isSaved;
+    });
+
+    try {
+      if (_isSaved) {
+        await _apiClient.savePost(widget.reel.postId);
+      } else {
+        await _apiClient.unsavePost(widget.reel.postId);
+      }
+    } catch (e) {
+      debugPrint('Error toggling save: $e');
+      // Revert on error
+      setState(() {
+        _isSaved = !_isSaved;
+      });
+    }
   }
 
   @override
@@ -371,18 +422,19 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white),
-                      minimumSize: const Size(0, 32),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                  if (!_isFollowing)
+                    OutlinedButton(
+                      onPressed: _toggleFollow,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white),
+                        minimumSize: const Size(0, 32),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      child: const Text(
+                        'Подписаться',
+                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
                     ),
-                    child: const Text(
-                      'Подписаться',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -460,14 +512,20 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.bookmark_border),
-                title: const Text('Сохранить'),
-                onTap: () => Navigator.pop(context),
+                leading: Icon(_isSaved ? Icons.bookmark : Icons.bookmark_border),
+                title: Text(_isSaved ? 'Убрать из сохраненных' : 'Сохранить'),
+                onTap: () {
+                  _toggleSave();
+                  Navigator.pop(context);
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.person_add_outlined),
-                title: const Text('Подписаться'),
-                onTap: () => Navigator.pop(context),
+                title: Text(_isFollowing ? 'Отписаться' : 'Подписаться'),
+                onTap: () {
+                  _toggleFollow();
+                  Navigator.pop(context);
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.link),
@@ -500,6 +558,8 @@ class ReelItem {
   final int shares;
   final String avatarUrl;
   bool isLiked;
+  final String ownerId;
+  final String ownerType;
 
   ReelItem({
     required this.postId,
@@ -511,5 +571,7 @@ class ReelItem {
     required this.shares,
     required this.avatarUrl,
     required this.isLiked,
+    required this.ownerId,
+    required this.ownerType,
   });
 }
