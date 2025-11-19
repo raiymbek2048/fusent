@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/constants/app_constants.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
 
 class ShopsMapPage extends StatefulWidget {
   const ShopsMapPage({super.key});
@@ -14,17 +15,73 @@ class ShopsMapPage extends StatefulWidget {
 }
 
 class _ShopsMapPageState extends State<ShopsMapPage> {
+  final ApiClient _apiClient = ApiClient();
   final MapController _mapController = MapController();
   Shop? _selectedShop;
   Position? _userLocation;
   bool _isLoadingLocation = false;
+  bool _isLoadingShops = false;
   bool _filterOnlyOpen = false;
   bool _filterHighRating = false;
+  List<Shop> _allShops = [];
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _loadShops();
+  }
+
+  Future<void> _loadShops() async {
+    setState(() {
+      _isLoadingShops = true;
+    });
+
+    try {
+      final response = await _apiClient.getAllShops();
+
+      if (mounted && response.statusCode == 200) {
+        final List<dynamic> shopsData = response.data as List<dynamic>;
+
+        setState(() {
+          _allShops = shopsData.map((shop) {
+            final shopMap = shop as Map<String, dynamic>;
+            // Parse coordinates from address or use default Bishkek location
+            final latitude = shopMap['latitude'] as double? ?? 42.8746;
+            final longitude = shopMap['longitude'] as double? ?? 74.5698;
+
+            return Shop(
+              id: shopMap['id'] ?? '',
+              name: shopMap['name'] ?? 'Магазин',
+              address: shopMap['address'] ?? '',
+              latitude: latitude,
+              longitude: longitude,
+              rating: (shopMap['averageRating'] ?? 0.0).toDouble(),
+              reviewsCount: shopMap['totalReviews'] ?? 0,
+              imageUrl: shopMap['logoUrl'] ?? '',
+              isOpen: true, // Backend doesn't provide this, default to true
+              category: shopMap['category'] ?? 'Общее',
+            );
+          }).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading shops: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Не удалось загрузить магазины: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingShops = false;
+        });
+      }
+    }
   }
 
   Future<void> _getCurrentLocation() async {
@@ -136,46 +193,6 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
 
     return filtered;
   }
-
-  // Mock data - replace with real data from backend
-  final List<Shop> _allShops = [
-    Shop(
-      id: '1',
-      name: 'Fashion Store',
-      address: 'Бишкек, ул. Чуй 123',
-      latitude: 42.8746,
-      longitude: 74.5698,
-      rating: 4.5,
-      reviewsCount: 120,
-      imageUrl: '',
-      isOpen: true,
-      workingHours: '9:00 - 20:00',
-    ),
-    Shop(
-      id: '2',
-      name: 'Tech Paradise',
-      address: 'Бишкек, ул. Ибраимова 67',
-      latitude: 42.8756,
-      longitude: 74.5708,
-      rating: 4.9,
-      reviewsCount: 203,
-      imageUrl: '',
-      isOpen: true,
-      workingHours: '9:00 - 20:00',
-    ),
-    Shop(
-      id: '3',
-      name: 'Book World',
-      address: 'Бишкек, пр. Манаса 45',
-      latitude: 42.8736,
-      longitude: 74.5688,
-      rating: 4.7,
-      reviewsCount: 156,
-      imageUrl: '',
-      isOpen: false,
-      workingHours: '10:00 - 19:00',
-    ),
-  ];
 
   void _goToShop(Shop shop) {
     _mapController.move(

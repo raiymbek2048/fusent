@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
 import 'dart:async';
 
 class StoryViewerPage extends StatefulWidget {
@@ -15,66 +16,82 @@ class StoryViewerPage extends StatefulWidget {
 }
 
 class _StoryViewerPageState extends State<StoryViewerPage> {
+  final ApiClient _apiClient = ApiClient();
   late PageController _pageController;
   int _currentUserStoryIndex = 0;
-
-  // Mock data - replace with real data from backend
-  final List<UserStory> _userStories = [
-    UserStory(
-      username: 'Fashion Store',
-      avatarUrl: 'https://via.placeholder.com/150',
-      stories: [
-        Story(
-          mediaUrl: 'https://via.placeholder.com/600',
-          mediaType: StoryMediaType.image,
-          timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        ),
-        Story(
-          mediaUrl: 'https://via.placeholder.com/600/FF0000',
-          mediaType: StoryMediaType.image,
-          timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-        ),
-      ],
-    ),
-    UserStory(
-      username: 'Tech Paradise',
-      avatarUrl: 'https://via.placeholder.com/150',
-      stories: [
-        Story(
-          mediaUrl: 'https://via.placeholder.com/600/00FF00',
-          mediaType: StoryMediaType.image,
-          timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-        ),
-      ],
-    ),
-    UserStory(
-      username: 'Book World',
-      avatarUrl: 'https://via.placeholder.com/150',
-      stories: [
-        Story(
-          mediaUrl: 'https://via.placeholder.com/600/0000FF',
-          mediaType: StoryMediaType.image,
-          timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-        ),
-        Story(
-          mediaUrl: 'https://via.placeholder.com/600/FFFF00',
-          mediaType: StoryMediaType.image,
-          timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
-        ),
-        Story(
-          mediaUrl: 'https://via.placeholder.com/600/FF00FF',
-          mediaType: StoryMediaType.image,
-          timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-        ),
-      ],
-    ),
-  ];
+  List<UserStory> _userStories = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _currentUserStoryIndex = widget.initialStoryIndex;
     _pageController = PageController(initialPage: widget.initialStoryIndex);
+    _loadStories();
+  }
+
+  Future<void> _loadStories() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _apiClient.getStories();
+
+      if (mounted && response.statusCode == 200) {
+        final List<dynamic> stories = response.data as List<dynamic>;
+
+        // Group stories by owner
+        final Map<String, List<Story>> groupedStories = {};
+
+        for (var storyData in stories) {
+          final storyMap = storyData as Map<String, dynamic>;
+          final owner = storyMap['owner'] as Map<String, dynamic>?;
+          final ownerId = owner?['id'] ?? '';
+          final ownerName = owner?['fullName'] ?? owner?['username'] ?? 'User';
+          final ownerAvatar = owner?['avatarUrl'] ?? '';
+
+          if (!groupedStories.containsKey(ownerId)) {
+            groupedStories[ownerId] = [];
+          }
+
+          groupedStories[ownerId]!.add(Story(
+            id: storyMap['id'] ?? '',
+            mediaUrl: storyMap['mediaUrl'] ?? '',
+            mediaType: (storyMap['mediaType'] == 'VIDEO')
+                ? StoryMediaType.video
+                : StoryMediaType.image,
+            timestamp: DateTime.parse(storyMap['createdAt'] ?? DateTime.now().toIso8601String()),
+            hasViewed: storyMap['hasViewed'] ?? false,
+          ));
+        }
+
+        setState(() {
+          _userStories = groupedStories.entries.map((entry) {
+            final firstStory = entry.value.first;
+            final owner = stories.firstWhere(
+              (s) => (s as Map<String, dynamic>)['id'] == firstStory.id,
+            ) as Map<String, dynamic>;
+            final ownerData = owner['owner'] as Map<String, dynamic>?;
+
+            return UserStory(
+              ownerId: entry.key,
+              username: ownerData?['fullName'] ?? ownerData?['username'] ?? 'User',
+              avatarUrl: ownerData?['avatarUrl'] ?? '',
+              stories: entry.value,
+            );
+          }).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading stories: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -497,23 +514,29 @@ class _StoryViewWidgetState extends State<StoryViewWidget> {
 enum StoryMediaType { image, video }
 
 class Story {
+  final String id;
   final String mediaUrl;
   final StoryMediaType mediaType;
   final DateTime timestamp;
+  final bool hasViewed;
 
   Story({
+    required this.id,
     required this.mediaUrl,
     required this.mediaType,
     required this.timestamp,
+    this.hasViewed = false,
   });
 }
 
 class UserStory {
+  final String ownerId;
   final String username;
   final String avatarUrl;
   final List<Story> stories;
 
   UserStory({
+    required this.ownerId,
     required this.username,
     required this.avatarUrl,
     required this.stories,
