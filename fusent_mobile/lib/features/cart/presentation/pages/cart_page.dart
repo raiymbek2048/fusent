@@ -221,8 +221,8 @@ class _CartPageState extends State<CartPage> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
-              // Switch to catalog tab (index 1)
-              DefaultTabController.of(context)?.animateTo(1);
+              // Navigate to catalog page
+              context.go('/catalog');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,

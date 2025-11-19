@@ -4,6 +4,7 @@ import 'package:fusent_mobile/core/network/api_client.dart';
 import 'package:fusent_mobile/features/catalog/data/models/product_model.dart';
 import 'package:fusent_mobile/features/catalog/data/models/product_variant_model.dart';
 import 'package:fusent_mobile/features/reviews/presentation/pages/reviews_page.dart';
+import 'package:go_router/go_router.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productId;
@@ -503,14 +504,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       onPressed: (product.variants.isEmpty || _selectedVariant != null) &&
                               (_selectedVariant?.inStock ?? product.stock > 0)
                           ? () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Покупка: ${product.name}${_selectedVariant != null ? ' (${_selectedVariant!.displayName})' : ''}',
-                                  ),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
+                              // Navigate to checkout page
+                              final variantId = _selectedVariant?.id ?? '';
+                              context.push('/checkout?productId=${product.id}&variantId=$variantId&quantity=1');
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
