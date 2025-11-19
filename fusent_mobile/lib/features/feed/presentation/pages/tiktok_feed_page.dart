@@ -308,6 +308,9 @@ class _TikTokFeedPageState extends State<TikTokFeedPage>
               bloc.add(LikePostEvent(postId: postId, isLiked: isLiked));
             },
             onComment: (postId, commentsCount) {
+              // Save current feed state
+              final currentState = bloc.state;
+
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
@@ -319,7 +322,12 @@ class _TikTokFeedPageState extends State<TikTokFeedPage>
                     commentsCount: commentsCount,
                   ),
                 ),
-              );
+              ).then((_) {
+                // Restore feed state when bottom sheet closes
+                if (currentState is FeedLoaded) {
+                  bloc.emit(currentState);
+                }
+              });
             },
             onShare: (postId) {
               bloc.add(SharePostEvent(postId: postId));

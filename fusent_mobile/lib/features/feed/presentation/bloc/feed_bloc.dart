@@ -244,21 +244,14 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
 
         emit(currentState.copyWith(posts: updatedPosts));
       } else if (currentState is CommentsLoaded && currentState.postId == event.postId) {
-        // If we're viewing comments, reload them
-        final comments = await repository.getComments(
-          postId: event.postId,
-          page: 0,
-          size: 20,
-        );
+        // If we're viewing comments, add new comment to the list without reloading
+        final updatedComments = [comment, ...currentState.comments];
         emit(CommentsLoaded(
           postId: event.postId,
-          comments: comments,
-          hasReachedMax: comments.isEmpty || comments.length < 20,
+          comments: updatedComments,
+          hasReachedMax: currentState.hasReachedMax,
         ));
       }
-
-      // Trigger reload of comments if viewing them
-      add(LoadCommentsEvent(postId: event.postId));
     } catch (e) {
       emit(PostActionError(
         postId: event.postId,
