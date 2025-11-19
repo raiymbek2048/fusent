@@ -60,7 +60,7 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
               reviewsCount: shopMap['totalReviews'] ?? 0,
               imageUrl: shopMap['logoUrl'] ?? '',
               isOpen: true, // Backend doesn't provide this, default to true
-              category: shopMap['category'] ?? 'Общее',
+              workingHours: '9:00 - 20:00', // Backend doesn't provide this, default
             );
           }).toList();
         });

@@ -62,13 +62,13 @@ class _ReelsPageState extends State<ReelsPage> {
             return ReelItem(
               postId: post.id,
               videoUrl: videoMedia.url,
-              username: post.owner.username ?? post.owner.fullName,
-              description: post.content ?? '',
+              username: post.ownerName,
+              description: post.text ?? '',
               likes: post.likesCount,
               comments: post.commentsCount,
               shares: post.sharesCount,
-              avatarUrl: post.owner.avatarUrl ?? '',
-              isLiked: post.isLiked,
+              avatarUrl: '',
+              isLiked: post.isLikedByCurrentUser,
             );
           }).toList();
         });
