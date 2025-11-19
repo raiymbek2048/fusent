@@ -12,7 +12,7 @@ spring:
       enabled: true
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/fusent}
+    url: ${DB_URL:jdbc:postgresql://localhost:5435/fusent}
     username: ${DB_USERNAME:fusent_user}
     password: ${DB_PASSWORD:fusent_password}
     driver-class-name: org.postgresql.Driver
@@ -143,7 +143,7 @@ app:
 
   s3:
     endpoint: ${S3_ENDPOINT:http://localhost:9000}
-    public-endpoint: ${S3_PUBLIC_ENDPOINT:http://192.168.1.217:9000}
+    public-endpoint: ${S3_PUBLIC_ENDPOINT:http://localhost:9000}
     access-key: ${S3_ACCESS_KEY:minioadmin}
     secret-key: ${S3_SECRET_KEY:minioadmin123}
     bucket-media: ${S3_BUCKET_MEDIA:fucent-media}

@@ -4,6 +4,7 @@ package kg.bishkek.fucent.fusent.repository;
 
 import kg.bishkek.fucent.fusent.model.AppUser;
 import kg.bishkek.fucent.fusent.model.Product;
+import kg.bishkek.fucent.fusent.model.Shop;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -80,4 +82,15 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
         @Param("follower") AppUser follower,
         Pageable pageable
     );
+
+    /**
+     * Find all products by shop ID, ordered by creation date (for export)
+     */
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.variants WHERE p.shop.id = :shopId ORDER BY p.createdAt DESC")
+    List<Product> findByShopIdOrderByCreatedAtDesc(@Param("shopId") UUID shopId);
+
+    /**
+     * Find product by shop and name (for import - checking duplicates)
+     */
+    Optional<Product> findByShopAndName(Shop shop, String name);
 }

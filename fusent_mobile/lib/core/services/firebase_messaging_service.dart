@@ -1,6 +1,9 @@
+import 'dart:io' show Platform;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:injectable/injectable.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 /// Background message handler
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -47,7 +50,8 @@ class FirebaseMessagingService {
       // Listen to token refresh
       _firebaseMessaging.onTokenRefresh.listen((newToken) {
         print('FCM Token refreshed: $newToken');
-        // TODO: Send new token to backend
+        // Send new token to backend
+        sendTokenToBackend(newToken);
       });
 
       // Handle foreground messages
@@ -222,6 +226,37 @@ class FirebaseMessagingService {
       print('Unsubscribed from topic: $topic');
     } catch (e) {
       print('Error unsubscribing from topic: $e');
+    }
+  }
+
+  /// Send FCM token to backend
+  Future<void> sendTokenToBackend(String token) async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      String deviceId = '';
+      String deviceType = '';
+
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceId = androidInfo.id;
+        deviceType = 'ANDROID';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceId = iosInfo.identifierForVendor ?? '';
+        deviceType = 'IOS';
+      }
+
+      // Send to backend API
+      final apiClient = ApiClient();
+      await apiClient.post('/api/v1/fcm/register', data: {
+        'token': token,
+        'deviceType': deviceType,
+        'deviceId': deviceId,
+      });
+
+      print('FCM token registered on backend');
+    } catch (e) {
+      print('Error sending FCM token to backend: $e');
     }
   }
 }

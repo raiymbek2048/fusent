@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/constants/app_constants.dart';
 
@@ -14,9 +16,129 @@ class ShopsMapPage extends StatefulWidget {
 class _ShopsMapPageState extends State<ShopsMapPage> {
   final MapController _mapController = MapController();
   Shop? _selectedShop;
+  Position? _userLocation;
+  bool _isLoadingLocation = false;
+  bool _filterOnlyOpen = false;
+  bool _filterHighRating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+    });
+
+    try {
+      // Check permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Доступ к геолокации отклонен'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+          setState(() {
+            _isLoadingLocation = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Геолокация отключена в настройках'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        setState(() {
+          _isLoadingLocation = false;
+        });
+        return;
+      }
+
+      // Get current position
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      setState(() {
+        _userLocation = position;
+        _isLoadingLocation = false;
+      });
+
+      // Move map to user location
+      _mapController.move(
+        LatLng(position.latitude, position.longitude),
+        14.0,
+      );
+    } catch (e) {
+      setState(() {
+        _isLoadingLocation = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка получения геолокации: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  double? _getDistanceToShop(Shop shop) {
+    if (_userLocation == null) return null;
+    return Geolocator.distanceBetween(
+      _userLocation!.latitude,
+      _userLocation!.longitude,
+      shop.latitude,
+      shop.longitude,
+    ) / 1000; // Convert to km
+  }
+
+  String _formatDistance(double? distance) {
+    if (distance == null) return '';
+    if (distance < 1) {
+      return '${(distance * 1000).toInt()} м';
+    }
+    return '${distance.toStringAsFixed(1)} км';
+  }
+
+  List<Shop> get _filteredShops {
+    var filtered = _allShops.where((shop) {
+      if (_filterOnlyOpen && !shop.isOpen) return false;
+      if (_filterHighRating && shop.rating < 4.5) return false;
+      return true;
+    }).toList();
+
+    // Sort by distance if user location available
+    if (_userLocation != null) {
+      filtered.sort((a, b) {
+        final distA = _getDistanceToShop(a) ?? double.infinity;
+        final distB = _getDistanceToShop(b) ?? double.infinity;
+        return distA.compareTo(distB);
+      });
+    }
+
+    return filtered;
+  }
 
   // Mock data - replace with real data from backend
-  final List<Shop> _shops = [
+  final List<Shop> _allShops = [
     Shop(
       id: '1',
       name: 'Fashion Store',
@@ -88,25 +210,49 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
                 userAgentPackageName: 'kg.bishkek.fusent.mobile',
               ),
               MarkerLayer(
-                markers: _shops.map((shop) {
-                  return Marker(
-                    point: LatLng(shop.latitude, shop.longitude),
-                    width: 40,
-                    height: 40,
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedShop = shop;
-                        });
-                      },
-                      child: const Icon(
-                        Icons.location_on,
-                        color: AppColors.primary,
-                        size: 40,
+                markers: [
+                  // User location marker
+                  if (_userLocation != null)
+                    Marker(
+                      point: LatLng(_userLocation!.latitude, _userLocation!.longitude),
+                      width: 40,
+                      height: 40,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.blue, width: 3),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.my_location,
+                            color: Colors.blue,
+                            size: 20,
+                          ),
+                        ),
                       ),
                     ),
-                  );
-                }).toList(),
+                  // Shop markers
+                  ..._filteredShops.map((shop) {
+                    return Marker(
+                      point: LatLng(shop.latitude, shop.longitude),
+                      width: 40,
+                      height: 40,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedShop = shop;
+                          });
+                        },
+                        child: const Icon(
+                          Icons.location_on,
+                          color: AppColors.primary,
+                          size: 40,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ],
               ),
             ],
           ),
@@ -130,7 +276,7 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => context.pop(),
                   ),
                   const SizedBox(width: 8),
                   const Icon(Icons.location_on, color: AppColors.primary),
@@ -147,7 +293,7 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
                           ),
                         ),
                         Text(
-                          '${_shops.length} точек',
+                          '${_filteredShops.length} точек',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -172,17 +318,32 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
             bottom: _selectedShop != null ? 220 : 100,
             right: 16,
             child: FloatingActionButton(
-              onPressed: () {
-                _mapController.move(
-                  const LatLng(
-                    AppConstants.defaultLatitude,
-                    AppConstants.defaultLongitude,
-                  ),
-                  AppConstants.defaultZoom,
-                );
-              },
+              onPressed: _isLoadingLocation
+                  ? null
+                  : () {
+                      if (_userLocation != null) {
+                        _mapController.move(
+                          LatLng(_userLocation!.latitude, _userLocation!.longitude),
+                          14.0,
+                        );
+                      } else {
+                        _getCurrentLocation();
+                      }
+                    },
               backgroundColor: Colors.white,
-              child: const Icon(Icons.my_location, color: AppColors.primary),
+              child: _isLoadingLocation
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    )
+                  : Icon(
+                      Icons.my_location,
+                      color: _userLocation != null ? Colors.blue : AppColors.primary,
+                    ),
             ),
           ),
 
@@ -430,10 +591,10 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () {
-              // TODO: View shop products
+              context.push('/shop/${shop.id}?shopName=${Uri.encodeComponent(shop.name)}');
             },
-            icon: const Icon(Icons.shopping_bag),
-            label: const Text('Смотреть товары'),
+            icon: const Icon(Icons.store),
+            label: const Text('Профиль магазина'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
             ),
@@ -467,10 +628,11 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
               ),
               ListView.separated(
                 shrinkWrap: true,
-                itemCount: _shops.length,
+                itemCount: _filteredShops.length,
                 separatorBuilder: (context, index) => const Divider(height: 1),
                 itemBuilder: (context, index) {
-                  final shop = _shops[index];
+                  final shop = _filteredShops[index];
+                  final distance = _getDistanceToShop(shop);
                   return ListTile(
                     leading: Container(
                       width: 50,
@@ -493,11 +655,25 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
                       ),
                     ),
                     title: Text(shop.name),
-                    subtitle: Text(
-                      shop.address,
-                      style: const TextStyle(fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          shop.address,
+                          style: const TextStyle(fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (distance != null)
+                          Text(
+                            _formatDistance(distance),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                      ],
                     ),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -558,48 +734,59 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Фильтры',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Фильтры',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    CheckboxListTile(
+                      title: const Text('Только открытые'),
+                      value: _filterOnlyOpen,
+                      onChanged: (value) {
+                        setModalState(() {
+                          _filterOnlyOpen = value ?? false;
+                        });
+                      },
+                    ),
+                    CheckboxListTile(
+                      title: const Text('Рейтинг 4.5+'),
+                      value: _filterHighRating,
+                      onChanged: (value) {
+                        setModalState(() {
+                          _filterHighRating = value ?? false;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            // Filters are already set, just refresh the UI
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Применить'),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                CheckboxListTile(
-                  title: const Text('Только открытые'),
-                  value: false,
-                  onChanged: (value) {
-                    // TODO: Filter by open status
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text('Рейтинг 4.5+'),
-                  value: false,
-                  onChanged: (value) {
-                    // TODO: Filter by rating
-                  },
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Применить'),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

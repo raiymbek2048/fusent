@@ -87,26 +87,38 @@ public class DataSeeder {
 
         // Admin user
         users.add(AppUser.builder()
+                .fullName("Admin User")
                 .email("admin@fusent.kg")
+                .username("admin")
+                .phone("+996700000000")
                 .passwordHash(passwordEncoder.encode("admin123"))
                 .role(Role.ADMIN)
                 .build());
 
         // Seller users
         users.add(AppUser.builder()
+                .fullName("Fashion Store")
                 .email("fashion.store@fusent.kg")
+                .username("fashion_store")
+                .phone("+996700000001")
                 .passwordHash(passwordEncoder.encode("seller123"))
                 .role(Role.SELLER)
                 .build());
 
         users.add(AppUser.builder()
+                .fullName("Tech Shop")
                 .email("tech.shop@fusent.kg")
+                .username("tech_shop")
+                .phone("+996700000002")
                 .passwordHash(passwordEncoder.encode("seller123"))
                 .role(Role.SELLER)
                 .build());
 
         users.add(AppUser.builder()
+                .fullName("Home Decor")
                 .email("home.decor@fusent.kg")
+                .username("home_decor")
+                .phone("+996700000003")
                 .passwordHash(passwordEncoder.encode("seller123"))
                 .role(Role.SELLER)
                 .build());
@@ -114,7 +126,10 @@ public class DataSeeder {
         // Buyer users
         for (int i = 1; i <= 5; i++) {
             users.add(AppUser.builder()
+                    .fullName("Buyer " + i)
                     .email("buyer" + i + "@test.kg")
+                    .username("buyer" + i)
+                    .phone("+99670000100" + i)
                     .passwordHash(passwordEncoder.encode("buyer123"))
                     .role(Role.BUYER)
                     .build());

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/di/injection_container.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
-import 'package:fusent_mobile/core/services/token_storage_service.dart';
 import 'package:fusent_mobile/features/feed/data/models/post_model.dart';
 import 'package:dio/dio.dart';
 
@@ -32,23 +31,11 @@ class _MyPostsPageState extends State<MyPostsPage> {
 
     try {
       final apiClient = sl<ApiClient>();
-      final tokenStorage = sl<TokenStorageService>();
 
-      // Get the user ID from secure storage
-      final userId = await tokenStorage.getUserId();
-
-      if (userId == null) {
-        setState(() {
-          _errorMessage = 'Не удалось получить ID пользователя';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      // Load posts by owner (MERCHANT type with userId)
-      final response = await apiClient.getPostsByOwner(
-        ownerType: 'MERCHANT',
-        ownerId: userId,
+      // Use the new simplified endpoint that automatically handles merchant lookup
+      final response = await apiClient.getMyPosts(
+        page: 0,
+        size: 50,
       );
 
       if (response.statusCode == 200 && response.data != null) {

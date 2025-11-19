@@ -78,7 +78,7 @@ public class NotificationController {
     // ========== Sending ==========
 
     @PostMapping("/send")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SELLER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SELLER') or hasRole('MERCHANT')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @Operation(summary = "Send a notification")
     public void sendNotification(@Valid @RequestBody SendNotificationRequest request) {

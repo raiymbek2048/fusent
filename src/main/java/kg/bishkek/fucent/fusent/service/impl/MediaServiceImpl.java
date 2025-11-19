@@ -30,6 +30,9 @@ public class MediaServiceImpl implements MediaService {
     @Value("${minio.url:http://localhost:9000}")
     private String minioUrl;
 
+    @Value("${app.s3.public-endpoint:${minio.url}}")
+    private String publicMinioUrl;
+
     @Override
     public UploadUrlResponse generateUploadUrl(MediaUploadRequest request) {
         try {
@@ -59,7 +62,7 @@ public class MediaServiceImpl implements MediaService {
             );
 
             // Generate public URL
-            String publicUrl = String.format("%s/%s/%s", minioUrl, bucketName, fileKey);
+            String publicUrl = String.format("%s/%s/%s", publicMinioUrl, bucketName, fileKey);
 
             Instant expiresAt = Instant.now().plus(15, ChronoUnit.MINUTES);
 
@@ -102,7 +105,7 @@ public class MediaServiceImpl implements MediaService {
         if (fileKey == null || fileKey.isBlank()) {
             throw new MediaStorageException("File key cannot be empty");
         }
-        return String.format("%s/%s/%s", minioUrl, bucketName, fileKey);
+        return String.format("%s/%s/%s", publicMinioUrl, bucketName, fileKey);
     }
 
     private String sanitizeFileName(String fileName) {

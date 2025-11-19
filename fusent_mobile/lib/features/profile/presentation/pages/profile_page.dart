@@ -9,137 +9,173 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Профиль'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              // TODO: Open settings
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        // Extract user data from auth state
+        final user = state is AuthAuthenticated ? state.user : null;
 
-            // Profile Header
-            Center(
-              child: Column(
-                children: [
-                  Stack(
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Профиль'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () {
+                  // TODO: Open settings
+                },
+              ),
+            ],
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
+
+                // Profile Header
+                Center(
+                  child: Column(
                     children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: AppColors.surface,
-                        child: const Icon(
-                          Icons.person,
-                          size: 50,
+                      Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: AppColors.surface,
+                            backgroundImage: user?.avatarUrl != null
+                                ? NetworkImage(user!.avatarUrl!)
+                                : null,
+                            child: user?.avatarUrl == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: AppColors.textSecondary,
+                                  )
+                                : null,
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.background,
+                                  width: 2,
+                                ),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.camera_alt,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  // TODO: Change profile photo
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        user?.fullName ?? 'User',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '@${user?.username ?? 'username'}',
+                        style: const TextStyle(
+                          fontSize: 16,
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.background,
-                              width: 2,
+                      if (user?.bio != null) ...[
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(
+                            user!.bio!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
                             ),
                           ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.camera_alt,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              // TODO: Change profile photo
-                            },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Stats
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatItem('Публикации', '${user?.postsCount ?? 0}'),
+                      _buildStatItem('Подписчики', _formatCount(user?.followersCount ?? 0)),
+                      _buildStatItem('Подписки', _formatCount(user?.followingCount ?? 0)),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // TODO: Edit profile
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
                           ),
+                          child: const Text('Редактировать'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            // TODO: Share profile
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                          child: const Text('Поделиться'),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Иван Иванов',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ),
+
+                const SizedBox(height: 24),
+                const Divider(height: 1),
+
+                // Menu Items
+                // Seller Dashboard - Only show for SELLER, MERCHANT, or ADMIN
+                if (user?.role == 'SELLER' || user?.role == 'MERCHANT' || user?.role == 'ADMIN') ...[
+                  _buildMenuItem(
+                    icon: Icons.store,
+                    title: 'Панель продавца',
+                    onTap: () {
+                      context.push('/seller/dashboard');
+                    },
+                    iconColor: AppColors.primary,
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '@ivanivanov',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  const Divider(height: 1),
                 ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Stats
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatItem('Публикации', '24'),
-                  _buildStatItem('Подписчики', '1.2K'),
-                  _buildStatItem('Подписки', '345'),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Action Buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Edit profile
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                      ),
-                      child: const Text('Редактировать'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        // TODO: Share profile
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                      child: const Text('Поделиться'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-            const Divider(height: 1),
-
-            // Menu Items
             _buildMenuItem(
               icon: Icons.shopping_bag_outlined,
               title: 'Мои заказы',
@@ -178,10 +214,21 @@ class ProfilePage extends StatelessWidget {
               },
               isDestructive: true,
             ),
-          ],
-        ),
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
   }
 
   Widget _buildStatItem(String label, String value) {
@@ -211,16 +258,18 @@ class ProfilePage extends StatelessWidget {
     required String title,
     required VoidCallback onTap,
     bool isDestructive = false,
+    Color? iconColor,
   }) {
     return ListTile(
       leading: Icon(
         icon,
-        color: isDestructive ? AppColors.error : AppColors.textPrimary,
+        color: iconColor ?? (isDestructive ? AppColors.error : AppColors.textPrimary),
       ),
       title: Text(
         title,
         style: TextStyle(
           color: isDestructive ? AppColors.error : AppColors.textPrimary,
+          fontWeight: iconColor != null ? FontWeight.w600 : FontWeight.normal,
         ),
       ),
       trailing: const Icon(

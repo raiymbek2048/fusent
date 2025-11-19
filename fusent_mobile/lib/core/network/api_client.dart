@@ -167,6 +167,40 @@ class ApiClient {
     return await _dio.get(path);
   }
 
+  Future<Response> searchProducts({
+    required String query,
+    String? categoryId,
+    String? shopId,
+    int page = 0,
+    int size = 20,
+  }) async {
+    return await _dio.get(
+      ApiEndpoints.products,
+      queryParameters: {
+        if (query.isNotEmpty) 'qtext': query,
+        if (categoryId != null) 'categoryId': categoryId,
+        if (shopId != null) 'shopId': shopId,
+        'page': page,
+        'size': size,
+      },
+    );
+  }
+
+  Future<Response> autocomplete({
+    required String query,
+    int page = 0,
+    int size = 10,
+  }) async {
+    return await _dio.get(
+      ApiEndpoints.autocompleteProducts,
+      queryParameters: {
+        'q': query,
+        'page': page,
+        'size': size,
+      },
+    );
+  }
+
   // Feed endpoints
   Future<Response> getFeed({
     int page = 0,
@@ -289,31 +323,95 @@ class ApiClient {
     );
   }
 
-  // Chat endpoints
-  Future<Response> getChats() async {
-    return await _dio.get(ApiEndpoints.chats);
+  Future<Response> removeFromCart({
+    required String productId,
+  }) async {
+    return await _dio.post(
+      ApiEndpoints.removeFromCart,
+      data: {
+        'productId': productId,
+      },
+    );
   }
 
-  Future<Response> getMessages(String chatId, {int page = 1}) async {
+  Future<Response> updateCartItem({
+    required String productId,
+    required int quantity,
+  }) async {
+    return await _dio.post(
+      ApiEndpoints.updateCartItem,
+      data: {
+        'productId': productId,
+        'quantity': quantity,
+      },
+    );
+  }
+
+  // Chat endpoints
+  Future<Response> createOrGetConversation({
+    required String recipientId,
+  }) async {
+    return await _dio.post(
+      ApiEndpoints.createConversation,
+      data: {
+        'recipientId': recipientId,
+      },
+    );
+  }
+
+  Future<Response> getConversations() async {
+    return await _dio.get(ApiEndpoints.conversations);
+  }
+
+  Future<Response> getConversationById(String conversationId) async {
     final path = ApiEndpoints.replacePathParams(
-      ApiEndpoints.messages,
-      {'id': chatId},
+      ApiEndpoints.conversationById,
+      {'conversationId': conversationId},
+    );
+    return await _dio.get(path);
+  }
+
+  Future<Response> getConversationMessages(
+    String conversationId, {
+    int page = 0,
+    int size = 50,
+  }) async {
+    final path = ApiEndpoints.replacePathParams(
+      ApiEndpoints.conversationMessages,
+      {'conversationId': conversationId},
     );
     return await _dio.get(
       path,
-      queryParameters: {'page': page},
+      queryParameters: {
+        'page': page,
+        'size': size,
+      },
     );
   }
 
-  Future<Response> sendMessage(String chatId, String message) async {
-    final path = ApiEndpoints.replacePathParams(
-      ApiEndpoints.sendMessage,
-      {'id': chatId},
-    );
+  Future<Response> sendChatMessage({
+    required String conversationId,
+    required String content,
+  }) async {
     return await _dio.post(
-      path,
-      data: {'message': message},
+      ApiEndpoints.sendChatMessage,
+      data: {
+        'conversationId': conversationId,
+        'content': content,
+      },
     );
+  }
+
+  Future<Response> markChatMessageAsRead(String messageId) async {
+    final path = ApiEndpoints.replacePathParams(
+      ApiEndpoints.markMessageRead,
+      {'messageId': messageId},
+    );
+    return await _dio.patch(path);
+  }
+
+  Future<Response> getUnreadMessagesCount() async {
+    return await _dio.get(ApiEndpoints.unreadCount);
   }
 
   // Stories endpoints
@@ -327,6 +425,39 @@ class ApiClient {
       {'id': storyId},
     );
     return await _dio.post(path);
+  }
+
+  // Shop endpoints
+  Future<Response> getAllShops({int page = 0, int size = 20}) async {
+    return await _dio.get(
+      ApiEndpoints.shops,
+      queryParameters: {
+        'page': page,
+        'size': size,
+      },
+    );
+  }
+
+  Future<Response> getShopById(String shopId) async {
+    final path = ApiEndpoints.replacePathParams(
+      ApiEndpoints.shopDetail,
+      {'id': shopId},
+    );
+    return await _dio.get(path);
+  }
+
+  Future<Response> getShopProducts(String shopId, {int page = 0, int size = 20}) async {
+    final path = ApiEndpoints.replacePathParams(
+      ApiEndpoints.shopProducts,
+      {'id': shopId},
+    );
+    return await _dio.get(
+      path,
+      queryParameters: {
+        'page': page,
+        'size': size,
+      },
+    );
   }
 
   // Seller Catalog endpoints
@@ -406,6 +537,19 @@ class ApiClient {
     );
   }
 
+  Future<Response> getMyPosts({
+    int page = 0,
+    int size = 20,
+  }) async {
+    return await _dio.get(
+      '/api/v1/social/posts/my-posts',
+      queryParameters: {
+        'page': page,
+        'size': size,
+      },
+    );
+  }
+
   // Media upload endpoints
   Future<Response> uploadProductImage(String filePath) async {
     final fileName = filePath.split('/').last;
@@ -435,5 +579,266 @@ class ApiClient {
       ApiEndpoints.uploadPostMedia,
       data: formData,
     );
+  }
+
+  // ==================== Reviews API ====================
+
+  // Create review for shop
+  Future<Response> createShopReview({
+    required String shopId,
+    required int rating,
+    String? orderId,
+    String? title,
+    String? comment,
+  }) async {
+    return await _dio.post(
+      '/api/reviews/shops',
+      data: {
+        'shopId': shopId,
+        'rating': rating,
+        if (orderId != null) 'orderId': orderId,
+        if (title != null) 'title': title,
+        if (comment != null) 'comment': comment,
+      },
+    );
+  }
+
+  // Create review for product
+  Future<Response> createProductReview({
+    required String productId,
+    required int rating,
+    String? orderId,
+    String? title,
+    String? comment,
+  }) async {
+    return await _dio.post(
+      '/api/reviews/products',
+      data: {
+        'productId': productId,
+        'rating': rating,
+        if (orderId != null) 'orderId': orderId,
+        if (title != null) 'title': title,
+        if (comment != null) 'comment': comment,
+      },
+    );
+  }
+
+  // Get shop reviews
+  Future<Response> getShopReviews({
+    required String shopId,
+    int page = 0,
+    int size = 20,
+    String sortBy = 'createdAt',
+    String sortDirection = 'DESC',
+  }) async {
+    return await _dio.get(
+      '/api/reviews/shops/$shopId',
+      queryParameters: {
+        'page': page,
+        'size': size,
+        'sortBy': sortBy,
+        'sortDirection': sortDirection,
+      },
+    );
+  }
+
+  // Get product reviews
+  Future<Response> getProductReviews({
+    required String productId,
+    int page = 0,
+    int size = 20,
+    String sortBy = 'createdAt',
+    String sortDirection = 'DESC',
+  }) async {
+    return await _dio.get(
+      '/api/reviews/products/$productId',
+      queryParameters: {
+        'page': page,
+        'size': size,
+        'sortBy': sortBy,
+        'sortDirection': sortDirection,
+      },
+    );
+  }
+
+  // Get shop review summary
+  Future<Response> getShopReviewSummary(String shopId) async {
+    return await _dio.get('/api/reviews/shops/$shopId/summary');
+  }
+
+  // Get product review summary
+  Future<Response> getProductReviewSummary(String productId) async {
+    return await _dio.get('/api/reviews/products/$productId/summary');
+  }
+
+  // Get my reviews
+  Future<Response> getMyReviews({
+    int page = 0,
+    int size = 20,
+  }) async {
+    return await _dio.get(
+      '/api/reviews/me',
+      queryParameters: {
+        'page': page,
+        'size': size,
+      },
+    );
+  }
+
+  // Mark review as helpful
+  Future<Response> markReviewHelpful({
+    required String reviewId,
+    required bool helpful,
+  }) async {
+    return await _dio.post(
+      '/api/reviews/$reviewId/helpful',
+      data: {'helpful': helpful},
+    );
+  }
+
+  // Delete review
+  Future<Response> deleteReview(String reviewId) async {
+    return await _dio.delete('/api/reviews/$reviewId');
+  }
+
+  // Check if user can review shop
+  Future<Response> canReviewShop(String shopId) async {
+    return await _dio.get('/api/reviews/shops/$shopId/can-review');
+  }
+
+  // Check if user can review product
+  Future<Response> canReviewProduct(String productId) async {
+    return await _dio.get('/api/reviews/products/$productId/can-review');
+  }
+
+  // ==================== Trending API ====================
+
+  // Get trending posts
+  Future<Response> getTrendingPosts({
+    int page = 0,
+    int size = 20,
+  }) async {
+    return await _dio.get(
+      '/api/v1/trending/posts',
+      queryParameters: {
+        'page': page,
+        'size': size,
+      },
+    );
+  }
+
+  // Get trending posts from last 24 hours
+  Future<Response> getTrending24Hours({
+    int page = 0,
+    int size = 20,
+  }) async {
+    return await _dio.get(
+      '/api/v1/trending/posts/24h',
+      queryParameters: {
+        'page': page,
+        'size': size,
+      },
+    );
+  }
+
+  // Get trending posts from last week
+  Future<Response> getTrendingWeek({
+    int page = 0,
+    int size = 20,
+  }) async {
+    return await _dio.get(
+      '/api/v1/trending/posts/week',
+      queryParameters: {
+        'page': page,
+        'size': size,
+      },
+    );
+  }
+
+  // Get trending posts with custom time window
+  Future<Response> getTrendingCustom({
+    required int hoursAgo,
+    int page = 0,
+    int size = 20,
+  }) async {
+    return await _dio.get(
+      '/api/v1/trending/posts/custom',
+      queryParameters: {
+        'hoursAgo': hoursAgo,
+        'page': page,
+        'size': size,
+      },
+    );
+  }
+
+  // Increment view count for a post
+  Future<Response> incrementViewCount(String postId) async {
+    return await _dio.post('/api/v1/trending/posts/$postId/view');
+  }
+
+  // Update trending score for a post
+  Future<Response> updatePostTrendingScore(String postId) async {
+    return await _dio.post('/api/v1/trending/posts/$postId/update-score');
+  }
+
+  // Manually trigger trending scores update
+  Future<Response> updateAllTrendingScores() async {
+    return await _dio.post('/api/v1/trending/update-scores');
+  }
+
+  // Follow endpoints
+  Future<Response> followTarget({
+    required String targetType,
+    required String targetId,
+  }) async {
+    return await _dio.post(
+      ApiEndpoints.follow,
+      data: {
+        'targetType': targetType,
+        'targetId': targetId,
+      },
+    );
+  }
+
+  Future<Response> unfollowTarget({
+    required String targetType,
+    required String targetId,
+  }) async {
+    final path = ApiEndpoints.replacePathParams(
+      ApiEndpoints.unfollow,
+      {
+        'targetType': targetType,
+        'targetId': targetId,
+      },
+    );
+    return await _dio.delete(path);
+  }
+
+  Future<Response> isFollowingTarget({
+    required String targetType,
+    required String targetId,
+  }) async {
+    final path = ApiEndpoints.replacePathParams(
+      ApiEndpoints.isFollowing,
+      {
+        'targetType': targetType,
+        'targetId': targetId,
+      },
+    );
+    return await _dio.get(path);
+  }
+
+  Future<Response> getFollowStats({
+    required String targetType,
+    required String targetId,
+  }) async {
+    final path = ApiEndpoints.replacePathParams(
+      ApiEndpoints.getFollowStats,
+      {
+        'targetType': targetType,
+        'targetId': targetId,
+      },
+    );
+    return await _dio.get(path);
   }
 }

@@ -1,355 +1,392 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
+import 'package:fusent_mobile/features/catalog/data/models/product_model.dart';
+import 'package:fusent_mobile/features/search/presentation/bloc/search_bloc.dart';
+import 'package:fusent_mobile/features/search/presentation/bloc/search_event.dart';
+import 'package:fusent_mobile/features/search/presentation/bloc/search_state.dart';
+import 'package:go_router/go_router.dart';
 
 class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+  final String? initialQuery;
+
+  const SearchPage({
+    super.key,
+    this.initialQuery,
+  });
 
   @override
   State<SearchPage> createState() => _SearchPageState();
 }
 
-class _SearchPageState extends State<SearchPage> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  bool _isSearching = false;
+  final FocusNode _searchFocusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
 
-  final List<String> _recentSearches = [
-    'Nike Air Max',
-    'iPhone 15',
-    'Куртка',
-    'Кроссовки',
-  ];
-
-  final List<String> _popularSearches = [
-    'Зимняя одежда',
-    'Электроника',
-    'Спортивная обувь',
-    'Аксессуары',
-    'Гаджеты',
-  ];
+  String? _selectedCategoryId;
+  String? _selectedShopId;
+  double? _minPrice;
+  double? _maxPrice;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
+      _searchController.text = widget.initialQuery!;
+      _performSearch();
+    }
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'Поиск товаров, магазинов...',
-            border: InputBorder.none,
-            hintStyle: TextStyle(
-              color: AppColors.textSecondary,
-            ),
-            suffixIcon: _searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      setState(() {
-                        _searchController.clear();
-                        _isSearching = false;
-                      });
-                    },
-                  )
-                : null,
+  void _onScroll() {
+    if (_isBottom) {
+      context.read<SearchBloc>().add(LoadMoreResults());
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
+  }
+
+  void _performSearch() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) return;
+
+    context.read<SearchBloc>().add(
+          SearchProducts(
+            query: query,
+            categoryId: _selectedCategoryId,
+            shopId: _selectedShopId,
+            minPrice: _minPrice,
+            maxPrice: _maxPrice,
           ),
-          style: const TextStyle(fontSize: 16),
-          onChanged: (value) {
-            setState(() {
-              _isSearching = value.isNotEmpty;
-            });
-          },
-          onSubmitted: (value) {
-            if (value.isNotEmpty) {
-              _performSearch(value);
-            }
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              if (_searchController.text.isNotEmpty) {
-                _performSearch(_searchController.text);
-              }
-            },
-          ),
-        ],
+        );
+  }
+
+  void _showFiltersBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      body: _isSearching
-          ? _buildSearchResults()
-          : Column(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Tabs
-                Container(
-                  color: AppColors.background,
-                  child: TabBar(
-                    controller: _tabController,
-                    indicatorColor: AppColors.primary,
-                    labelColor: AppColors.textPrimary,
-                    unselectedLabelColor: AppColors.textSecondary,
-                    tabs: const [
-                      Tab(text: 'Товары'),
-                      Tab(text: 'Магазины'),
-                      Tab(text: 'Пользователи'),
-                    ],
+                const Text(
+                  'Фильтры',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-
-                // Content
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Цена',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
                 Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildProductsTab(),
-                      _buildShopsTab(),
-                      _buildUsersTab(),
-                    ],
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'От',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      _minPrice = double.tryParse(value);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'До',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      _maxPrice = double.tryParse(value);
+                    },
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _performSearch();
+                },
+                child: const Text('Применить фильтры'),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildProductsTab() {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Recent Searches
-          if (_recentSearches.isNotEmpty) ...[
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Недавние поиски',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => SearchBloc(apiClient: ApiClient()),
+      child: Scaffold(
+        appBar: AppBar(
+          title: TextField(
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            autofocus: widget.initialQuery == null,
+            decoration: InputDecoration(
+              hintText: 'Поиск товаров...',
+              border: InputBorder.none,
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        context.read<SearchBloc>().add(ClearSearch());
+                        setState(() {});
+                      },
+                    )
+                  : null,
             ),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _recentSearches.map((search) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: InputChip(
-                    avatar: const Icon(Icons.history, size: 18),
-                    label: Text(search),
-                    onPressed: () => _performSearch(search),
-                    deleteIcon: const Icon(Icons.close, size: 18),
-                    onDeleted: () {
-                      setState(() {
-                        _recentSearches.remove(search);
-                      });
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
-          ],
-
-          // Popular Searches
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Популярные запросы',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _popularSearches.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                leading: const Icon(Icons.trending_up, color: AppColors.primary),
-                title: Text(_popularSearches[index]),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => _performSearch(_popularSearches[index]),
-              );
+            onSubmitted: (_) => _performSearch(),
+            onChanged: (value) {
+              setState(() {});
             },
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildShopsTab() {
-    return ListView.builder(
-      itemCount: 10,
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: AppColors.surface,
-            child: const Icon(Icons.store),
-          ),
-          title: Text('Fashion Store ${index + 1}'),
-          subtitle: const Text('1.2K подписчиков'),
-          trailing: OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.border),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.tune),
+              onPressed: _showFiltersBottomSheet,
+              tooltip: 'Фильтры',
             ),
-            child: const Text('Подписаться'),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildUsersTab() {
-    return ListView.builder(
-      itemCount: 10,
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: AppColors.surface,
-            backgroundImage: NetworkImage('https://via.placeholder.com/150'),
-          ),
-          title: Text('User ${index + 1}'),
-          subtitle: const Text('@username'),
-          trailing: OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.border),
-            ),
-            child: const Text('Подписаться'),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSearchResults() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(8),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: 20,
-      itemBuilder: (context, index) {
-        return _buildProductCard(
-          name: 'Product ${index + 1}',
-          price: '${(index + 1) * 1000} сом',
-          imageUrl: 'https://via.placeholder.com/300',
-          rating: 4.5,
-        );
-      },
-    );
-  }
-
-  Widget _buildProductCard({
-    required String name,
-    required String price,
-    required String imageUrl,
-    required double rating,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 3,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                color: AppColors.background,
-              ),
-              child: Center(
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.image, size: 48, color: AppColors.textSecondary);
-                  },
+          ],
+        ),
+        body: BlocBuilder<SearchBloc, SearchState>(
+          builder: (context, state) {
+            if (state is SearchInitial) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search,
+                      size: 80,
+                      color: AppColors.textSecondary,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Введите запрос для поиска',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+              );
+            }
+
+            if (state is SearchLoading) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              );
+            }
+
+            if (state is SearchError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: AppColors.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      state.message,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (state is SearchEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.search_off,
+                      size: 80,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Ничего не найдено по запросу "${state.query}"',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (state is SearchLoaded) {
+              return GridView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 0.75,
+                ),
+                itemCount: state.products.length + (state.hasReachedMax ? 0 : 1),
+                itemBuilder: (context, index) {
+                  if (index >= state.products.length) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: CircularProgressIndicator(color: AppColors.primary),
+                      ),
+                    );
+                  }
+
+                  final product = state.products[index];
+                  final images = product.getAllImageUrls();
+                  final imageUrl = images.isNotEmpty ? images.first : null;
+
+                  return GestureDetector(
+                    onTap: () {
+                      context.push('/product/${product.id}');
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.star, size: 14, color: Colors.amber),
-                          const SizedBox(width: 4),
-                          Text(
-                            rating.toString(),
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12),
+                                ),
+                              ),
+                              child: imageUrl != null
+                                  ? ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(12),
+                                      ),
+                                      child: Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return const Center(
+                                            child: Icon(
+                                              Icons.image,
+                                              size: 40,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Icon(
+                                        Icons.image,
+                                        size: 40,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  product.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${product.currentPrice.toStringAsFixed(0)} сом',
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        price,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+                    ),
+                  );
+                },
+              );
+            }
+
+            return const SizedBox();
+          },
+        ),
       ),
     );
-  }
-
-  void _performSearch(String query) {
-    setState(() {
-      _searchController.text = query;
-      _isSearching = true;
-      if (!_recentSearches.contains(query)) {
-        _recentSearches.insert(0, query);
-        if (_recentSearches.length > 5) {
-          _recentSearches.removeLast();
-        }
-      }
-    });
   }
 }

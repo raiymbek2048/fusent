@@ -19,7 +19,8 @@ import java.util.UUID;
 @Table(name = "post", indexes = {
     @Index(name = "idx_post_owner", columnList = "owner_type, owner_id"),
     @Index(name = "idx_post_created", columnList = "created_at"),
-    @Index(name = "idx_post_status", columnList = "status")
+    @Index(name = "idx_post_status", columnList = "status"),
+    @Index(name = "idx_post_trending", columnList = "trending_score DESC, created_at DESC")
 })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Post {
@@ -69,6 +70,14 @@ public class Post {
     @Column(name = "shares_count")
     @Builder.Default
     private Integer sharesCount = 0;
+
+    @Column(name = "views_count")
+    @Builder.Default
+    private Integer viewsCount = 0;
+
+    @Column(name = "trending_score", precision = 12, scale = 4)
+    @Builder.Default
+    private BigDecimal trendingScore = BigDecimal.ZERO;
 
     @CreationTimestamp
     @Column(name = "created_at")

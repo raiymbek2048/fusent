@@ -109,6 +109,8 @@ class PostModel extends Equatable {
   final int likesCount;
   final int commentsCount;
   final int sharesCount;
+  final int viewsCount;
+  final double trendingScore;
   final List<PostMediaModel> media;
   final List<String> tags;
   final bool isLikedByCurrentUser;
@@ -130,6 +132,8 @@ class PostModel extends Equatable {
     required this.likesCount,
     required this.commentsCount,
     required this.sharesCount,
+    required this.viewsCount,
+    required this.trendingScore,
     required this.media,
     required this.tags,
     required this.isLikedByCurrentUser,
@@ -169,6 +173,8 @@ class PostModel extends Equatable {
       likesCount: json['likesCount'] as int? ?? 0,
       commentsCount: json['commentsCount'] as int? ?? 0,
       sharesCount: json['sharesCount'] as int? ?? 0,
+      viewsCount: json['viewsCount'] as int? ?? 0,
+      trendingScore: (json['trendingScore'] as num?)?.toDouble() ?? 0.0,
       media: (json['media'] as List<dynamic>?)
               ?.map((e) => PostMediaModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -196,6 +202,8 @@ class PostModel extends Equatable {
       'likesCount': likesCount,
       'commentsCount': commentsCount,
       'sharesCount': sharesCount,
+      'viewsCount': viewsCount,
+      'trendingScore': trendingScore,
       'media': media.map((e) => e.toJson()).toList(),
       'tags': tags,
       'isLikedByCurrentUser': isLikedByCurrentUser,
@@ -219,6 +227,8 @@ class PostModel extends Equatable {
     int? likesCount,
     int? commentsCount,
     int? sharesCount,
+    int? viewsCount,
+    double? trendingScore,
     List<PostMediaModel>? media,
     List<String>? tags,
     bool? isLikedByCurrentUser,
@@ -240,6 +250,8 @@ class PostModel extends Equatable {
       likesCount: likesCount ?? this.likesCount,
       commentsCount: commentsCount ?? this.commentsCount,
       sharesCount: sharesCount ?? this.sharesCount,
+      viewsCount: viewsCount ?? this.viewsCount,
+      trendingScore: trendingScore ?? this.trendingScore,
       media: media ?? this.media,
       tags: tags ?? this.tags,
       isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
@@ -264,6 +276,8 @@ class PostModel extends Equatable {
         likesCount,
         commentsCount,
         sharesCount,
+        viewsCount,
+        trendingScore,
         media,
         tags,
         isLikedByCurrentUser,

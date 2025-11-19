@@ -21,7 +21,7 @@ public class MediaController {
     private final S3Service s3Service;
 
     @PostMapping("/upload/product")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Upload product image")
     public ResponseEntity<Map<String, String>> uploadProductImage(@RequestParam("file") MultipartFile file) {
         String url = s3Service.uploadFile(file, "products");
@@ -45,7 +45,7 @@ public class MediaController {
     }
 
     @PostMapping("/upload/shop")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Upload shop logo or banner")
     public ResponseEntity<Map<String, String>> uploadShopMedia(@RequestParam("file") MultipartFile file) {
         String url = s3Service.uploadFile(file, "shops");

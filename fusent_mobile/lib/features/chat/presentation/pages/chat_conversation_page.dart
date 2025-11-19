@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
+import 'package:fusent_mobile/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:intl/intl.dart';
 
 class ChatConversationPage extends StatefulWidget {
   final String chatId;
   final String shopName;
-  final bool isShop;
+  final String? recipientId;
 
   const ChatConversationPage({
     super.key,
     required this.chatId,
     required this.shopName,
-    required this.isShop,
+    this.recipientId,
   });
 
   @override
@@ -18,50 +22,138 @@ class ChatConversationPage extends StatefulWidget {
 }
 
 class _ChatConversationPageState extends State<ChatConversationPage> {
+  final ApiClient _apiClient = ApiClient();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _messageFocusNode = FocusNode();
+  bool _isLoading = false;
+  String? _conversationId;
+  String? _currentUserId;
 
-  // Mock messages
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'text': 'Здравствуйте! Интересует этот товар',
-      'isMine': true,
-      'time': '14:30',
-    },
-    {
-      'text': 'Добрый день! Да, товар в наличии',
-      'isMine': false,
-      'time': '14:32',
-    },
-    {
-      'text': 'Какая цена?',
-      'isMine': true,
-      'time': '14:33',
-    },
-    {
-      'text': '5000 сом',
-      'isMine': false,
-      'time': '14:33',
-    },
-  ];
+  List<Map<String, dynamic>> _messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeConversation();
+  }
+
+  Future<void> _initializeConversation() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Get current user ID from AuthBloc
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      _currentUserId = authState.user.id;
+    }
+
+    try {
+      // If we have a recipientId, create or get conversation
+      if (widget.recipientId != null) {
+        final response = await _apiClient.createOrGetConversation(
+          recipientId: widget.recipientId!,
+        );
+
+        if (response.statusCode == 200) {
+          final convData = response.data as Map<String, dynamic>;
+          _conversationId = convData['id'] as String;
+        }
+      } else {
+        // Use the chatId as conversationId
+        _conversationId = widget.chatId;
+      }
+
+      // Load messages
+      if (_conversationId != null) {
+        await _loadMessages();
+      }
+    } catch (e) {
+      debugPrint('Error initializing conversation: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMessages() async {
+    if (_conversationId == null) return;
+
+    try {
+      final response = await _apiClient.getConversationMessages(_conversationId!);
+
+      if (mounted && response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final List<dynamic> content = data['content'] as List<dynamic>;
+
+        setState(() {
+          _messages = content.reversed.map((msg) {
+            final msgMap = msg as Map<String, dynamic>;
+            final isMine = msgMap['senderId'] == _currentUserId;
+
+            return {
+              'id': msgMap['id'],
+              'text': msgMap['content'] ?? '',
+              'isMine': isMine,
+              'time': _formatTime(msgMap['createdAt']),
+              'status': msgMap['isRead'] == true ? 'read' : 'delivered',
+              'senderId': msgMap['senderId'],
+            };
+          }).toList();
+        });
+
+        // Scroll to bottom
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading messages: $e');
+    }
+  }
+
+  String _formatTime(String? timestamp) {
+    if (timestamp == null) return '';
+
+    try {
+      final DateTime messageTime = DateTime.parse(timestamp);
+      return DateFormat('HH:mm').format(messageTime);
+    } catch (e) {
+      return '';
+    }
+  }
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _messageFocusNode.dispose();
     super.dispose();
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  Future<void> _sendMessage() async {
+    if (_messageController.text.trim().isEmpty || _conversationId == null) return;
 
+    final messageText = _messageController.text;
+    _messageController.clear();
+
+    // Optimistically add message to UI
+    final tempId = DateTime.now().millisecondsSinceEpoch.toString();
     setState(() {
       _messages.add({
-        'text': _messageController.text,
+        'id': tempId,
+        'text': messageText,
         'isMine': true,
-        'time': TimeOfDay.now().format(context),
+        'time': DateFormat('HH:mm').format(DateTime.now()),
+        'status': 'sent',
+        'senderId': _currentUserId,
       });
-      _messageController.clear();
     });
 
     // Scroll to bottom
@@ -75,7 +167,48 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       }
     });
 
-    // TODO: Send message to API
+    try {
+      final response = await _apiClient.sendChatMessage(
+        conversationId: _conversationId!,
+        content: messageText,
+      );
+
+      if (mounted && response.statusCode == 200) {
+        final sentMessage = response.data as Map<String, dynamic>;
+
+        // Update the temporary message with real data
+        setState(() {
+          final index = _messages.indexWhere((m) => m['id'] == tempId);
+          if (index != -1) {
+            _messages[index] = {
+              'id': sentMessage['id'],
+              'text': sentMessage['content'] ?? messageText,
+              'isMine': true,
+              'time': _formatTime(sentMessage['createdAt']),
+              'status': 'delivered',
+              'senderId': sentMessage['senderId'],
+            };
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error sending message: $e');
+
+      // Remove the temporary message on error
+      if (mounted) {
+        setState(() {
+          _messages.removeWhere((m) => m['id'] == tempId);
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Не удалось отправить сообщение: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -89,8 +222,8 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             CircleAvatar(
               radius: 20,
               backgroundColor: AppColors.surface,
-              child: Icon(
-                widget.isShop ? Icons.store : Icons.person,
+              child: const Icon(
+                Icons.person,
                 color: AppColors.textSecondary,
               ),
             ),
@@ -107,14 +240,6 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  if (widget.isShop)
-                    const Text(
-                      'Онлайн',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -124,29 +249,34 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           IconButton(
             icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
             onPressed: () {
-              // TODO: Show chat options
+              // Show chat options
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Messages list
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildMessage(
-                  text: message['text'] as String,
-                  isMine: message['isMine'] as bool,
-                  time: message['time'] as String,
-                );
-              },
-            ),
-          ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                // Messages list
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final message = _messages[index];
+                      final isMine = message['isMine'] as bool;
+
+                      return _buildMessage(
+                        text: message['text'] as String,
+                        isMine: isMine,
+                        time: message['time'] as String,
+                        status: isMine ? message['status'] as String? : null,
+                      );
+                    },
+                  ),
+                ),
 
           // Message input
           Container(
@@ -174,13 +304,19 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                   Expanded(
                     child: TextField(
                       controller: _messageController,
+                      focusNode: _messageFocusNode,
                       decoration: InputDecoration(
                         hintText: 'Сообщение...',
+                        hintStyle: const TextStyle(color: AppColors.textSecondary),
                         filled: true,
                         fillColor: AppColors.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                           borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 1),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -213,6 +349,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     required String text,
     required bool isMine,
     required String time,
+    String? status,
   }) {
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
@@ -233,16 +370,24 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
               decoration: BoxDecoration(
                 color: isMine ? AppColors.primary : AppColors.surface,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isMine ? 16 : 4),
-                  bottomRight: Radius.circular(isMine ? 4 : 16),
+                  topLeft: const Radius.circular(18),
+                  topRight: const Radius.circular(18),
+                  bottomLeft: Radius.circular(isMine ? 18 : 4),
+                  bottomRight: Radius.circular(isMine ? 4 : 18),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Text(
                 text,
                 style: TextStyle(
                   fontSize: 15,
+                  height: 1.4,
                   color: isMine ? Colors.white : AppColors.textPrimary,
                 ),
               ),
@@ -250,12 +395,31 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             const SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                time,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    time,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  if (isMine && status != null) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      status == 'sent'
+                          ? Icons.check
+                          : status == 'delivered'
+                              ? Icons.done_all
+                              : Icons.done_all,
+                      size: 14,
+                      color: status == 'read'
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

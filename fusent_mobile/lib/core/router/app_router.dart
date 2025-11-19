@@ -20,6 +20,8 @@ import '../../features/seller/presentation/pages/create_post_page.dart';
 import '../../features/seller/presentation/pages/my_posts_page.dart';
 import '../../features/seller/presentation/pages/shops_management_page.dart';
 import '../../features/seller/presentation/pages/employees_management_page.dart';
+import '../../features/map/presentation/pages/shops_map_page.dart';
+import '../../features/shop/presentation/pages/shop_profile_page.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -89,6 +91,20 @@ class AppRouter {
         builder: (context, state) {
           final productId = state.pathParameters['id']!;
           return ProductDetailPage(productId: productId);
+        },
+      ),
+
+      // Shop Profile
+      GoRoute(
+        path: '/shop/:shopId',
+        name: 'shop-profile',
+        builder: (context, state) {
+          final shopId = state.pathParameters['shopId']!;
+          final shopName = state.uri.queryParameters['shopName'];
+          return ShopProfilePage(
+            shopId: shopId,
+            shopName: shopName,
+          );
         },
       ),
 
@@ -175,6 +191,13 @@ class AppRouter {
         path: '/seller/employees',
         name: 'seller-employees',
         builder: (context, state) => const EmployeesManagementPage(),
+      ),
+
+      // Shops Map
+      GoRoute(
+        path: '/shops-map',
+        name: 'shops-map',
+        builder: (context, state) => const ShopsMapPage(),
       ),
     ],
   );

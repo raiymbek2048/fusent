@@ -50,7 +50,7 @@ class _FeedPageState extends State<FeedPage> with SingleTickerProviderStateMixin
             break;
           case 2: // Тренды
             if (_trendsBloc.state is FeedInitial) {
-              _trendsBloc.add(const LoadPublicFeed(refresh: true));
+              _trendsBloc.add(const LoadTrendingFeed(refresh: true));
             }
             break;
         }
@@ -192,6 +192,8 @@ class _FeedPageState extends State<FeedPage> with SingleTickerProviderStateMixin
                   onPressed: () {
                     if (isFollowing) {
                       bloc.add(const LoadFollowingFeed(refresh: true));
+                    } else if (_tabController.index == 2) {
+                      bloc.add(const LoadTrendingFeed(refresh: true));
                     } else {
                       bloc.add(const LoadPublicFeed(refresh: true));
                     }
@@ -227,6 +229,8 @@ class _FeedPageState extends State<FeedPage> with SingleTickerProviderStateMixin
             onRefresh: () async {
               if (isFollowing) {
                 bloc.add(const LoadFollowingFeed(refresh: true));
+              } else if (_tabController.index == 2) {
+                bloc.add(const LoadTrendingFeed(refresh: true));
               } else {
                 bloc.add(const LoadPublicFeed(refresh: true));
               }

@@ -26,14 +26,14 @@ public class AdsController {
     // ========== Campaigns ==========
 
     @PostMapping("/campaigns")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Create a new ad campaign")
     public CampaignResponse createCampaign(@Valid @RequestBody CreateCampaignRequest request) {
         return adCampaignService.createCampaign(request);
     }
 
     @PutMapping("/campaigns/{campaignId}")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Update an ad campaign")
     public CampaignResponse updateCampaign(
         @PathVariable UUID campaignId,
@@ -43,7 +43,7 @@ public class AdsController {
     }
 
     @DeleteMapping("/campaigns/{campaignId}")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Cancel an ad campaign")
     public void deleteCampaign(@PathVariable UUID campaignId) {
@@ -51,14 +51,14 @@ public class AdsController {
     }
 
     @GetMapping("/campaigns/{campaignId}")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get campaign by ID")
     public CampaignResponse getCampaign(@PathVariable UUID campaignId) {
         return adCampaignService.getCampaign(campaignId);
     }
 
     @GetMapping("/merchants/{merchantId}/campaigns")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get all campaigns for a merchant")
     public List<CampaignResponse> getCampaignsByMerchant(@PathVariable UUID merchantId) {
         return adCampaignService.getCampaignsByMerchant(merchantId);
@@ -72,7 +72,7 @@ public class AdsController {
     }
 
     @PatchMapping("/campaigns/{campaignId}/status")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Update campaign status")
     public void updateCampaignStatus(
@@ -83,7 +83,7 @@ public class AdsController {
     }
 
     @PatchMapping("/campaigns/{campaignId}/budget")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Update campaign budget")
     public void updateBudget(
@@ -96,14 +96,14 @@ public class AdsController {
     // ========== Metrics ==========
 
     @GetMapping("/campaigns/{campaignId}/metrics")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get overall campaign metrics")
     public CampaignMetricsResponse getCampaignMetrics(@PathVariable UUID campaignId) {
         return adCampaignService.getCampaignMetrics(campaignId);
     }
 
     @GetMapping("/campaigns/{campaignId}/metrics/daily")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get daily campaign metrics for a date range")
     public List<AdEventDailyResponse> getCampaignDailyMetrics(
         @PathVariable UUID campaignId,

@@ -52,7 +52,6 @@ public class Product {
     @CreationTimestamp
     private Instant createdAt;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<ProductVariant> variants;
 
@@ -65,5 +64,19 @@ public class Product {
     @JsonProperty("categoryId")
     public UUID getCategoryId() {
         return category != null ? category.getId() : null;
+    }
+
+    // Add stock for JSON serialization (from first/default variant)
+    @JsonProperty("stock")
+    public Integer getStock() {
+        if (variants != null && !variants.isEmpty()) {
+            // Create a defensive copy to avoid concurrent modification
+            try {
+                return variants.get(0).getStockQty();
+            } catch (Exception e) {
+                return 0;
+            }
+        }
+        return 0;
     }
 }

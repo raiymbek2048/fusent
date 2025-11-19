@@ -56,6 +56,14 @@ public class ShopController {
         return ResponseEntity.ok(shops);
     }
 
+    @Operation(summary = "Get my shops (current seller)")
+    @GetMapping("/my")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ShopResponse>> getMyShops() {
+        List<ShopResponse> shops = shopService.getMyShops();
+        return ResponseEntity.ok(shops);
+    }
+
     @Operation(summary = "Search shops by name")
     @GetMapping("/search")
     public ResponseEntity<Page<ShopResponse>> searchShops(

@@ -47,7 +47,7 @@ public class PaymentController {
     }
 
     @PostMapping("/refund/{orderId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SELLER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SELLER') or hasRole('MERCHANT')")
     @Operation(summary = "Process refund for an order")
     public ResponseEntity<RefundResponse> processRefund(
         @PathVariable UUID orderId,

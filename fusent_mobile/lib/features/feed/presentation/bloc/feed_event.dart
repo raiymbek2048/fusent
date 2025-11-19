@@ -75,3 +75,27 @@ class CreateCommentEvent extends FeedEvent {
   @override
   List<Object?> get props => [postId, text];
 }
+
+class LoadTrendingFeed extends FeedEvent {
+  final int page;
+  final bool refresh;
+  final String timeWindow; // 'all', '24h', 'week'
+
+  const LoadTrendingFeed({
+    this.page = 0,
+    this.refresh = false,
+    this.timeWindow = 'all',
+  });
+
+  @override
+  List<Object?> get props => [page, refresh, timeWindow];
+}
+
+class IncrementViewCountEvent extends FeedEvent {
+  final String postId;
+
+  const IncrementViewCountEvent({required this.postId});
+
+  @override
+  List<Object?> get props => [postId];
+}

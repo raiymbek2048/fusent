@@ -65,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
         var accessToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
 
-        log.info("New user registered: email={}, role={}, username={}", user.getEmail(), user.getRole(), user.getUsername());
+        log.info("New user registered: email={}, role={}, username={}", user.getEmail(), user.getRole(), user.getUsernameField());
 
         return new AuthResponse(
                 accessToken,
@@ -171,7 +171,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getId().toString(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getUsername(),
+                user.getUsernameField(),
                 user.getPhone(),
                 user.getRole().name(),
                 user.getShopAddress(),

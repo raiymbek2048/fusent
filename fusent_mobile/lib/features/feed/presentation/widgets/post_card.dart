@@ -5,7 +5,8 @@ import 'package:go_router/go_router.dart';
 class PostCard extends StatefulWidget {
   final String username;
   final String userAvatar;
-  final String postImage;
+  final String postImage; // Deprecated: use postImages instead
+  final List<String>? postImages; // Multiple images for carousel
   final String description;
   final int likes;
   final int comments;
@@ -20,7 +21,8 @@ class PostCard extends StatefulWidget {
     super.key,
     required this.username,
     required this.userAvatar,
-    required this.postImage,
+    this.postImage = '',
+    this.postImages,
     required this.description,
     required this.likes,
     required this.comments,
@@ -38,10 +40,25 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   bool _showProductButton = false;
+  late PageController _imagePageController;
+  int _currentImageIndex = 0;
+
+  // Get images list (either from postImages or single postImage)
+  List<String> get _images {
+    if (widget.postImages != null && widget.postImages!.isNotEmpty) {
+      return widget.postImages!;
+    }
+    if (widget.postImage.isNotEmpty) {
+      return [widget.postImage];
+    }
+    return [];
+  }
 
   @override
   void initState() {
     super.initState();
+    _imagePageController = PageController();
+
     // Показать кнопку "Перейти на товар" через 2 секунды, если есть привязанный товар
     if (widget.linkedProductId != null) {
       Future.delayed(const Duration(seconds: 2), () {
@@ -52,6 +69,12 @@ class _PostCardState extends State<PostCard> {
         }
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _imagePageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -109,34 +132,100 @@ class _PostCardState extends State<PostCard> {
             ),
           ),
 
-          // Image
+          // Image Carousel
           GestureDetector(
             onDoubleTap: widget.onLike,
             child: AspectRatio(
               aspectRatio: 1,
-              child: Container(
-                color: AppColors.surface,
-                child: widget.postImage.isNotEmpty
-                    ? Image.network(
-                        widget.postImage,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
+              child: Stack(
+                children: [
+                  // Images PageView
+                  _images.isEmpty
+                      ? Container(
+                          color: AppColors.surface,
+                          child: const Center(
                             child: Icon(
                               Icons.image,
                               size: 48,
                               color: AppColors.textSecondary,
                             ),
-                          );
-                        },
-                      )
-                    : const Center(
-                        child: Icon(
-                          Icons.image,
-                          size: 48,
-                          color: AppColors.textSecondary,
+                          ),
+                        )
+                      : PageView.builder(
+                          controller: _imagePageController,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentImageIndex = index;
+                            });
+                          },
+                          itemCount: _images.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              color: AppColors.surface,
+                              child: Image.network(
+                                _images[index],
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.image,
+                                      size: 48,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+
+                  // Page Indicators (dots)
+                  if (_images.length > 1)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${_currentImageIndex + 1}/${_images.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
+                    ),
+
+                  // Dot Indicators at bottom
+                  if (_images.length > 1)
+                    Positioned(
+                      bottom: 8,
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          _images.length,
+                          (index) => Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _currentImageIndex == index
+                                  ? AppColors.primary
+                                  : Colors.white.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

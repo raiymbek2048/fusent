@@ -144,4 +144,30 @@ class FeedRepositoryImpl implements FeedRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<List<PostModel>> getTrendingFeed({
+    required int page,
+    required int size,
+    required String timeWindow,
+  }) async {
+    try {
+      return await remoteDataSource.getTrendingFeed(
+        page: page,
+        size: size,
+        timeWindow: timeWindow,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> incrementViewCount(String postId) async {
+    try {
+      await remoteDataSource.incrementViewCount(postId);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

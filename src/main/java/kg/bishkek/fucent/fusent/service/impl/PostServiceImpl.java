@@ -193,6 +193,33 @@ public class PostServiceImpl implements PostService {
         ).map(this::toPostResponse);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getMyPosts(Pageable pageable) {
+        // Get current user
+        var currentUserId = SecurityUtil.currentUserId(userRepository);
+        var currentUser = userRepository.findById(currentUserId)
+            .orElseThrow(() -> new IllegalArgumentException("Current user not found"));
+
+        OwnerType ownerType;
+        UUID ownerId;
+
+        if (currentUser.getRole() == kg.bishkek.fucent.fusent.enums.Role.SELLER) {
+            // Sellers post as MERCHANT, so get posts by merchant ID
+            var merchant = merchantRepository.findByOwnerUserId(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Merchant not found for seller"));
+
+            ownerType = OwnerType.MERCHANT;
+            ownerId = merchant.getId();
+        } else {
+            // BUYER and ADMIN post as USER
+            ownerType = OwnerType.USER;
+            ownerId = currentUserId;
+        }
+
+        return getPostsByOwner(ownerType, ownerId, pageable);
+    }
+
     private PostResponse toPostResponse(Post post) {
         // Get owner name
         String ownerName = getOwnerName(post.getOwnerType(), post.getOwnerId());

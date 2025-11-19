@@ -122,6 +122,20 @@ public class ShopServiceImpl implements ShopService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ShopResponse> getMyShops() {
+        var currentUserId = SecurityUtil.currentUserId(users);
+        log.info("Fetching shops for current user: {}", currentUserId);
+
+        List<Shop> shopsList = shops.findByMerchantOwnerUserId(currentUserId);
+        log.info("Found {} shops for user {}", shopsList.size(), currentUserId);
+
+        return shopsList.stream()
+            .map(this::toShopResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public ShopResponse updateShop(UUID id, UpdateShopRequest request) {
         log.info("Updating shop with id: {}", id);

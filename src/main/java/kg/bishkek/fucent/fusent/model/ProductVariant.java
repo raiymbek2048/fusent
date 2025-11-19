@@ -28,12 +28,12 @@ public class ProductVariant {
     private Product product;
 
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String sku;
 
     private String name; // Variant display name (e.g., "Стандартный", "Размер M", etc.)
 
-    private String barcode; // required for online purchase later
+    private String barcode; // required for online purchase later (unique when not null)
 
 
     @JdbcTypeCode(SqlTypes.JSON)

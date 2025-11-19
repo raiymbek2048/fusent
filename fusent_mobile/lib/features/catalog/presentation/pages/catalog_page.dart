@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fusent_mobile/features/map/presentation/pages/shops_map_page.dart';
 import 'package:fusent_mobile/core/di/injection_container.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
 import 'package:dio/dio.dart';
@@ -204,7 +203,9 @@ class _CatalogPageState extends State<CatalogPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Каталог'),
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -233,12 +234,7 @@ class _CatalogPageState extends State<CatalogPage> {
             padding: const EdgeInsets.all(16),
             child: ElevatedButton.icon(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ShopsMapPage(),
-                  ),
-                );
+                context.push('/shops-map');
               },
               icon: const Icon(Icons.map),
               label: const Text('Показать на карте'),

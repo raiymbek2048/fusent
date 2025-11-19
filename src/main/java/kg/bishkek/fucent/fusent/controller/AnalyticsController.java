@@ -34,7 +34,7 @@ public class AnalyticsController {
     // ========== Shop Metrics ==========
 
     @GetMapping("/shops/{shopId}/metrics/daily")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get shop metrics for a specific day")
     public ShopMetricDailyResponse getShopMetricsForDay(
         @PathVariable UUID shopId,
@@ -44,7 +44,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/shops/{shopId}/metrics/range")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get shop metrics for a date range")
     public List<ShopMetricDailyResponse> getShopMetricsRange(
         @PathVariable UUID shopId,
@@ -55,7 +55,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/shops/{shopId}/metrics/summary")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get shop metrics summary for a date range")
     public ShopMetricsSummaryResponse getShopMetricsSummary(
         @PathVariable UUID shopId,
@@ -68,7 +68,7 @@ public class AnalyticsController {
     // ========== Product Metrics ==========
 
     @GetMapping("/products/variants/{variantId}/metrics/daily")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get product variant metrics for a specific day")
     public ProductMetricDailyResponse getProductMetricsForDay(
         @PathVariable UUID variantId,
@@ -78,7 +78,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/products/variants/{variantId}/metrics/range")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get product variant metrics for a date range")
     public List<ProductMetricDailyResponse> getProductMetricsRange(
         @PathVariable UUID variantId,
@@ -89,7 +89,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/shops/{shopId}/products/top")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
     @Operation(summary = "Get top performing products for a shop")
     public List<ProductMetricDailyResponse> getTopProducts(
         @PathVariable UUID shopId,

@@ -7,6 +7,7 @@ import 'package:fusent_mobile/features/feed/data/models/comment_model.dart';
 abstract class FeedRemoteDataSource {
   Future<List<PostModel>> getPublicFeed({required int page, required int size});
   Future<List<PostModel>> getFollowingFeed({required int page, required int size});
+  Future<List<PostModel>> getTrendingFeed({required int page, required int size, required String timeWindow});
   Future<PostModel> getPost(String postId);
   Future<void> likePost(String postId);
   Future<void> unlikePost(String postId);
@@ -19,6 +20,7 @@ abstract class FeedRemoteDataSource {
   Future<int> getSharesCount(String postId);
   Future<void> savePost(String postId);
   Future<void> unsavePost(String postId);
+  Future<void> incrementViewCount(String postId);
 }
 
 class FeedRemoteDataSourceImpl implements FeedRemoteDataSource {
@@ -261,6 +263,51 @@ class FeedRemoteDataSourceImpl implements FeedRemoteDataSource {
         {'postId': postId},
       );
       await apiClient.dio.delete(path);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<List<PostModel>> getTrendingFeed({
+    required int page,
+    required int size,
+    required String timeWindow,
+  }) async {
+    try {
+      Response response;
+
+      switch (timeWindow) {
+        case '24h':
+          response = await apiClient.getTrending24Hours(page: page, size: size);
+          break;
+        case 'week':
+          response = await apiClient.getTrendingWeek(page: page, size: size);
+          break;
+        default:
+          response = await apiClient.getTrendingPosts(page: page, size: size);
+      }
+
+      // Backend returns Page<PostResponse>, extract content
+      if (response.data is Map<String, dynamic>) {
+        final content = response.data['content'] as List<dynamic>;
+        return content
+            .map((json) => PostModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+
+      return (response.data as List<dynamic>)
+          .map((json) => PostModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<void> incrementViewCount(String postId) async {
+    try {
+      await apiClient.incrementViewCount(postId);
     } on DioException catch (e) {
       throw _handleError(e);
     }

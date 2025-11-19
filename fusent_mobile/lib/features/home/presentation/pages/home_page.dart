@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
-import 'package:fusent_mobile/features/feed/presentation/pages/feed_page.dart';
+import 'package:fusent_mobile/features/feed/presentation/pages/tiktok_feed_page.dart';
 import 'package:fusent_mobile/features/catalog/presentation/pages/catalog_page.dart';
 import 'package:fusent_mobile/features/profile/presentation/pages/profile_page.dart';
 import 'package:fusent_mobile/features/chat/presentation/pages/chat_list_page.dart';
@@ -17,7 +17,7 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const FeedPage(),
+    const TikTokFeedPage(),
     const CatalogPage(),
     const ChatListPage(),
     const CartPage(),

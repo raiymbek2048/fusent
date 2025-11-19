@@ -9,11 +9,13 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
   FeedBloc({required this.repository}) : super(FeedInitial()) {
     on<LoadPublicFeed>(_onLoadPublicFeed);
     on<LoadFollowingFeed>(_onLoadFollowingFeed);
+    on<LoadTrendingFeed>(_onLoadTrendingFeed);
     on<LikePostEvent>(_onLikePost);
     on<SavePostEvent>(_onSavePost);
     on<SharePostEvent>(_onSharePost);
     on<LoadCommentsEvent>(_onLoadComments);
     on<CreateCommentEvent>(_onCreateComment);
+    on<IncrementViewCountEvent>(_onIncrementViewCount);
   }
 
   Future<void> _onLoadPublicFeed(
@@ -91,15 +93,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     Emitter<FeedState> emit,
   ) async {
     try {
-      emit(PostActionLoading(postId: event.postId, action: 'like'));
-
-      if (event.isLiked) {
-        await repository.unlikePost(event.postId);
-      } else {
-        await repository.likePost(event.postId);
-      }
-
-      // Update the post in the current state
+      // Optimistically update UI first
       final currentState = state;
       if (currentState is FeedLoaded) {
         final updatedPosts = currentState.posts.map((post) {
@@ -117,13 +111,30 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         emit(currentState.copyWith(posts: updatedPosts));
       }
 
-      emit(PostActionSuccess(postId: event.postId, action: 'like'));
+      // Then call API in background
+      if (event.isLiked) {
+        await repository.unlikePost(event.postId);
+      } else {
+        await repository.likePost(event.postId);
+      }
     } catch (e) {
-      emit(PostActionError(
-        postId: event.postId,
-        action: 'like',
-        message: e.toString(),
-      ));
+      // If API fails, revert the optimistic update
+      final currentState = state;
+      if (currentState is FeedLoaded) {
+        final revertedPosts = currentState.posts.map((post) {
+          if (post.id == event.postId) {
+            return post.copyWith(
+              isLikedByCurrentUser: event.isLiked,
+              likesCount: event.isLiked
+                  ? post.likesCount + 1
+                  : post.likesCount - 1,
+            );
+          }
+          return post;
+        }).toList();
+
+        emit(currentState.copyWith(posts: revertedPosts));
+      }
     }
   }
 
@@ -214,14 +225,12 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     Emitter<FeedState> emit,
   ) async {
     try {
-      emit(PostActionLoading(postId: event.postId, action: 'comment'));
-
       final comment = await repository.createComment(
         postId: event.postId,
         text: event.text,
       );
 
-      // Update comments count
+      // Update comments count and reload comments
       final currentState = state;
       if (currentState is FeedLoaded) {
         final updatedPosts = currentState.posts.map((post) {
@@ -234,15 +243,90 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         }).toList();
 
         emit(currentState.copyWith(posts: updatedPosts));
+      } else if (currentState is CommentsLoaded && currentState.postId == event.postId) {
+        // If we're viewing comments, reload them
+        final comments = await repository.getComments(
+          postId: event.postId,
+          page: 0,
+          size: 20,
+        );
+        emit(CommentsLoaded(
+          postId: event.postId,
+          comments: comments,
+          hasReachedMax: comments.isEmpty || comments.length < 20,
+        ));
       }
 
-      emit(CommentCreated(comment: comment));
+      // Trigger reload of comments if viewing them
+      add(LoadCommentsEvent(postId: event.postId));
     } catch (e) {
       emit(PostActionError(
         postId: event.postId,
         action: 'comment',
         message: e.toString(),
       ));
+    }
+  }
+
+  Future<void> _onLoadTrendingFeed(
+    LoadTrendingFeed event,
+    Emitter<FeedState> emit,
+  ) async {
+    try {
+      if (event.refresh) {
+        emit(FeedLoading());
+      }
+
+      final posts = await repository.getTrendingFeed(
+        page: event.page,
+        size: 20,
+        timeWindow: event.timeWindow,
+      );
+
+      if (event.page == 0) {
+        emit(FeedLoaded(
+          posts: posts,
+          hasReachedMax: posts.isEmpty || posts.length < 20,
+          currentPage: 0,
+        ));
+      } else {
+        final currentState = state;
+        if (currentState is FeedLoaded) {
+          emit(currentState.copyWith(
+            posts: [...currentState.posts, ...posts],
+            hasReachedMax: posts.isEmpty || posts.length < 20,
+            currentPage: event.page,
+          ));
+        }
+      }
+    } catch (e) {
+      emit(FeedError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onIncrementViewCount(
+    IncrementViewCountEvent event,
+    Emitter<FeedState> emit,
+  ) async {
+    try {
+      await repository.incrementViewCount(event.postId);
+
+      // Update views count locally
+      final currentState = state;
+      if (currentState is FeedLoaded) {
+        final updatedPosts = currentState.posts.map((post) {
+          if (post.id == event.postId) {
+            return post.copyWith(
+              viewsCount: post.viewsCount + 1,
+            );
+          }
+          return post;
+        }).toList();
+
+        emit(currentState.copyWith(posts: updatedPosts));
+      }
+    } catch (e) {
+      // Silently fail - view count is not critical
     }
   }
 }

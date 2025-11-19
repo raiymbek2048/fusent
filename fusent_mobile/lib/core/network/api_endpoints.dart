@@ -1,6 +1,6 @@
 class ApiEndpoints {
   // Base URL - change this to your backend URL
-  static const String baseUrl = 'http://192.168.1.217:8080';
+  static const String baseUrl = 'http://localhost:8080';
 
   // Auth Endpoints
   static const String login = '/api/v1/auth/login';
@@ -19,8 +19,8 @@ class ApiEndpoints {
   // Product Endpoints
   static const String products = '/api/v1/public/catalog/products';
   static const String productDetail = '/api/v1/public/catalog/products/{id}';
-  static const String searchProducts = '/api/v1/products/search';
-  static const String filterProducts = '/api/v1/products/filter';
+  static const String searchProducts = '/api/v1/catalog/search';
+  static const String autocompleteProducts = '/api/v1/catalog/autocomplete';
 
   // Post/Feed Endpoints (Social Controller)
   static const String publicFeed = '/api/v1/social/feed/public';
@@ -81,9 +81,13 @@ class ApiEndpoints {
   static const String orderDetail = '/api/v1/orders/{id}';
 
   // Chat Endpoints
-  static const String chats = '/api/v1/chats';
-  static const String messages = '/api/v1/chats/{id}/messages';
-  static const String sendMessage = '/api/v1/chats/{id}/messages';
+  static const String conversations = '/api/v1/chat/conversations';
+  static const String createConversation = '/api/v1/chat/conversations';
+  static const String conversationById = '/api/v1/chat/conversations/{conversationId}';
+  static const String conversationMessages = '/api/v1/chat/conversations/{conversationId}/messages';
+  static const String sendChatMessage = '/api/v1/chat/messages';
+  static const String markMessageRead = '/api/v1/chat/messages/{messageId}/read';
+  static const String unreadCount = '/api/v1/chat/unread-count';
 
   // Shop/Merchant Endpoints
   static const String shops = '/api/v1/shops';

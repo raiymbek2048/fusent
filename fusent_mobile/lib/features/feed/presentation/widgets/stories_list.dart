@@ -1,28 +1,91 @@
 import 'package:flutter/material.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
 import 'package:fusent_mobile/features/feed/presentation/pages/story_viewer_page.dart';
 
-class StoriesList extends StatelessWidget {
+class StoriesList extends StatefulWidget {
   const StoriesList({super.key});
 
   @override
+  State<StoriesList> createState() => _StoriesListState();
+}
+
+class _StoriesListState extends State<StoriesList> {
+  final ApiClient _apiClient = ApiClient();
+  List<Map<String, dynamic>> _stories = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStories();
+  }
+
+  Future<void> _loadStories() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _apiClient.getStories();
+
+      if (mounted && response.statusCode == 200) {
+        final List<dynamic> stories = response.data as List<dynamic>;
+
+        setState(() {
+          _stories = stories.map((story) {
+            final storyMap = story as Map<String, dynamic>;
+            final owner = storyMap['owner'] as Map<String, dynamic>?;
+
+            return {
+              'id': storyMap['id'],
+              'username': owner?['fullName'] ?? owner?['username'] ?? 'User',
+              'avatarUrl': owner?['avatarUrl'] ?? '',
+              'hasViewed': storyMap['hasViewed'] ?? false,
+              'mediaUrl': storyMap['mediaUrl'],
+            };
+          }).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading stories: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading && _stories.isEmpty) {
+      return Container(
+        height: 120,
+        color: AppColors.background,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Container(
       height: 120,
       color: AppColors.background,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         scrollDirection: Axis.horizontal,
-        itemCount: 10, // Mock data
+        itemCount: _stories.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
             return _buildAddStoryButton();
           }
+          final story = _stories[index - 1];
           return _buildStoryItem(
             context,
-            username: 'User $index',
-            avatarUrl: '',
-            hasNewStory: index % 2 == 0,
+            storyId: story['id'] as String,
+            username: story['username'] as String,
+            avatarUrl: story['avatarUrl'] as String,
+            hasNewStory: !(story['hasViewed'] as bool),
           );
         },
       ),
@@ -65,6 +128,7 @@ class StoriesList extends StatelessWidget {
 
   Widget _buildStoryItem(
     BuildContext context, {
+    required String storyId,
     required String username,
     required String avatarUrl,
     required bool hasNewStory,
@@ -72,12 +136,19 @@ class StoriesList extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 12),
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
+          // Mark story as viewed
+          try {
+            await _apiClient.viewStory(storyId);
+          } catch (e) {
+            debugPrint('Error marking story as viewed: $e');
+          }
+
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const StoryViewerPage(
-                initialStoryIndex: 0, // Will be replaced with actual index
+                initialStoryIndex: 0,
               ),
             ),
           );

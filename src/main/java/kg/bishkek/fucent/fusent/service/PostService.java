@@ -23,4 +23,6 @@ public interface PostService {
     Page<PostResponse> getPostsByOwner(OwnerType ownerType, UUID ownerId, Pageable pageable);
 
     Page<PostResponse> getPostsByShop(UUID shopId, Pageable pageable);
+
+    Page<PostResponse> getMyPosts(Pageable pageable);
 }

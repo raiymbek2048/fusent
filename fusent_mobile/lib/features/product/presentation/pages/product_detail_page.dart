@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
+import 'package:fusent_mobile/features/catalog/data/models/product_model.dart';
+import 'package:fusent_mobile/features/catalog/data/models/product_variant_model.dart';
 import 'package:fusent_mobile/features/reviews/presentation/pages/reviews_page.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -15,18 +18,91 @@ class ProductDetailPage extends StatefulWidget {
 }
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
-  int _currentImageIndex = 0;
-  final List<String> _images = [
-    'https://via.placeholder.com/600',
-    'https://via.placeholder.com/600/FF0000',
-    'https://via.placeholder.com/600/00FF00',
-    'https://via.placeholder.com/600/0000FF',
-  ];
+  final ApiClient _apiClient = ApiClient();
 
+  ProductModel? _product;
+  bool _isLoading = true;
+  String? _error;
+
+  int _currentImageIndex = 0;
   bool _isFavorite = false;
+  ProductVariantModel? _selectedVariant;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProduct();
+  }
+
+  Future<void> _loadProduct() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final response = await _apiClient.getProductDetail(widget.productId);
+
+      if (response.statusCode == 200 && response.data != null) {
+        final product = ProductModel.fromJson(response.data);
+
+        setState(() {
+          _product = product;
+          // Select first variant by default if available
+          if (product.variants.isNotEmpty) {
+            _selectedVariant = product.variants.first;
+          }
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = 'Не удалось загрузить товар';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Ошибка: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Загрузка...')),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    if (_error != null || _product == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Ошибка')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+              const SizedBox(height: 16),
+              Text(_error ?? 'Товар не найден'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadProduct,
+                child: const Text('Повторить'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final product = _product!;
+    final images = product.getAllImageUrls();
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -35,59 +111,70 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             expandedHeight: 400,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                children: [
-                  PageView.builder(
-                    itemCount: _images.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentImageIndex = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      return Image.network(
-                        _images[index],
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: AppColors.surface,
-                            child: const Center(
-                              child: Icon(
-                                Icons.image,
-                                size: 100,
-                                color: AppColors.textSecondary,
-                              ),
+              background: images.isNotEmpty
+                  ? Stack(
+                      children: [
+                        PageView.builder(
+                          itemCount: images.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentImageIndex = index;
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return Image.network(
+                              images[index],
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: AppColors.surface,
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.image,
+                                      size: 100,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        // Image Indicators
+                        if (images.length > 1)
+                          Positioned(
+                            bottom: 16,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(images.length, (index) {
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                                  width: _currentImageIndex == index ? 24 : 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: _currentImageIndex == index
+                                        ? AppColors.primary
+                                        : Colors.white.withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                );
+                              }),
                             ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-
-                  // Image Indicators
-                  Positioned(
-                    bottom: 16,
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_images.length, (index) {
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: _currentImageIndex == index ? 24 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: _currentImageIndex == index
-                                ? AppColors.primary
-                                : Colors.white.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(4),
                           ),
-                        );
-                      }),
+                      ],
+                    )
+                  : Container(
+                      color: AppColors.surface,
+                      child: const Center(
+                        child: Icon(
+                          Icons.image,
+                          size: 100,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
             ),
             actions: [
               IconButton(
@@ -119,9 +206,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Price
-                      const Text(
-                        '5 000 сом',
-                        style: TextStyle(
+                      Text(
+                        '${_selectedVariant?.price.toStringAsFixed(0) ?? product.basePrice.toStringAsFixed(0)} сом',
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
@@ -130,14 +217,42 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       const SizedBox(height: 8),
 
                       // Product Name
-                      const Text(
-                        'Nike Air Max 270',
-                        style: TextStyle(
+                      Text(
+                        product.name,
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // Stock Status
+                      Row(
+                        children: [
+                          Icon(
+                            (_selectedVariant?.inStock ?? product.stock > 0)
+                                ? Icons.check_circle
+                                : Icons.cancel,
+                            size: 16,
+                            color: (_selectedVariant?.inStock ?? product.stock > 0)
+                                ? Colors.green
+                                : AppColors.error,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            (_selectedVariant?.inStock ?? product.stock > 0)
+                                ? 'В наличии (${_selectedVariant?.stockQuantity ?? product.stock} шт.)'
+                                : 'Нет в наличии',
+                            style: TextStyle(
+                              color: (_selectedVariant?.inStock ?? product.stock > 0)
+                                  ? Colors.green
+                                  : AppColors.error,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
 
                       // Rating and Reviews
                       GestureDetector(
@@ -145,10 +260,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ReviewsPage(
-                                productId: '1',
-                                averageRating: 4.5,
-                                totalReviews: 128,
+                              builder: (context) => ReviewsPage(
+                                productId: widget.productId,
+                                productName: product.name,
+                                apiClient: _apiClient,
                               ),
                             ),
                           );
@@ -157,8 +272,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           children: [
                             Row(
                               children: List.generate(5, (index) {
-                                return Icon(
-                                  index < 4 ? Icons.star : Icons.star_border,
+                                return const Icon(
+                                  Icons.star_border,
                                   color: Colors.amber,
                                   size: 20,
                                 );
@@ -166,7 +281,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ),
                             const SizedBox(width: 8),
                             const Text(
-                              '4.5 (128 отзывов)',
+                              'Посмотреть отзывы',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
                               ),
@@ -185,87 +300,122 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       const Divider(),
                       const SizedBox(height: 16),
 
-                      // Seller Info
+                      // Variants Selection
+                      if (product.variants.isNotEmpty) ...[
+                        const Text(
+                          'Варианты',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: product.variants.map((variant) {
+                            final isSelected = _selectedVariant?.id == variant.id;
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedVariant = variant;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.primary : AppColors.surface,
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.primary : AppColors.border,
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      variant.displayName,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    if (!variant.inStock) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Нет в наличии',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isSelected ? Colors.white70 : AppColors.error,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 24),
+                        const Divider(),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Description
+                      if (product.description != null && product.description!.isNotEmpty) ...[
+                        const Text(
+                          'Описание',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          product.description!,
+                          style: const TextStyle(
+                            height: 1.5,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Divider(),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Reviews Section
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          CircleAvatar(
-                            radius: 24,
-                            backgroundColor: AppColors.surface,
-                            child: const Icon(Icons.store),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Fashion Store',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  'Проверенный продавец',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
+                          const Text(
+                            'Отзывы',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          OutlinedButton(
-                            onPressed: () {},
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppColors.border),
-                            ),
-                            child: const Text('Перейти'),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ReviewsPage(
+                                    productId: widget.productId,
+                                    productName: product.name,
+                                    apiClient: _apiClient,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Text('Все отзывы →'),
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 24),
-                      const Divider(),
-                      const SizedBox(height: 16),
-
-                      // Description
-                      const Text(
-                        'Описание',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                        'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. '
-                        'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.',
-                        style: TextStyle(
-                          height: 1.5,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-                      const Divider(),
-                      const SizedBox(height: 16),
-
-                      // Specifications
-                      const Text(
-                        'Характеристики',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildSpecRow('Бренд', 'Nike'),
-                      _buildSpecRow('Размер', '42'),
-                      _buildSpecRow('Цвет', 'Черный'),
-                      _buildSpecRow('Материал', 'Текстиль, Резина'),
-                      _buildSpecRow('Страна', 'Вьетнам'),
 
                       const SizedBox(height: 100), // Space for bottom bar
                     ],
@@ -287,67 +437,94 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ),
         ),
         child: SafeArea(
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                flex: 2,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    // TODO: Add to cart
-                  },
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 56),
-                    side: const BorderSide(color: AppColors.primary),
+              // Variant selection warning
+              if (product.variants.isNotEmpty && _selectedVariant == null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  icon: const Icon(Icons.shopping_cart_outlined),
-                  label: const Text('В корзину'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Buy now
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(0, 56),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: AppColors.error,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Выберите вариант товара',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  icon: const Icon(Icons.shopping_bag),
-                  label: const Text('Купить сейчас'),
                 ),
+
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: OutlinedButton.icon(
+                      onPressed: (product.variants.isEmpty || _selectedVariant != null) &&
+                              (_selectedVariant?.inStock ?? product.stock > 0)
+                          ? () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Добавлено в корзину: ${product.name}${_selectedVariant != null ? ' (${_selectedVariant!.displayName})' : ''}',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          : null,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 56),
+                        side: const BorderSide(color: AppColors.primary),
+                      ),
+                      icon: const Icon(Icons.shopping_cart_outlined),
+                      label: const Text('В корзину'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: ElevatedButton.icon(
+                      onPressed: (product.variants.isEmpty || _selectedVariant != null) &&
+                              (_selectedVariant?.inStock ?? product.stock > 0)
+                          ? () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Покупка: ${product.name}${_selectedVariant != null ? ' (${_selectedVariant!.displayName})' : ''}',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(0, 56),
+                      ),
+                      icon: const Icon(Icons.shopping_bag),
+                      label: const Text('Купить сейчас'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSpecRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

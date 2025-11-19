@@ -4,14 +4,18 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Основные цвета
-  static const Color primary = Color(0xFF5B7CFF); // Синий из макета
+  // Основные цвета (фиолетовые акценты)
+  static const Color primary = Color(0xFF9C27B0); // Фиолетовый основной
+  static const Color primaryLight = Color(0xFFBA68C8); // Светлый фиолетовый
+  static const Color primaryDark = Color(0xFF7B1FA2); // Темный фиолетовый
   static const Color secondary = Color(0xFFE91E63); // Розовый/магента акцент
+  static const Color accent = Color(0xFFAB47BC); // Акцентный фиолетовый
 
   // Фоновые цвета (темная тема)
-  static const Color background = Color(0xFF1C1C1E); // Основной фон
-  static const Color surface = Color(0xFF2C2C2E); // Карточки, модалки
-  static const Color surfaceVariant = Color(0xFF3A3A3C);
+  static const Color background = Color(0xFF121212); // Глубокий черный фон
+  static const Color surface = Color(0xFF1E1E1E); // Карточки, модалки
+  static const Color surfaceVariant = Color(0xFF2C2C2C); // Вариант поверхности
+  static const Color surfaceLight = Color(0xFF3A3A3C); // Светлее поверхность
 
   // Текст
   static const Color textPrimary = Color(0xFFFFFFFF);

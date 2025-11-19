@@ -24,7 +24,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/seller/catalog")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SELLER')")
+@PreAuthorize("hasRole('SELLER') or hasRole('MERCHANT') or hasRole('ADMIN')")
 public class CatalogSellerController {
     private final CatalogMutationsService svc;
     private final ProductRepository productRepository;
@@ -64,6 +64,9 @@ public class CatalogSellerController {
         if (!product.getShop().getMerchant().getOwnerUserId().equals(userId)) {
             throw new IllegalArgumentException("You don't have permission to access this product");
         }
+
+        // Force load variants to populate stock field
+        org.hibernate.Hibernate.initialize(product.getVariants());
 
         return product;
     }
