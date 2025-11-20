@@ -772,7 +772,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
         // Right Side Actions
         Positioned(
           right: 12,
-          bottom: 120,
+          bottom: widget.post.linkedProductId != null ? 240 : 180,
           child: Column(
             children: [
               // Profile Avatar
@@ -855,19 +855,6 @@ class _PostFeedItemState extends State<PostFeedItem> {
                 label: '',
                 onTap: widget.onSave,
               ),
-
-              // Linked Product indicator
-              if (widget.post.linkedProductId != null) ...[
-                const SizedBox(height: 24),
-                _buildActionButton(
-                  icon: Icons.shopping_bag_outlined,
-                  label: '',
-                  color: AppColors.primary,
-                  onTap: () {
-                    context.push('/product/${widget.post.linkedProductId}');
-                  },
-                ),
-              ],
             ],
           ),
         ),
@@ -876,7 +863,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
         Positioned(
           left: 12,
           right: 80,
-          bottom: 100,
+          bottom: widget.post.linkedProductId != null ? 160 : 100,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -942,6 +929,54 @@ class _PostFeedItemState extends State<PostFeedItem> {
             ],
           ),
         ),
+
+        // Product Button - Large button at bottom
+        if (widget.post.linkedProductId != null)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 80,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  context.push('/product/${widget.post.linkedProductId}');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.shopping_bag, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Перейти к товару',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
