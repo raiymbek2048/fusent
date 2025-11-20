@@ -170,3 +170,59 @@ Complete the Instagram-like share functionality by:
 **Modified files:**
 - [List of files changed]
 ```
+
+---
+
+## Session 2025-11-20 (Late Morning - Continued from Previous)
+
+### Task: Fix Rendering Error in Create Post Page
+**Status:** ✅ COMPLETED
+
+**Problem:**
+User showed screenshot with rendering error when creating post with product selection. Error: "_owner != null" assertion failed in Flutter when displaying product dropdown with images.
+
+**Root Cause:**
+Using `DecorationImage` with `NetworkImage` inside Container's `BoxDecoration` caused widget ownership lifecycle issues during rendering. The NetworkImage widget wasn't properly attached to the widget tree when being used as a DecorationImage.
+
+**Fix Applied:**
+- Replaced `DecorationImage` pattern with direct `Image.network` widget wrapped in `ClipRRect`
+- Added `errorBuilder` to gracefully handle image loading failures (shows icon fallback)
+- Added `mainAxisSize: MainAxisSize.min` to Column widget to prevent unbounded height
+- Added `maxLines: 1` and `overflow: TextOverflow.ellipsis` to prevent text overflow
+
+**Code change in `create_post_page.dart` (lines 295-314):**
+```dart
+// OLD (caused crash):
+decoration: BoxDecoration(
+  borderRadius: BorderRadius.circular(4),
+  image: DecorationImage(
+    image: NetworkImage(product['imageUrl']),
+    fit: BoxFit.cover,
+  ),
+),
+
+// NEW (fixed):
+decoration: BoxDecoration(
+  borderRadius: BorderRadius.circular(4),
+  color: AppColors.surface,
+),
+child: ClipRRect(
+  borderRadius: BorderRadius.circular(4),
+  child: Image.network(
+    product['imageUrl'],
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) {
+      return const Icon(Icons.image, size: 24, color: AppColors.textSecondary);
+    },
+  ),
+),
+```
+
+**Modified files:**
+- `fusent_mobile/lib/features/seller/presentation/pages/create_post_page.dart`
+
+**Testing:**
+✅ Flutter app restarted successfully with all fixes applied
+✅ App running without errors
+
+**User quote:** "посмотри как создается пост со связкой на товар" (look at how posts are created with product links)

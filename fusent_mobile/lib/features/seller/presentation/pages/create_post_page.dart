@@ -299,19 +299,29 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                     margin: const EdgeInsets.only(right: 8),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(4),
-                                      image: DecorationImage(
-                                        image: NetworkImage(product['imageUrl']),
+                                      color: AppColors.surface,
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Image.network(
+                                        product['imageUrl'],
                                         fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return const Icon(Icons.image, size: 24, color: AppColors.textSecondary);
+                                        },
                                       ),
                                     ),
                                   ),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         product['name'] as String,
                                         style: const TextStyle(fontWeight: FontWeight.w500),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       Text(
                                         '${product['price']} сом',
