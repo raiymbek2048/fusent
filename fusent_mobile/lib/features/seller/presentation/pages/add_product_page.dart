@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/di/injection_container.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
+import 'package:fusent_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -102,14 +104,22 @@ class _AddProductPageState extends State<AddProductPage> {
         }
       }
 
+      // Get shopId from current user
+      final authState = context.read<AuthBloc>().state;
+      if (authState is! AuthAuthenticated) {
+        throw Exception('User not authenticated');
+      }
+
+      final shopId = authState.user.shopId;
+      if (shopId == null || shopId.isEmpty) {
+        throw Exception('Shop not found');
+      }
+
       // Parse form values
       final price = double.parse(_priceController.text.trim());
       final stock = _stockController.text.trim().isEmpty
           ? 0
           : int.parse(_stockController.text.trim());
-
-      // Shop ID for the test user
-      final shopId = '8d4c1f8f-d6f3-4f1c-94e6-38a72e182c36';
 
       // Use uploaded image URL if available, otherwise use the manual URL input
       final finalImageUrl = uploadedImageUrl ??
@@ -134,12 +144,8 @@ class _AddProductPageState extends State<AddProductPage> {
             backgroundColor: AppColors.success,
           ),
         );
-        // Navigate back to previous page (seller dashboard)
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go('/seller/dashboard');
-        }
+        // Navigate back to seller dashboard
+        context.go('/seller/dashboard');
       }
     } on DioException catch (e) {
       String errorMessage = 'Ошибка при создании товара';

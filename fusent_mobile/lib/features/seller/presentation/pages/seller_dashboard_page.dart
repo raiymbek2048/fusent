@@ -11,6 +11,7 @@ class SellerDashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, // Убираем кнопку "назад"
         title: const Text('Панель продавца'),
         actions: [
           IconButton(

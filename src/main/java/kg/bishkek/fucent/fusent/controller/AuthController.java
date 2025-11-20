@@ -66,6 +66,7 @@ public class AuthController {
 
         var user = (kg.bishkek.fucent.fusent.model.AppUser) authentication.getPrincipal();
 
+        String shopId = user.getShop() != null ? user.getShop().getId().toString() : null;
         var userInfo = new UserInfo(
                 user.getId().toString(),
                 user.getFullName(),
@@ -73,6 +74,7 @@ public class AuthController {
                 user.getUsername(),
                 user.getPhone(),
                 user.getRole().name(),
+                shopId,
                 user.getShopAddress(),
                 user.getHasSmartPOS(),
                 user.getCreatedAt()

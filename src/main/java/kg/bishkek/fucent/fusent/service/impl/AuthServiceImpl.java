@@ -4,7 +4,11 @@ import kg.bishkek.fucent.fusent.dto.AuthDtos.*;
 import kg.bishkek.fucent.fusent.enums.Role;
 import kg.bishkek.fucent.fusent.exception.UnauthorizedException;
 import kg.bishkek.fucent.fusent.model.AppUser;
+import kg.bishkek.fucent.fusent.model.Merchant;
+import kg.bishkek.fucent.fusent.model.Shop;
 import kg.bishkek.fucent.fusent.repository.AppUserRepository;
+import kg.bishkek.fucent.fusent.repository.MerchantRepository;
+import kg.bishkek.fucent.fusent.repository.ShopRepository;
 import kg.bishkek.fucent.fusent.service.AuthService;
 import kg.bishkek.fucent.fusent.service.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +30,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final MerchantRepository merchantRepository;
+    private final ShopRepository shopRepository;
 
     @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
@@ -60,6 +66,42 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         user = userRepository.save(user);
+
+        // If user is SELLER, create Merchant and main Shop (головной филиал)
+        if (role == Role.SELLER) {
+            // Create Merchant
+            String merchantName = request.fullName() + "'s Business";
+            String merchantDescription = "Магазин " + request.fullName();
+
+            var merchant = Merchant.builder()
+                    .ownerUserId(user.getId())
+                    .name(merchantName)
+                    .description(merchantDescription)
+                    .build();
+
+            merchant = merchantRepository.save(merchant);
+            log.info("Created merchant for seller: merchantId={}, name={}", merchant.getId(), merchant.getName());
+
+            // Create main Shop (головной филиал)
+            String shopName = request.fullName();
+            String shopAddress = request.shopAddress() != null && !request.shopAddress().isBlank()
+                    ? request.shopAddress()
+                    : "Главный офис";
+
+            var shop = Shop.builder()
+                    .merchant(merchant)
+                    .name(shopName)
+                    .address(shopAddress)
+                    .phone(request.phone())
+                    .build();
+
+            shop = shopRepository.save(shop);
+            log.info("Created main shop for seller: shopId={}, name={}", shop.getId(), shop.getName());
+
+            // Link user to the created shop
+            user.setShop(shop);
+            user = userRepository.save(user);
+        }
 
         // Generate tokens
         var accessToken = jwtService.generateToken(user);
@@ -167,6 +209,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private UserInfo toUserInfo(AppUser user) {
+        String shopId = user.getShop() != null ? user.getShop().getId().toString() : null;
         return new UserInfo(
                 user.getId().toString(),
                 user.getFullName(),
@@ -174,6 +217,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getUsernameField(),
                 user.getPhone(),
                 user.getRole().name(),
+                shopId,
                 user.getShopAddress(),
                 user.getHasSmartPOS(),
                 user.getCreatedAt()

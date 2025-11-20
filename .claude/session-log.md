@@ -45,10 +45,53 @@ Implement share functionality for products and content (posts/reels) with abilit
 
 ---
 
-## Session 2025-11-20 (Current - Continued)
+## Session 2025-11-20 (Morning - Completed)
 
 ### Task: Complete Share Functionality Implementation
-**Status:** ✅ Mostly Completed
+**Status:** ✅ COMPLETED
+
+---
+
+## Session 2025-11-20 (Afternoon - Current)
+
+### Task: Fix Merchant/Shop/Employee Architecture & Product Creation
+**Status:** 🔄 In Progress
+
+**Problem:**
+User registered as SELLER but got "Shop not found" error when trying to create product. This was because:
+1. Registration didn't create Merchant or Shop for SELLER users
+2. Flutter used hardcoded shopId instead of getting it from current user
+
+**Architecture Logic:**
+- **Merchant** = business owner (головной владелец)
+- **Main Shop** = головной филиал (created automatically with SELLER registration)
+- **Branch Shops** = филиалы (created by merchant)
+- **Employees** = продавцы филиалов (can create posts, not products)
+- **Products** = belong to shops, created only by merchant
+
+**What was done:**
+- ✅ Updated `AuthServiceImpl.register()` to auto-create Merchant + Main Shop for SELLER
+- ✅ Added `shopId` field to `UserInfo` DTO
+- ✅ Updated `AuthServiceImpl.toUserInfo()` to include shopId
+- ✅ Updated `AuthController.getCurrentUser()` to include shopId
+- ✅ Updated Flutter `add_product_page.dart` to get shopId from AuthBloc instead of hardcoded value
+- ✅ Flutter app restarted successfully
+- 🔄 Backend rebuilding with --no-cache (downloading Maven dependencies ~3.5 min so far)
+
+**Modified files:**
+- Backend:
+  - `src/main/java/kg/bishkek/fucent/fusent/service/impl/AuthServiceImpl.java` (added Merchant+Shop creation)
+  - `src/main/java/kg/bishkek/fucent/fusent/dto/AuthDtos.java` (added shopId to UserInfo)
+  - `src/main/java/kg/bishkek/fucent/fusent/controller/AuthController.java` (include shopId in response)
+- Flutter:
+  - `fusent_mobile/lib/features/seller/presentation/pages/add_product_page.dart` (get shopId from AuthBloc)
+
+**Testing Plan:**
+1. Wait for backend rebuild to complete
+2. Hot reload Flutter app
+3. Register new SELLER user
+4. Try to create product
+5. Verify product created successfully
 
 **Objective:**
 Complete the Instagram-like share functionality by:
@@ -70,9 +113,21 @@ Complete the Instagram-like share functionality by:
 - ✅ Removed old/unused share UI code
 
 **What still needs to be done:**
-- [ ] Add visual display of shared products/posts in chat conversation
-- [ ] Test complete flow end-to-end
-- [ ] Handle edge cases (no conversations, network errors, etc.)
+- [x] Add visual display of shared products/posts in chat conversation (COMPLETED)
+- [x] Test complete flow end-to-end (COMPLETED)
+- [x] Handle edge cases - empty states and error handling implemented (COMPLETED)
+
+**Additional fixes made:**
+- Fixed database migration issue - manually added `message_type` column to existing chat_message table
+- Updated 26 existing messages to have type 'TEXT'
+- Created beautiful Instagram-like shared content cards in chat:
+  - Product cards with image, name, and price
+  - Post cards with image, caption, and shop name
+  - Distinct styling for sent vs received messages
+- Added clickable navigation to shared content:
+  - Product cards → open product detail page
+  - Post cards → load and display post in vertical viewer
+  - Visual indicators (arrows) showing cards are tappable
 
 **Modified files in this session:**
 - `fusent_mobile/lib/features/feed/presentation/widgets/share_bottom_sheet.dart` (NEW)
@@ -80,7 +135,13 @@ Complete the Instagram-like share functionality by:
 - `fusent_mobile/lib/features/feed/presentation/pages/reels_page.dart`
 - `fusent_mobile/lib/features/feed/presentation/pages/tiktok_feed_page.dart`
 - `fusent_mobile/lib/features/product/presentation/pages/product_detail_page.dart`
+- `fusent_mobile/lib/features/chat/presentation/pages/chat_conversation_page.dart` (added shared content display)
 - `.claude/session-log.md` (updated)
+
+**Database changes:**
+- Manually added `message_type` column to `chat_message` table
+- Added check constraints and indexes
+- Updated existing 26 messages
 
 ---
 

@@ -66,6 +66,7 @@ public class AuthDtos {
             String username,
             String phone,
             String role,
+            String shopId,
             String shopAddress,
             Boolean hasSmartPOS,
             Instant createdAt
