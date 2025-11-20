@@ -19,18 +19,20 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final _textController = TextEditingController();
   final _imagePicker = ImagePicker();
 
-  String _selectedPostType = 'TEXT';
+  String _selectedPostType = 'PHOTO';
   String _selectedVisibility = 'PUBLIC';
   bool _isLoading = false;
   bool _isLoadingProducts = false;
+  bool _linkProduct = false; // Whether to link a product
   List<XFile> _selectedImages = [];
   List<Map<String, dynamic>> _products = [];
   String? _selectedProductId;
 
   final List<Map<String, String>> _postTypes = [
-    {'value': 'TEXT', 'label': 'Текст'},
-    {'value': 'PHOTO', 'label': 'Фото'},
-    {'value': 'PRODUCT', 'label': 'Товар'},
+    {'value': 'PHOTO', 'label': 'Пост'},
+    {'value': 'VIDEO', 'label': 'Видео'},
+    {'value': 'CAROUSEL', 'label': 'Карусель'},
+    {'value': 'SHORT', 'label': 'Shorts'},
   ];
 
   final List<Map<String, String>> _visibilityOptions = [
@@ -92,9 +94,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
       if (images.isNotEmpty) {
         setState(() {
           _selectedImages = images;
-          if (_selectedPostType == 'TEXT') {
-            _selectedPostType = 'PHOTO';
-          }
         });
       }
     } catch (e) {
@@ -112,9 +111,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
   void _removeImage(int index) {
     setState(() {
       _selectedImages.removeAt(index);
-      if (_selectedImages.isEmpty && _selectedPostType == 'PHOTO') {
-        _selectedPostType = 'TEXT';
-      }
     });
   }
 
@@ -240,10 +236,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 onChanged: (value) {
                   setState(() {
                     _selectedPostType = value!;
-                    // Load products if PRODUCT type is selected
-                    if (value == 'PRODUCT' && _products.isEmpty) {
-                      _loadProducts();
-                    }
                   });
                 },
               ),
@@ -271,8 +263,28 @@ class _CreatePostPageState extends State<CreatePostPage> {
               ),
               const SizedBox(height: 16),
 
-              // Product Selection (only for PRODUCT type)
-              if (_selectedPostType == 'PRODUCT') ...[
+              // Link Product Checkbox
+              CheckboxListTile(
+                title: const Text('Связать с товаром'),
+                subtitle: const Text('Добавить ссылку на товар в пост'),
+                value: _linkProduct,
+                onChanged: (value) {
+                  setState(() {
+                    _linkProduct = value ?? false;
+                    if (_linkProduct && _products.isEmpty) {
+                      _loadProducts();
+                    }
+                    if (!_linkProduct) {
+                      _selectedProductId = null;
+                    }
+                  });
+                },
+                contentPadding: EdgeInsets.zero,
+              ),
+              const SizedBox(height: 16),
+
+              // Product Selection (only if linking product)
+              if (_linkProduct) ...[
                 _isLoadingProducts
                     ? const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
@@ -315,18 +327,19 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
                                         product['name'] as String,
-                                        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                                        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
+                                      const SizedBox(height: 2),
                                       Text(
                                         '${product['price']} сом',
                                         style: const TextStyle(
-                                          fontSize: 11,
+                                          fontSize: 10,
                                           color: AppColors.textSecondary,
                                         ),
                                       ),
@@ -343,8 +356,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           });
                         },
                         validator: (value) {
-                          if (_selectedPostType == 'PRODUCT' && value == null) {
-                            return 'Выберите товар для публикации';
+                          if (_linkProduct && value == null) {
+                            return 'Выберите товар для связи с постом';
                           }
                           return null;
                         },
