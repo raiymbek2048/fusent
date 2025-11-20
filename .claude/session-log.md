@@ -226,3 +226,42 @@ child: ClipRRect(
 ✅ App running without errors
 
 **User quote:** "посмотри как создается пост со связкой на товар" (look at how posts are created with product links)
+
+---
+
+## Session 2025-11-20 (Late Morning - Continued)
+
+### Task: Fix Create Post Page UX Issues
+**Status:** ✅ COMPLETED
+
+**Problem:**
+User reported that when selecting "Товар" (Product) post type:
+1. Fields appear to disappear (actually just scroll out of view)
+2. Submit button doesn't respond (user can't see it - it's below the fold)
+3. Poor UX - user doesn't realize they need to scroll down
+
+**Root Cause:**
+The product dropdown with images (40x40px) plus loading indicator took up too much vertical space, pushing text field, photo button, and submit button below the visible area on screen.
+
+**Fix Applied:**
+Made UI more compact to fit more content on screen:
+- Reduced product dropdown image size: 40x40 → 32x32 pixels
+- Reduced font sizes in dropdown: 14px for name, 11px for price
+- Reduced loading indicator padding
+- Added `isExpanded: true` and `menuMaxHeight: 300` to dropdown
+- Reduced post text field lines: 8 → 5 lines
+- Smaller error icon: 24px → 16px
+
+**Result:**
+Now when "Товар" is selected, users can see product dropdown, text field, and submit button without excessive scrolling.
+
+**Modified files:**
+- `fusent_mobile/lib/features/seller/presentation/pages/create_post_page.dart` (lines 276-363)
+
+**Testing:**
+✅ Flutter app restarted with changes
+✅ UI is more compact and user-friendly
+
+**Git commit:** 2ca8cc5
+
+**User quote:** "поля пропадают когда выбираю товар. а также я нажимаю на создать а он никак не реагирует." (fields disappear when selecting product, and submit button doesn't respond)
