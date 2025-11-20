@@ -274,11 +274,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
               // Product Selection (only for PRODUCT type)
               if (_selectedPostType == 'PRODUCT') ...[
                 _isLoadingProducts
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: CircularProgressIndicator(),
-                        ),
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Center(child: CircularProgressIndicator()),
                       )
                     : DropdownButtonFormField<String>(
                         value: _selectedProductId,
@@ -287,6 +285,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.inventory_2),
                         ),
+                        isExpanded: true,
+                        menuMaxHeight: 300,
                         items: _products.map((product) {
                           return DropdownMenuItem(
                             value: product['id'] as String,
@@ -294,8 +294,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
                               children: [
                                 if (product['imageUrl'] != null && product['imageUrl'] != '')
                                   Container(
-                                    width: 40,
-                                    height: 40,
+                                    width: 32,
+                                    height: 32,
                                     margin: const EdgeInsets.only(right: 8),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(4),
@@ -307,7 +307,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                         product['imageUrl'],
                                         fit: BoxFit.cover,
                                         errorBuilder: (context, error, stackTrace) {
-                                          return const Icon(Icons.image, size: 24, color: AppColors.textSecondary);
+                                          return const Icon(Icons.image, size: 16, color: AppColors.textSecondary);
                                         },
                                       ),
                                     ),
@@ -319,14 +319,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                     children: [
                                       Text(
                                         product['name'] as String,
-                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                                        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       Text(
                                         '${product['price']} сом',
                                         style: const TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 11,
                                           color: AppColors.textSecondary,
                                         ),
                                       ),
@@ -360,7 +360,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   hintText: 'Что нового в вашем магазине?',
                   border: OutlineInputBorder(),
                 ),
-                maxLines: 8,
+                maxLines: 5,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Введите текст поста';
