@@ -52,6 +52,13 @@ public class Merchant {
     @Column(columnDefinition = "jsonb")
     private String settingsJson; // posEnabled, inventoryMode
 
+    private String logoUrl; // nullable
+
+    private String bannerUrl; // nullable
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isVerified = false;
 
     @CreationTimestamp
     private Instant createdAt;

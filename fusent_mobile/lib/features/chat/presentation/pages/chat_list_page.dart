@@ -38,17 +38,15 @@ class _ChatListPageState extends State<ChatListPage> {
         setState(() {
           _allChats = conversations.map((conv) {
             final convMap = conv as Map<String, dynamic>;
-            final otherUser = convMap['otherUser'] as Map<String, dynamic>?;
-            final lastMessage = convMap['lastMessage'] as Map<String, dynamic>?;
 
             return {
-              'conversationId': convMap['id'],
-              'shopName': otherUser?['fullName'] ?? 'Неизвестный',
-              'lastMessage': lastMessage?['content'] ?? '',
-              'time': _formatTime(lastMessage?['createdAt']),
+              'conversationId': convMap['conversationId'],
+              'shopName': convMap['otherUserName'] ?? 'Неизвестный',
+              'lastMessage': convMap['lastMessage'] ?? '',
+              'time': _formatTime(convMap['lastMessageAt']),
               'unreadCount': convMap['unreadCount'] ?? 0,
               'isOnline': false,
-              'recipientId': otherUser?['id'],
+              'recipientId': convMap['otherUserId'],
             };
           }).toList();
         });
@@ -231,10 +229,12 @@ class _ChatListPageState extends State<ChatListPage> {
     required bool isOnline,
   }) {
     return InkWell(
-      onTap: () {
-        context.push(
+      onTap: () async {
+        await context.push(
           '/chat/$conversationId?shopName=$shopName&recipientId=$recipientId',
         );
+        // Reload conversations when returning from chat to update read status
+        _loadConversations();
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

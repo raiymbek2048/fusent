@@ -4,6 +4,7 @@ import 'package:fusent_mobile/core/network/api_client.dart';
 import 'package:fusent_mobile/features/catalog/data/models/product_model.dart';
 import 'package:fusent_mobile/features/catalog/data/models/product_variant_model.dart';
 import 'package:fusent_mobile/features/reviews/presentation/pages/reviews_page.dart';
+import 'package:fusent_mobile/features/feed/presentation/widgets/share_bottom_sheet.dart';
 import 'package:go_router/go_router.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -180,7 +181,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.share),
-                onPressed: () {},
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => ShareBottomSheet(
+                      productId: widget.productId,
+                    ),
+                  );
+                },
               ),
               IconButton(
                 icon: Icon(

@@ -61,6 +61,23 @@ class EmployeeService {
     }
   }
 
+  /// Update employee details
+  Future<EmployeeModel> updateEmployee(String employeeId, UpdateEmployeeRequest request) async {
+    try {
+      final url = ApiEndpoints.replacePathParams(
+        ApiEndpoints.updateEmployee,
+        {'id': employeeId},
+      );
+      final response = await _apiClient.put(
+        url,
+        data: request.toJson(),
+      );
+      return EmployeeModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception('Failed to update employee: ${e.message}');
+    }
+  }
+
   /// Update employee's shop assignment
   Future<EmployeeModel> updateEmployeeShop(String employeeId, UpdateEmployeeShopRequest request) async {
     try {

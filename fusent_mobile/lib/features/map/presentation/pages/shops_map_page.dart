@@ -69,8 +69,8 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
       debugPrint('Error loading shops: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Не удалось загрузить магазины: ${e.toString()}'),
+          const SnackBar(
+            content: Text('Не удалось загрузить магазины'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -148,9 +148,9 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка получения геолокации: $e'),
-            duration: const Duration(seconds: 2),
+          const SnackBar(
+            content: Text('Геолокация недоступна. Используйте эмулятор с поддержкой местоположения'),
+            duration: Duration(seconds: 3),
           ),
         );
       }

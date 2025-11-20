@@ -15,6 +15,20 @@ public class CartDtos {
         @Min(1) int qty
     ) {}
 
+    public record AddToCartLegacyRequest(
+        @NotNull String productId,
+        @Min(1) int quantity
+    ) {}
+
+    public record RemoveFromCartLegacyRequest(
+        @NotNull String productId
+    ) {}
+
+    public record UpdateCartItemLegacyRequest(
+        @NotNull String productId,
+        @Min(1) int quantity
+    ) {}
+
     public record UpdateCartItemRequest(
         @Min(1) int qty
     ) {}

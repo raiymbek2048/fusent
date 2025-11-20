@@ -42,7 +42,17 @@ class ShopService {
       );
       return ShopModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      throw Exception('Failed to create shop: ${e.message}');
+      String errorMessage = 'Не удалось создать филиал';
+      if (e.response?.data != null) {
+        if (e.response!.data is Map) {
+          errorMessage = e.response!.data['message'] ?? errorMessage;
+        }
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Ошибка при создании филиала: ${e.toString()}');
     }
   }
 

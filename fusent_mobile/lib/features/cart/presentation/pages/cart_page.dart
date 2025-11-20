@@ -60,10 +60,17 @@ class _CartPageState extends State<CartPage> {
     } catch (e) {
       debugPrint('Error loading cart: $e');
       if (mounted) {
+        // Check if it's an authentication error
+        String errorMessage = 'Не удалось загрузить корзину';
+        if (e.toString().contains('403') || e.toString().contains('401')) {
+          errorMessage = 'Сессия истекла. Пожалуйста, войдите снова';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Не удалось загрузить корзину: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -96,8 +103,8 @@ class _CartPageState extends State<CartPage> {
       debugPrint('Error removing item: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Не удалось удалить товар: ${e.toString()}'),
+          const SnackBar(
+            content: Text('Не удалось удалить товар'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -135,8 +142,8 @@ class _CartPageState extends State<CartPage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Не удалось обновить количество: ${e.toString()}'),
+          const SnackBar(
+            content: Text('Не удалось обновить количество'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -222,7 +229,7 @@ class _CartPageState extends State<CartPage> {
           ElevatedButton(
             onPressed: () {
               // Navigate to catalog page
-              context.go('/catalog');
+              context.go('/home/catalog');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,

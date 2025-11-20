@@ -81,6 +81,29 @@ class CreateEmployeeRequest {
   }
 }
 
+class UpdateEmployeeRequest {
+  final String fullName;
+  final String email;
+  final String? phone;
+  final String? password;  // Optional - only update if provided
+
+  UpdateEmployeeRequest({
+    required this.fullName,
+    required this.email,
+    this.phone,
+    this.password,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'fullName': fullName,
+      'email': email,
+      if (phone != null) 'phone': phone,
+      if (password != null && password!.isNotEmpty) 'password': password,
+    };
+  }
+}
+
 class UpdateEmployeeShopRequest {
   final String shopId;
 

@@ -62,17 +62,15 @@ class _StoriesListState extends State<StoriesList> {
   Widget build(BuildContext context) {
     if (_isLoading && _stories.isEmpty) {
       return Container(
-        height: 120,
-        color: AppColors.background,
+        height: 90,
         child: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Container(
-      height: 120,
-      color: AppColors.background,
+      height: 90,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         scrollDirection: Axis.horizontal,
         itemCount: _stories.length + 1,
         itemBuilder: (context, index) {
@@ -94,32 +92,37 @@ class _StoriesListState extends State<StoriesList> {
 
   Widget _buildAddStoryButton() {
     return Padding(
-      padding: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.only(right: 10),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 72,
-            height: 72,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: Colors.grey[900],
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.border, width: 2),
+              border: Border.all(color: Colors.grey[800]!, width: 1.5),
             ),
             child: const Icon(
               Icons.add,
-              color: AppColors.primary,
-              size: 32,
+              color: Colors.white,
+              size: 24,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Ваша',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
+          const SizedBox(
+            width: 56,
+            child: Text(
+              'Ваша',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white70,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -134,7 +137,7 @@ class _StoriesListState extends State<StoriesList> {
     required bool hasNewStory,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.only(right: 10),
       child: GestureDetector(
         onTap: () async {
           // Mark story as viewed
@@ -154,10 +157,11 @@ class _StoriesListState extends State<StoriesList> {
           );
         },
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: hasNewStory
@@ -168,34 +172,34 @@ class _StoriesListState extends State<StoriesList> {
                       )
                     : null,
                 border: !hasNewStory
-                    ? Border.all(color: AppColors.border, width: 2)
+                    ? Border.all(color: Colors.grey[800]!, width: 1.5)
                     : null,
               ),
-              padding: const EdgeInsets.all(3),
+              padding: const EdgeInsets.all(2),
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.background,
+                  color: Colors.black,
                 ),
                 padding: const EdgeInsets.all(2),
                 child: CircleAvatar(
-                  radius: 32,
-                  backgroundColor: AppColors.surface,
+                  radius: 24,
+                  backgroundColor: Colors.grey[900],
                   backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
                   child: avatarUrl.isEmpty
-                      ? const Icon(Icons.person, color: AppColors.textSecondary)
+                      ? const Icon(Icons.person, color: Colors.white54, size: 20)
                       : null,
                 ),
               ),
             ),
             const SizedBox(height: 4),
             SizedBox(
-              width: 72,
+              width: 56,
               child: Text(
                 username,
                 style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  color: Colors.white70,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

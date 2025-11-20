@@ -193,6 +193,106 @@ class _EmployeesManagementPageState extends State<EmployeesManagementPage> {
     );
   }
 
+  void _showEditEmployeeDialog(EmployeeModel employee) {
+    final fullNameController = TextEditingController(text: employee.fullName);
+    final emailController = TextEditingController(text: employee.email);
+    final phoneController = TextEditingController(text: employee.phone ?? '');
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Редактировать сотрудника'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: fullNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Полное имя *',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email *',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Телефон',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                decoration: const InputDecoration(
+                  labelText: 'Новый пароль (оставьте пустым, чтобы не менять)',
+                  border: OutlineInputBorder(),
+                  helperText: 'Оставьте пустым, если не хотите менять пароль',
+                ),
+                obscureText: true,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Отмена'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (fullNameController.text.isEmpty ||
+                  emailController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Заполните обязательные поля')),
+                );
+                return;
+              }
+
+              try {
+                await _employeeService.updateEmployee(
+                  employee.id,
+                  UpdateEmployeeRequest(
+                    fullName: fullNameController.text,
+                    email: emailController.text,
+                    phone: phoneController.text.isNotEmpty ? phoneController.text : null,
+                    password: passwordController.text.isNotEmpty ? passwordController.text : null,
+                  ),
+                );
+
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  _loadData();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Сотрудник обновлен')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Ошибка: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Сохранить'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showChangeShopDialog(EmployeeModel employee) {
     String? selectedShopId = employee.shopId;
 
@@ -385,7 +485,9 @@ class _EmployeesManagementPageState extends State<EmployeesManagementPage> {
                               ),
                               trailing: PopupMenuButton<String>(
                                 onSelected: (value) {
-                                  if (value == 'change_shop') {
+                                  if (value == 'edit') {
+                                    _showEditEmployeeDialog(employee);
+                                  } else if (value == 'change_shop') {
                                     _showChangeShopDialog(employee);
                                   } else if (value == 'delete') {
                                     showDialog(
@@ -414,6 +516,16 @@ class _EmployeesManagementPageState extends State<EmployeesManagementPage> {
                                   }
                                 },
                                 itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'edit',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.edit, size: 20),
+                                        SizedBox(width: 8),
+                                        Text('Редактировать'),
+                                      ],
+                                    ),
+                                  ),
                                   const PopupMenuItem(
                                     value: 'change_shop',
                                     child: Row(

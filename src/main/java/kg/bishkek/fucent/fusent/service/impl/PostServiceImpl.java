@@ -275,11 +275,18 @@ public class PostServiceImpl implements PostService {
 
     private String getOwnerName(OwnerType ownerType, UUID ownerId) {
         return switch (ownerType) {
-            case MERCHANT -> merchantRepository.findById(ownerId)
-                .map(Merchant::getName)
-                .orElse("Unknown Merchant");
+            case MERCHANT -> {
+                // Get first shop of merchant, or merchant name if no shops
+                var shops = shopRepository.findByMerchant_Id(ownerId);
+                if (!shops.isEmpty()) {
+                    yield shops.get(0).getName();
+                }
+                yield merchantRepository.findById(ownerId)
+                    .map(Merchant::getName)
+                    .orElse("Unknown Merchant");
+            }
             case USER -> userRepository.findById(ownerId)
-                .map(AppUser::getEmail)
+                .map(AppUser::getFullName)
                 .orElse("Unknown User");
             case SHOP -> shopRepository.findById(ownerId)
                 .map(Shop::getName)

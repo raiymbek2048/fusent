@@ -34,6 +34,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
   @override
   void dispose() {
+    // Restore cached feed state when closing comments
+    context.read<FeedBloc>().add(const RestoreCachedFeedEvent());
     _commentController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -41,6 +43,10 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
   void _sendComment() {
     if (_commentController.text.trim().isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+    });
 
     final text = _commentController.text.trim();
     context.read<FeedBloc>().add(
@@ -93,8 +99,32 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
           // Comments List
           Expanded(
-            child: BlocBuilder<FeedBloc, FeedState>(
-              builder: (context, state) {
+            child: BlocListener<FeedBloc, FeedState>(
+              listener: (context, state) {
+                // Stop loading when comments are loaded or error occurs
+                if (_isLoading) {
+                  if (state is CommentsLoaded && state.postId == widget.postId) {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                  } else if (state is PostActionError &&
+                             state.action == 'comment' &&
+                             state.postId == widget.postId) {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                    // Show error message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Не удалось добавить комментарий: ${state.message}'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: BlocBuilder<FeedBloc, FeedState>(
+                builder: (context, state) {
                 if (state is CommentsLoaded && state.postId == widget.postId) {
                   if (state.comments.isEmpty) {
                     return Center(
@@ -193,7 +223,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                     color: AppColors.primary,
                   ),
                 );
-              },
+                },
+              ),
             ),
           ),
 
@@ -255,10 +286,19 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                   const SizedBox(width: 8),
 
                   // Send Button
-                  IconButton(
-                    icon: const Icon(Icons.send, color: AppColors.primary),
-                    onPressed: _sendComment,
-                  ),
+                  _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.send, color: AppColors.primary),
+                          onPressed: _sendComment,
+                        ),
                 ],
               ),
             ),

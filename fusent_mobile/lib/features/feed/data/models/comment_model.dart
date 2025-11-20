@@ -25,15 +25,19 @@ class CommentModel extends Equatable {
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
     return CommentModel(
-      id: json['id'] as String,
-      postId: json['postId'] as String,
-      userId: json['userId'] as String,
-      userName: json['userName'] as String,
-      text: json['text'] as String,
+      id: json['id']?.toString() ?? '',
+      postId: json['postId']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      userName: json['userName']?.toString() ?? 'Unknown',
+      text: json['text']?.toString() ?? '',
       isFlagged: json['isFlagged'] as bool? ?? false,
       verifiedPurchase: json['verifiedPurchase'] as bool? ?? false,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : DateTime.now(),
     );
   }
 

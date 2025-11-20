@@ -93,4 +93,20 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
      * Find product by shop and name (for import - checking duplicates)
      */
     Optional<Product> findByShopAndName(Shop shop, String name);
+
+    /**
+     * Count products by shop ID
+     */
+    long countByShop_Id(UUID shopId);
+
+    /**
+     * Count all products across all shops of a merchant
+     */
+    @Query("""
+        SELECT COUNT(p) FROM Product p
+        INNER JOIN p.shop s
+        INNER JOIN s.merchant m
+        WHERE m.id = :merchantId
+        """)
+    long countByMerchantId(@Param("merchantId") UUID merchantId);
 }

@@ -5,7 +5,14 @@ class ApiClient {
   late final Dio _dio;
   String? _accessToken;
 
-  ApiClient({String? baseUrl}) {
+  // Singleton pattern
+  static final ApiClient _instance = ApiClient._internal();
+
+  factory ApiClient({String? baseUrl}) {
+    return _instance;
+  }
+
+  ApiClient._internal({String? baseUrl}) {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl ?? ApiEndpoints.baseUrl,
@@ -32,7 +39,17 @@ class ApiClient {
           return handler.next(response);
         },
         onError: (DioException error, handler) {
-          // Handle errors globally
+          // Handle 401/403 errors (unauthorized/forbidden - token expired or invalid)
+          if (error.response?.statusCode == 401 || error.response?.statusCode == 403) {
+            // Clear the expired/invalid token
+            _accessToken = null;
+
+            // You can add additional logic here to:
+            // - Navigate to login page
+            // - Show a message to the user
+            // - Refresh the token
+          }
+
           return handler.next(error);
         },
       ),
@@ -390,15 +407,22 @@ class ApiClient {
   }
 
   Future<Response> sendChatMessage({
-    required String conversationId,
-    required String content,
+    required String recipientId,
+    required String messageText,
   }) async {
     return await _dio.post(
       ApiEndpoints.sendChatMessage,
       data: {
-        'conversationId': conversationId,
-        'content': content,
+        'recipientId': recipientId,
+        'messageText': messageText,
       },
+    );
+  }
+
+  Future<Response> sendMessage(Map<String, dynamic> messageData) async {
+    return await _dio.post(
+      ApiEndpoints.sendChatMessage,
+      data: messageData,
     );
   }
 

@@ -2,8 +2,11 @@ package kg.bishkek.fucent.fusent.service.impl;
 
 import kg.bishkek.fucent.fusent.dto.ChatDtos.*;
 import kg.bishkek.fucent.fusent.model.ChatMessage;
+import kg.bishkek.fucent.fusent.model.MessageType;
 import kg.bishkek.fucent.fusent.repository.AppUserRepository;
 import kg.bishkek.fucent.fusent.repository.ChatMessageRepository;
+import kg.bishkek.fucent.fusent.repository.ProductRepository;
+import kg.bishkek.fucent.fusent.repository.PostRepository;
 import kg.bishkek.fucent.fusent.security.SecurityUtil;
 import kg.bishkek.fucent.fusent.service.ChatService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,8 @@ import java.util.stream.Collectors;
 public class ChatServiceImpl implements ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final AppUserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final PostRepository postRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -76,15 +81,30 @@ public class ChatServiceImpl implements ChatService {
         // Generate conversation ID (consistent for both users)
         UUID conversationId = generateConversationId(currentUserId, request.recipientId());
 
-        var message = ChatMessage.builder()
+        // Determine message type
+        MessageType messageType = request.messageType() != null ? request.messageType() : MessageType.TEXT;
+
+        var messageBuilder = ChatMessage.builder()
             .conversationId(conversationId)
             .sender(sender)
             .recipient(recipient)
             .messageText(request.messageText())
+            .messageType(messageType)
             .isRead(false)
-            .isFlagged(false)
-            .build();
+            .isFlagged(false);
 
+        // Handle shared content
+        if (messageType == MessageType.PRODUCT_SHARE && request.sharedProductId() != null) {
+            var product = productRepository.findById(request.sharedProductId())
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+            messageBuilder.sharedProduct(product);
+        } else if (messageType == MessageType.POST_SHARE && request.sharedPostId() != null) {
+            var post = postRepository.findById(request.sharedPostId())
+                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
+            messageBuilder.sharedPost(post);
+        }
+
+        var message = messageBuilder.build();
         message = chatMessageRepository.save(message);
         return toMessageResponse(message);
     }
@@ -225,6 +245,33 @@ public class ChatServiceImpl implements ChatService {
     }
 
     private ChatMessageResponse toMessageResponse(ChatMessage message) {
+        SharedProductInfo productInfo = null;
+        if (message.getSharedProduct() != null) {
+            var product = message.getSharedProduct();
+            productInfo = new SharedProductInfo(
+                product.getId(),
+                product.getName(),
+                product.getImageUrl(),
+                product.getBasePrice() != null ? product.getBasePrice().doubleValue() : 0.0
+            );
+        }
+
+        SharedPostInfo postInfo = null;
+        if (message.getSharedPost() != null) {
+            var post = message.getSharedPost();
+            String imageUrl = null;
+            if (post.getMedia() != null && !post.getMedia().isEmpty()) {
+                imageUrl = post.getMedia().get(0).getUrl();
+            }
+
+            postInfo = new SharedPostInfo(
+                post.getId(),
+                post.getText(),
+                imageUrl,
+                "Shop" // Post uses ownerId system, would need to fetch Shop name
+            );
+        }
+
         return new ChatMessageResponse(
             message.getId(),
             message.getConversationId(),
@@ -233,6 +280,9 @@ public class ChatServiceImpl implements ChatService {
             message.getRecipient().getId(),
             message.getRecipient().getEmail(),
             message.getMessageText(),
+            message.getMessageType(),
+            productInfo,
+            postInfo,
             message.getIsRead(),
             message.getIsFlagged(),
             message.getCreatedAt()

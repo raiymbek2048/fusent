@@ -65,7 +65,7 @@ public class ChatController {
         return chatService.getConversationById(conversationId);
     }
 
-    @PatchMapping("/messages/{messageId}/read")
+    @PutMapping("/messages/{messageId}/read")
     @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Mark message as read")

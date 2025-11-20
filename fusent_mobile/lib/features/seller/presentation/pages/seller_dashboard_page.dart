@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class SellerDashboardPage extends StatelessWidget {
@@ -16,6 +18,26 @@ class SellerDashboardPage extends StatelessWidget {
             onPressed: () {
               // TODO: Open notifications
             },
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'logout') {
+                _showLogoutDialog(context);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, size: 20, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Выйти', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -136,6 +158,25 @@ class SellerDashboardPage extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: Icons.chat_bubble_outline,
+                    title: 'Сообщения',
+                    color: Color(0xFF673AB7), // Deep Purple color
+                    onTap: () {
+                      context.push('/home/chats');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(), // Empty space for symmetry
+                ),
+              ],
+            ),
 
             const SizedBox(height: 32),
 
@@ -199,6 +240,34 @@ class SellerDashboardPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  static void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Выйти из аккаунта?'),
+        content: const Text('Вы уверены, что хотите выйти из аккаунта?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.read<AuthBloc>().add(LogoutRequested());
+              // Navigate to login page after logout
+              context.go('/login');
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Выйти'),
+          ),
+        ],
       ),
     );
   }

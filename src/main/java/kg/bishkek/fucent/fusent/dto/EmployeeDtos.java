@@ -31,6 +31,19 @@ public class EmployeeDtos {
             UUID shopId
     ) {}
 
+    public record UpdateEmployeeRequest(
+            @NotBlank(message = "Full name is required")
+            String fullName,
+
+            @NotBlank(message = "Email is required")
+            @Email(message = "Invalid email format")
+            String email,
+
+            String phone,
+
+            String password  // Optional - only update if provided
+    ) {}
+
     public record EmployeeResponse(
             UUID id,
             String fullName,

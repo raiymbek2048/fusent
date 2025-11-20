@@ -31,8 +31,21 @@ public class ChatMessage {
     @JoinColumn(name = "recipient_id", nullable = false)
     private AppUser recipient;
 
-    @Column(name = "message_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "message_text", columnDefinition = "TEXT")
     private String messageText;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type", nullable = false)
+    @Builder.Default
+    private MessageType messageType = MessageType.TEXT;
+
+    @ManyToOne
+    @JoinColumn(name = "shared_product_id")
+    private Product sharedProduct;
+
+    @ManyToOne
+    @JoinColumn(name = "shared_post_id")
+    private Post sharedPost;
 
     @Column(name = "is_read")
     @Builder.Default

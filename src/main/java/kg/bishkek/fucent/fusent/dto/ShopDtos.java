@@ -45,6 +45,13 @@ public class ShopDtos {
         Instant lastHeartbeatAt,
         Instant createdAt,
         Double rating,
-        Integer totalReviews
+        Double averageRating,  // For mobile app compatibility
+        Integer totalReviews,
+        String logoUrl,
+        String bannerUrl,
+        Integer followersCount,
+        Integer productsCount,
+        Boolean isVerified,
+        UUID ownerId  // For mobile app compatibility (same as sellerId)
     ) {}
 }

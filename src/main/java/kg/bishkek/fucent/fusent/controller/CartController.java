@@ -4,11 +4,15 @@ package kg.bishkek.fucent.fusent.controller;
 
 import jakarta.validation.Valid;
 import kg.bishkek.fucent.fusent.dto.CartDtos.*;
+import kg.bishkek.fucent.fusent.model.AppUser;
 import kg.bishkek.fucent.fusent.model.Cart;
 import kg.bishkek.fucent.fusent.model.CartItem;
+import kg.bishkek.fucent.fusent.model.Product;
+import kg.bishkek.fucent.fusent.repository.ProductRepository;
 import kg.bishkek.fucent.fusent.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -20,7 +24,120 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CartController {
     private final CartService cartService;
+    private final ProductRepository productRepository;
 
+    // Endpoints that use authenticated user (no userId in path)
+    @GetMapping
+    public ResponseEntity<CartResponse> getMyCart(@AuthenticationPrincipal AppUser user) {
+        Cart cart = cartService.getCartWithItems(user.getId());
+        return ResponseEntity.ok(toCartResponse(cart));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<CartSummary> getMyCartSummary(@AuthenticationPrincipal AppUser user) {
+        Cart cart = cartService.getCartWithItems(user.getId());
+        return ResponseEntity.ok(new CartSummary(cart.getTotalItems(), cart.getTotalAmount()));
+    }
+
+    @PostMapping("/items")
+    public ResponseEntity<CartItemResponse> addItemToMyCart(
+            @AuthenticationPrincipal AppUser user,
+            @Valid @RequestBody AddToCartRequest request) {
+        CartItem item = cartService.addItem(user.getId(), request.variantId(), request.qty());
+        return ResponseEntity.ok(toCartItemResponse(item));
+    }
+
+    @PutMapping("/items/{variantId}")
+    public ResponseEntity<CartItemResponse> updateMyCartItem(
+            @AuthenticationPrincipal AppUser user,
+            @PathVariable UUID variantId,
+            @Valid @RequestBody UpdateCartItemRequest request) {
+        CartItem item = cartService.updateItemQuantity(user.getId(), variantId, request.qty());
+        return ResponseEntity.ok(toCartItemResponse(item));
+    }
+
+    @DeleteMapping("/items/{variantId}")
+    public ResponseEntity<Void> removeItemFromMyCart(
+            @AuthenticationPrincipal AppUser user,
+            @PathVariable UUID variantId) {
+        cartService.removeItem(user.getId(), variantId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> clearMyCart(@AuthenticationPrincipal AppUser user) {
+        cartService.clearCart(user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    // Legacy endpoints for mobile app compatibility
+    @PostMapping("/add")
+    public ResponseEntity<CartItemResponse> addToCartLegacy(
+            @AuthenticationPrincipal AppUser user,
+            @Valid @RequestBody AddToCartLegacyRequest request) {
+        // Convert productId string to UUID
+        UUID productId = UUID.fromString(request.productId());
+
+        // Get product with variants
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // Get first variant
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            throw new RuntimeException("Product has no variants");
+        }
+        UUID variantId = product.getVariants().get(0).getId();
+
+        // Add to cart using variantId
+        CartItem item = cartService.addItem(user.getId(), variantId, request.quantity());
+        return ResponseEntity.ok(toCartItemResponse(item));
+    }
+
+    @PostMapping("/remove")
+    public ResponseEntity<Void> removeFromCartLegacy(
+            @AuthenticationPrincipal AppUser user,
+            @Valid @RequestBody RemoveFromCartLegacyRequest request) {
+        // Convert productId string to UUID
+        UUID productId = UUID.fromString(request.productId());
+
+        // Get product with variants
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // Get first variant
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            throw new RuntimeException("Product has no variants");
+        }
+        UUID variantId = product.getVariants().get(0).getId();
+
+        // Remove from cart
+        cartService.removeItem(user.getId(), variantId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/update")
+    public ResponseEntity<CartItemResponse> updateCartItemLegacy(
+            @AuthenticationPrincipal AppUser user,
+            @Valid @RequestBody UpdateCartItemLegacyRequest request) {
+        // Convert productId string to UUID
+        UUID productId = UUID.fromString(request.productId());
+
+        // Get product with variants
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // Get first variant
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            throw new RuntimeException("Product has no variants");
+        }
+        UUID variantId = product.getVariants().get(0).getId();
+
+        // Update cart item
+        CartItem item = cartService.updateItemQuantity(user.getId(), variantId, request.quantity());
+        return ResponseEntity.ok(toCartItemResponse(item));
+    }
+
+    // Legacy endpoints with userId parameter (for admin use)
     @GetMapping("/{userId}")
     public ResponseEntity<CartResponse> getCart(@PathVariable UUID userId) {
         Cart cart = cartService.getCartWithItems(userId);

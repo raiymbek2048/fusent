@@ -29,6 +29,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   bool _isLoading = false;
   String? _conversationId;
   String? _currentUserId;
+  String? _recipientId;  // Store recipient ID for sending messages
 
   List<Map<String, dynamic>> _messages = [];
 
@@ -49,28 +50,66 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
       _currentUserId = authState.user.id;
     }
 
+    debugPrint('╔══════════════════════════════════════════════════════════════╗');
+    debugPrint('║ CHAT INITIALIZATION - ${DateTime.now().toString()}');
+    debugPrint('╠══════════════════════════════════════════════════════════════╣');
+    debugPrint('║ Current User ID: $_currentUserId');
+    debugPrint('║ Widget chatId: ${widget.chatId}');
+    debugPrint('║ Widget shopName: ${widget.shopName}');
+    debugPrint('║ Widget recipientId: ${widget.recipientId}');
+    debugPrint('║ recipientId is null: ${widget.recipientId == null}');
+    debugPrint('╚══════════════════════════════════════════════════════════════╝');
+
     try {
       // If we have a recipientId, create or get conversation
       if (widget.recipientId != null) {
+        debugPrint('→ RecipientId provided, calling createOrGetConversation...');
+
+        // Store recipientId for sending messages
+        _recipientId = widget.recipientId;
+
         final response = await _apiClient.createOrGetConversation(
           recipientId: widget.recipientId!,
         );
 
+        debugPrint('← API Response status: ${response.statusCode}');
+        debugPrint('← API Response data: ${response.data}');
+
         if (response.statusCode == 200) {
           final convData = response.data as Map<String, dynamic>;
-          _conversationId = convData['id'] as String;
+          _conversationId = convData['conversationId']?.toString();
+          debugPrint('✓ Stored conversation ID: $_conversationId');
         }
       } else {
         // Use the chatId as conversationId
+        debugPrint('→ No recipientId, using chatId as conversationId');
         _conversationId = widget.chatId;
+        debugPrint('✓ Stored conversation ID: $_conversationId');
       }
 
       // Load messages
       if (_conversationId != null) {
+        debugPrint('→ Loading messages for conversation: $_conversationId');
         await _loadMessages();
+      } else {
+        debugPrint('✗ Cannot load messages: conversationId is null');
       }
     } catch (e) {
-      debugPrint('Error initializing conversation: $e');
+      debugPrint('!!! Error initializing conversation: $e');
+      if (e.toString().contains('DioException')) {
+        debugPrint('!!! This is a DioException - likely a backend error');
+      }
+
+      // Show error to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Не удалось открыть чат: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -81,14 +120,26 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   }
 
   Future<void> _loadMessages() async {
-    if (_conversationId == null) return;
+    if (_conversationId == null) {
+      debugPrint('✗ Cannot load messages: conversationId is null');
+      return;
+    }
+
+    debugPrint('╔══════════════════════════════════════════════════════════════╗');
+    debugPrint('║ LOADING MESSAGES');
+    debugPrint('╠══════════════════════════════════════════════════════════════╣');
+    debugPrint('║ Conversation ID: $_conversationId');
+    debugPrint('╚══════════════════════════════════════════════════════════════╝');
 
     try {
       final response = await _apiClient.getConversationMessages(_conversationId!);
+      debugPrint('← Load messages response status: ${response.statusCode}');
 
       if (mounted && response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         final List<dynamic> content = data['content'] as List<dynamic>;
+
+        debugPrint('✓ Loaded ${content.length} messages');
 
         setState(() {
           _messages = content.reversed.map((msg) {
@@ -97,7 +148,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
 
             return {
               'id': msgMap['id'],
-              'text': msgMap['content'] ?? '',
+              'text': msgMap['messageText'] ?? '',
               'isMine': isMine,
               'time': _formatTime(msgMap['createdAt']),
               'status': msgMap['isRead'] == true ? 'read' : 'delivered',
@@ -105,6 +156,11 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
             };
           }).toList();
         });
+
+        debugPrint('✓ Messages displayed in UI');
+
+        // Mark unread messages as read
+        _markMessagesAsRead();
 
         // Scroll to bottom
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -114,7 +170,47 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         });
       }
     } catch (e) {
-      debugPrint('Error loading messages: $e');
+      debugPrint('✗ Error loading messages: $e');
+    }
+  }
+
+  Future<void> _markMessagesAsRead() async {
+    try {
+      // Find all unread messages that are not mine
+      final unreadMessages = _messages
+          .where((msg) =>
+              !msg['isMine'] &&
+              msg['status'] != 'read' &&
+              msg['id'] != null)
+          .toList();
+
+      if (unreadMessages.isEmpty) {
+        debugPrint('✓ No unread messages to mark as read');
+        return;
+      }
+
+      debugPrint('→ Marking ${unreadMessages.length} messages as read');
+
+      // Mark each unread message as read
+      for (final msg in unreadMessages) {
+        try {
+          final messageId = msg['id'].toString();
+          await _apiClient.put(
+            '/api/v1/chat/messages/$messageId/read',
+            data: {},
+          );
+          debugPrint('✓ Marked message $messageId as read');
+
+          // Update local state
+          setState(() {
+            msg['status'] = 'read';
+          });
+        } catch (e) {
+          debugPrint('✗ Failed to mark message ${msg['id']} as read: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('✗ Error in _markMessagesAsRead: $e');
     }
   }
 
@@ -138,10 +234,24 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   }
 
   Future<void> _sendMessage() async {
-    if (_messageController.text.trim().isEmpty || _conversationId == null) return;
+    if (_messageController.text.trim().isEmpty || _recipientId == null) {
+      debugPrint('✗ Cannot send message: text is empty or recipientId is null');
+      debugPrint('  MessageText isEmpty: ${_messageController.text.trim().isEmpty}');
+      debugPrint('  RecipientId is null: ${_recipientId == null}');
+      debugPrint('  RecipientId value: $_recipientId');
+      return;
+    }
 
     final messageText = _messageController.text;
     _messageController.clear();
+
+    debugPrint('╔══════════════════════════════════════════════════════════════╗');
+    debugPrint('║ SENDING MESSAGE');
+    debugPrint('╠══════════════════════════════════════════════════════════════╣');
+    debugPrint('║ Recipient ID: $_recipientId');
+    debugPrint('║ Current Conversation ID: $_conversationId');
+    debugPrint('║ Message Text: $messageText');
+    debugPrint('╚══════════════════════════════════════════════════════════════╝');
 
     // Optimistically add message to UI
     final tempId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -169,12 +279,28 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
 
     try {
       final response = await _apiClient.sendChatMessage(
-        conversationId: _conversationId!,
-        content: messageText,
+        recipientId: _recipientId!,
+        messageText: messageText,
       );
+
+      debugPrint('← Send message response status: ${response.statusCode}');
 
       if (mounted && response.statusCode == 200) {
         final sentMessage = response.data as Map<String, dynamic>;
+        debugPrint('✓ Message sent successfully!');
+        debugPrint('  Message ID: ${sentMessage['id']}');
+        debugPrint('  Conversation ID from response: ${sentMessage['conversationId']}');
+
+        // Update conversation ID to ensure we're viewing the correct conversation
+        final newConversationId = sentMessage['conversationId']?.toString();
+        if (newConversationId != null && newConversationId != _conversationId) {
+          debugPrint('⚠ Updating conversation ID!');
+          debugPrint('  OLD: $_conversationId');
+          debugPrint('  NEW: $newConversationId');
+          _conversationId = newConversationId;
+        } else {
+          debugPrint('✓ Conversation ID unchanged: $_conversationId');
+        }
 
         // Update the temporary message with real data
         setState(() {
@@ -182,7 +308,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           if (index != -1) {
             _messages[index] = {
               'id': sentMessage['id'],
-              'text': sentMessage['content'] ?? messageText,
+              'text': sentMessage['messageText'] ?? messageText,
               'isMine': true,
               'time': _formatTime(sentMessage['createdAt']),
               'status': 'delivered',
@@ -192,7 +318,7 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         });
       }
     } catch (e) {
-      debugPrint('Error sending message: $e');
+      debugPrint('✗ Error sending message: $e');
 
       // Remove the temporary message on error
       if (mounted) {

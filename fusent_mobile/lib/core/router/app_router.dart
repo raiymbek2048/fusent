@@ -122,9 +122,11 @@ class AppRouter {
         builder: (context, state) {
           final chatId = state.pathParameters['id']!;
           final shopName = state.uri.queryParameters['shopName'] ?? 'Chat';
+          final recipientId = state.uri.queryParameters['recipientId'];
           return ChatConversationPage(
             chatId: chatId,
             shopName: shopName,
+            recipientId: recipientId,
           );
         },
       ),

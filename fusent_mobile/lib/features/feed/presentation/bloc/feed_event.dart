@@ -99,3 +99,7 @@ class IncrementViewCountEvent extends FeedEvent {
   @override
   List<Object?> get props => [postId];
 }
+
+class RestoreCachedFeedEvent extends FeedEvent {
+  const RestoreCachedFeedEvent();
+}

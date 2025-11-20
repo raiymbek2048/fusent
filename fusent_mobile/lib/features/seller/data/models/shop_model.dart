@@ -35,11 +35,11 @@ class ShopModel extends Equatable {
 
   factory ShopModel.fromJson(Map<String, dynamic> json) {
     return ShopModel(
-      id: json['id'] as String,
-      merchantId: json['merchantId'] as String,
-      merchantName: json['merchantName'] as String,
-      sellerId: json['sellerId'] as String,
-      name: json['name'] as String,
+      id: (json['id'] as String?) ?? '',
+      merchantId: (json['merchantId'] as String?) ?? '',
+      merchantName: (json['merchantName'] as String?) ?? '',
+      sellerId: (json['sellerId'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
       address: json['address'] as String?,
       phone: json['phone'] as String?,
       lat: json['lat'] != null ? (json['lat'] as num).toDouble() : null,
@@ -48,7 +48,9 @@ class ShopModel extends Equatable {
       lastHeartbeatAt: json['lastHeartbeatAt'] != null
           ? DateTime.parse(json['lastHeartbeatAt'] as String)
           : null,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
       rating: json['rating'] != null ? (json['rating'] as num).toDouble() : null,
       totalReviews: json['totalReviews'] as int?,
     );

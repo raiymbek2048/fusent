@@ -114,6 +114,52 @@ public class EmployeeServiceImpl implements kg.bishkek.fucent.fusent.service.Emp
 
     @Override
     @Transactional
+    public EmployeeResponse updateEmployee(UUID employeeId, UpdateEmployeeRequest request) {
+        var currentUserId = SecurityUtil.currentUserId(users);
+        log.info("Updating employee: employeeId={}, currentUserId={}", employeeId, currentUserId);
+
+        // Get the merchant for the current user
+        Merchant merchant = merchants.findByOwnerUserId(currentUserId)
+            .orElseThrow(() -> new IllegalArgumentException("You are not a merchant owner"));
+
+        // Find the employee
+        AppUser employee = users.findById(employeeId)
+            .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        // Verify the employee is a seller
+        if (employee.getRole() != Role.SELLER) {
+            throw new IllegalArgumentException("User is not an employee");
+        }
+
+        // Verify the employee belongs to the merchant
+        if (employee.getShop() == null ||
+            !employee.getShop().getMerchant().getId().equals(merchant.getId())) {
+            throw new IllegalArgumentException("Employee does not belong to your merchant account");
+        }
+
+        // Check if email is being changed and if it's already taken
+        if (!employee.getEmail().equals(request.email()) && users.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("Email is already in use");
+        }
+
+        // Update employee fields
+        employee.setFullName(request.fullName());
+        employee.setEmail(request.email());
+        employee.setPhone(request.phone());
+
+        // Update password if provided
+        if (request.password() != null && !request.password().isBlank()) {
+            employee.setPasswordHash(passwordEncoder.encode(request.password()));
+        }
+
+        employee = users.save(employee);
+        log.info("Employee updated successfully: employeeId={}", employeeId);
+
+        return toEmployeeResponse(employee);
+    }
+
+    @Override
+    @Transactional
     public EmployeeResponse updateEmployeeShop(UUID employeeId, UpdateEmployeeShopRequest request) {
         var currentUserId = SecurityUtil.currentUserId(users);
         log.info("Updating employee shop: employeeId={}, newShopId={}, currentUserId={}",

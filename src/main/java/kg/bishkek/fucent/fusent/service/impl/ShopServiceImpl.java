@@ -1,10 +1,13 @@
 package kg.bishkek.fucent.fusent.service.impl;
 
 import kg.bishkek.fucent.fusent.dto.ShopDtos.*;
+import kg.bishkek.fucent.fusent.enums.FollowTargetType;
 import kg.bishkek.fucent.fusent.model.Merchant;
 import kg.bishkek.fucent.fusent.model.Shop;
 import kg.bishkek.fucent.fusent.repository.AppUserRepository;
+import kg.bishkek.fucent.fusent.repository.FollowRepository;
 import kg.bishkek.fucent.fusent.repository.MerchantRepository;
+import kg.bishkek.fucent.fusent.repository.ProductRepository;
 import kg.bishkek.fucent.fusent.repository.ShopRepository;
 import kg.bishkek.fucent.fusent.security.SecurityUtil;
 import kg.bishkek.fucent.fusent.service.ShopService;
@@ -27,6 +30,8 @@ public class ShopServiceImpl implements ShopService {
     private final ShopRepository shops;
     private final MerchantRepository merchants;
     private final AppUserRepository users;
+    private final ProductRepository products;
+    private final FollowRepository follows;
 
     @Override
     @Transactional
@@ -183,11 +188,20 @@ public class ShopServiceImpl implements ShopService {
     }
 
     private ShopResponse toShopResponse(Shop shop) {
+        Merchant merchant = shop.getMerchant();
+
+        Double rating = shop.getRating() != null ? shop.getRating().doubleValue() : 0.0;
+        Integer reviewCount = shop.getReviewCount() != null ? shop.getReviewCount() : 0;
+
+        // Calculate real-time counts
+        long followersCount = follows.countByTargetTypeAndTargetId(FollowTargetType.MERCHANT, merchant.getId());
+        long productsCount = products.countByMerchantId(merchant.getId());
+
         return new ShopResponse(
             shop.getId(),
-            shop.getMerchant().getId(),
-            shop.getMerchant().getName(),
-            shop.getMerchant().getOwnerUserId(),  // sellerId
+            merchant.getId(),
+            merchant.getName(),
+            merchant.getOwnerUserId(),  // sellerId
             shop.getName(),
             shop.getAddress(),
             shop.getPhone(),
@@ -196,8 +210,15 @@ public class ShopServiceImpl implements ShopService {
             shop.getPosStatus(),
             shop.getLastHeartbeatAt(),
             shop.getCreatedAt(),
-            shop.getRating() != null ? shop.getRating().doubleValue() : 0.0,
-            shop.getReviewCount() != null ? shop.getReviewCount() : 0
+            rating,
+            rating,  // averageRating (same as rating for compatibility)
+            reviewCount,
+            merchant.getLogoUrl(),
+            merchant.getBannerUrl(),
+            (int) followersCount,
+            (int) productsCount,
+            merchant.getIsVerified() != null ? merchant.getIsVerified() : false,
+            merchant.getOwnerUserId()  // ownerId (same as sellerId)
         );
     }
 }

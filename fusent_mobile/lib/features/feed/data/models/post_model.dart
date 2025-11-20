@@ -97,7 +97,7 @@ class PostMediaModel extends Equatable {
 class PostModel extends Equatable {
   final String id;
   final OwnerType ownerType;
-  final String ownerId;
+  final String? ownerId;
   final String ownerName;
   final String? text;
   final PostType postType;
@@ -120,7 +120,7 @@ class PostModel extends Equatable {
   const PostModel({
     required this.id,
     required this.ownerType,
-    required this.ownerId,
+    this.ownerId,
     required this.ownerName,
     this.text,
     required this.postType,
@@ -148,8 +148,8 @@ class PostModel extends Equatable {
         (e) => e.name == json['ownerType'],
         orElse: () => OwnerType.USER,
       ),
-      ownerId: json['ownerId'] as String,
-      ownerName: json['ownerName'] as String,
+      ownerId: json['ownerId'] as String?,
+      ownerName: (json['ownerName'] as String?) ?? '',
       text: json['text'] as String?,
       postType: PostType.values.firstWhere(
         (e) => e.name == json['postType'],

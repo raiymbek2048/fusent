@@ -123,6 +123,7 @@ class ApiEndpoints {
   static const String employees = '/api/v1/employees';
   static const String createEmployee = '/api/v1/employees';
   static const String employeeDetail = '/api/v1/employees/{id}';
+  static const String updateEmployee = '/api/v1/employees/{id}';
   static const String updateEmployeeShop = '/api/v1/employees/{id}/shop';
   static const String deleteEmployee = '/api/v1/employees/{id}';
   static const String employeesByShop = '/api/v1/employees/shop/{shopId}';

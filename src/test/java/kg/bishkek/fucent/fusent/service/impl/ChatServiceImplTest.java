@@ -74,7 +74,10 @@ class ChatServiceImplTest {
         // Given
         SendMessageRequest request = new SendMessageRequest(
             testRecipient.getId(),
-            "Hello!"
+            "Hello!",
+            null,
+            null,
+            null
         );
 
         when(userRepository.findById(testSender.getId())).thenReturn(Optional.of(testSender));
@@ -110,7 +113,7 @@ class ChatServiceImplTest {
     void sendMessage_shouldThrowExceptionWhenRecipientNotFound() {
         // Given
         UUID nonExistentRecipientId = UUID.randomUUID();
-        SendMessageRequest request = new SendMessageRequest(nonExistentRecipientId, "Hello!");
+        SendMessageRequest request = new SendMessageRequest(nonExistentRecipientId, "Hello!", null, null, null);
 
         when(userRepository.findById(testSender.getId())).thenReturn(Optional.of(testSender));
         when(userRepository.findById(nonExistentRecipientId)).thenReturn(Optional.empty());

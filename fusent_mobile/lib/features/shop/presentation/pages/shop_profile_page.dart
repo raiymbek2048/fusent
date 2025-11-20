@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
+import 'package:fusent_mobile/features/feed/data/models/post_model.dart';
+import 'package:fusent_mobile/features/feed/presentation/pages/posts_viewer_page.dart';
 import 'package:go_router/go_router.dart';
 
 class ShopProfilePage extends StatefulWidget {
@@ -38,12 +40,21 @@ class _ShopProfilePageState extends State<ShopProfilePage>
     'location': '',
   };
 
+  String? _actualShopId; // Real shop ID (if shop exists)
+  String? _merchantId; // Merchant ID for fetching posts/products
+
+  List<dynamic> _products = [];
+  List<dynamic> _posts = [];
+  List<dynamic> _reviews = [];
+  bool _isLoadingProducts = false;
+  bool _isLoadingPosts = false;
+  bool _isLoadingReviews = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadShopData();
-    _checkFollowStatus();
   }
 
   Future<void> _loadShopData() async {
@@ -52,33 +63,88 @@ class _ShopProfilePageState extends State<ShopProfilePage>
     });
 
     try {
-      final response = await _apiClient.getShopById(widget.shopId);
+      debugPrint('=== SHOP PROFILE DEBUG START ===');
+      debugPrint('Requesting shop/merchant with ID: ${widget.shopId}');
 
-      if (mounted && response.statusCode == 200) {
-        final shop = response.data as Map<String, dynamic>;
+      // First try to load as shop ID
+      try {
+        final shopResponse = await _apiClient.getShopById(widget.shopId);
 
-        setState(() {
-          _shopData = {
-            'name': shop['name'] ?? 'Без названия',
-            'description': shop['description'] ?? '',
-            'avatar': shop['logoUrl'],
-            'coverImage': shop['bannerUrl'],
-            'rating': (shop['averageRating'] ?? 0.0).toDouble(),
-            'reviewsCount': shop['totalReviews'] ?? 0,
-            'followersCount': shop['followersCount'] ?? 0,
-            'productsCount': shop['productsCount'] ?? 0,
-            'isVerified': shop['isVerified'] ?? false,
-            'location': shop['address'] ?? '',
-            'ownerId': shop['ownerId'],
-          };
-        });
+        if (mounted && shopResponse.statusCode == 200) {
+          final shop = shopResponse.data as Map<String, dynamic>;
+          _updateShopData(shop);
+          return;
+        }
+      } catch (shopError) {
+        debugPrint('Failed to load as shop ID: $shopError');
+        debugPrint('Trying to load as merchant ID...');
+      }
+
+      // If shop ID failed, try loading as merchant ID
+      // First get merchant details to extract owner user ID
+      String? ownerUserId;
+      try {
+        final merchantResponse = await _apiClient.get('/api/v1/merchants/${widget.shopId}');
+        if (merchantResponse.statusCode == 200) {
+          final merchant = merchantResponse.data as Map<String, dynamic>;
+          // Try both camelCase and snake_case field names
+          ownerUserId = (merchant['ownerUserId'] ?? merchant['owner_id'])?.toString();
+          debugPrint('Got merchant owner user ID: $ownerUserId');
+        }
+      } catch (e) {
+        debugPrint('Not a merchant ID, treating as user ID: $e');
+      }
+
+      // If we couldn't get ownerUserId from merchant, use widget.shopId as fallback
+      if (ownerUserId == null || ownerUserId.isEmpty) {
+        ownerUserId = widget.shopId;
+        debugPrint('Using shopId as ownerUserId fallback: $ownerUserId');
+      }
+
+      final sellerResponse = await _apiClient.get('/api/v1/shops/seller/$ownerUserId');
+
+      debugPrint('Seller response status: ${sellerResponse.statusCode}');
+      debugPrint('Seller response data: ${sellerResponse.data}');
+
+      if (mounted && sellerResponse.statusCode == 200) {
+        final shops = sellerResponse.data as List<dynamic>;
+
+        if (shops.isNotEmpty) {
+          // Use first shop for this merchant
+          final shop = shops[0] as Map<String, dynamic>;
+          _updateShopData(shop);
+        } else {
+          // No shops for this merchant - show merchant profile with placeholder data
+          debugPrint('No shops found for merchant, showing placeholder');
+          setState(() {
+            _merchantId = widget.shopId; // This is actually merchant ID
+            _shopData = {
+              'name': widget.shopName ?? 'Магазин',
+              'description': 'У этого продавца пока нет магазинов',
+              'avatar': null,
+              'coverImage': null,
+              'rating': 0.0,
+              'reviewsCount': 0,
+              'followersCount': 0,
+              'productsCount': 0,
+              'isVerified': false,
+              'location': '',
+              'ownerId': ownerUserId, // Use actual owner user ID for chat
+            };
+          });
+
+          // Load posts for the merchant (no products/reviews without a shop)
+          _loadPosts();
+        }
+      } else {
+        throw Exception('Failed to load merchant shops');
       }
     } catch (e) {
       debugPrint('Error loading shop data: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Не удалось загрузить магазин: ${e.toString()}'),
+          const SnackBar(
+            content: Text('Не удалось загрузить магазин'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -92,6 +158,43 @@ class _ShopProfilePageState extends State<ShopProfilePage>
     }
   }
 
+  void _updateShopData(Map<String, dynamic> shop) {
+    debugPrint('Shop name: ${shop['name']}');
+    debugPrint('Shop logoUrl: ${shop['logoUrl']}');
+    debugPrint('Shop bannerUrl: ${shop['bannerUrl']}');
+    debugPrint('Shop followersCount: ${shop['followersCount']}');
+    debugPrint('Shop productsCount: ${shop['productsCount']}');
+    debugPrint('Shop isVerified: ${shop['isVerified']}');
+    debugPrint('=== SHOP PROFILE DEBUG END ===');
+
+    setState(() {
+      _actualShopId = shop['id']; // Store actual shop ID
+      _merchantId = shop['merchantId']; // Store merchant ID
+
+      _shopData = {
+        'name': shop['name'] ?? 'Без названия',
+        'description': shop['description'] ?? '',
+        'avatar': shop['logoUrl'],
+        'coverImage': shop['bannerUrl'],
+        'rating': (shop['averageRating'] ?? 0.0).toDouble(),
+        'reviewsCount': shop['totalReviews'] ?? 0,
+        'followersCount': shop['followersCount'] ?? 0,
+        'productsCount': shop['productsCount'] ?? 0,
+        'isVerified': shop['isVerified'] ?? false,
+        'location': shop['address'] ?? '',
+        'ownerId': shop['ownerId'],
+      };
+    });
+
+    // Load data for tabs
+    _loadProducts();
+    _loadPosts();
+    _loadReviews();
+
+    // Check follow status after merchantId is available
+    _checkFollowStatus();
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -99,10 +202,16 @@ class _ShopProfilePageState extends State<ShopProfilePage>
   }
 
   Future<void> _checkFollowStatus() async {
+    // Only check follow status after merchantId is loaded
+    if (_merchantId == null) {
+      debugPrint('No merchant ID available for follow check');
+      return;
+    }
+
     try {
       final response = await _apiClient.isFollowingTarget(
         targetType: 'MERCHANT',
-        targetId: widget.shopId,
+        targetId: _merchantId!,
       );
 
       if (mounted && response.statusCode == 200) {
@@ -117,6 +226,11 @@ class _ShopProfilePageState extends State<ShopProfilePage>
   }
 
   Future<void> _toggleFollow() async {
+    if (_merchantId == null) {
+      debugPrint('Cannot toggle follow: merchantId is null');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -126,7 +240,7 @@ class _ShopProfilePageState extends State<ShopProfilePage>
         // Unfollow
         await _apiClient.unfollowTarget(
           targetType: 'MERCHANT',
-          targetId: widget.shopId,
+          targetId: _merchantId!,
         );
         setState(() {
           _isFollowing = false;
@@ -136,7 +250,7 @@ class _ShopProfilePageState extends State<ShopProfilePage>
         // Follow
         await _apiClient.followTarget(
           targetType: 'MERCHANT',
-          targetId: widget.shopId,
+          targetId: _merchantId!,
         );
         setState(() {
           _isFollowing = true;
@@ -153,12 +267,13 @@ class _ShopProfilePageState extends State<ShopProfilePage>
         );
       }
     } catch (e) {
+      debugPrint('Error toggling follow: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка: ${e.toString()}'),
+          const SnackBar(
+            content: Text('Не удалось изменить подписку'),
             backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 3),
+            duration: Duration(seconds: 3),
           ),
         );
       }
@@ -181,15 +296,19 @@ class _ShopProfilePageState extends State<ShopProfilePage>
             expandedHeight: 200,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: Image.network(
-                _shopData['coverImage'],
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: AppColors.surface,
-                  );
-                },
-              ),
+              background: _shopData['coverImage'] != null
+                  ? Image.network(
+                      _shopData['coverImage'] as String,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: AppColors.surface,
+                        );
+                      },
+                    )
+                  : Container(
+                      color: AppColors.surface,
+                    ),
             ),
           ),
 
@@ -213,11 +332,16 @@ class _ShopProfilePageState extends State<ShopProfilePage>
                         child: CircleAvatar(
                           radius: 50,
                           backgroundColor: AppColors.surface,
-                          child: const Icon(
-                            Icons.store,
-                            size: 50,
-                            color: AppColors.textSecondary,
-                          ),
+                          backgroundImage: _shopData['avatar'] != null
+                              ? NetworkImage(_shopData['avatar'] as String)
+                              : null,
+                          child: _shopData['avatar'] == null
+                              ? const Icon(
+                                  Icons.store,
+                                  size: 50,
+                                  color: AppColors.textSecondary,
+                                )
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -427,6 +551,19 @@ class _ShopProfilePageState extends State<ShopProfilePage>
   }
 
   Widget _buildProductsGrid() {
+    if (_isLoadingProducts) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_products.isEmpty) {
+      return const Center(
+        child: Text(
+          'Нет товаров',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+      );
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -435,11 +572,16 @@ class _ShopProfilePageState extends State<ShopProfilePage>
         crossAxisSpacing: 16,
         childAspectRatio: 0.75,
       ),
-      itemCount: 10,
+      itemCount: _products.length,
       itemBuilder: (context, index) {
+        final product = _products[index] as Map<String, dynamic>;
+        final imageUrl = (product['images'] as List<dynamic>?)?.isNotEmpty == true
+            ? product['images'][0]
+            : null;
+
         return GestureDetector(
           onTap: () {
-            context.push('/product/$index');
+            context.push('/product/${product['id']}');
           },
           child: Container(
             decoration: BoxDecoration(
@@ -457,13 +599,33 @@ class _ShopProfilePageState extends State<ShopProfilePage>
                         top: Radius.circular(12),
                       ),
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.image,
-                        size: 40,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                    child: imageUrl != null
+                        ? ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(12),
+                            ),
+                            child: Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(
+                                    Icons.image,
+                                    size: 40,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : const Center(
+                            child: Icon(
+                              Icons.image,
+                              size: 40,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                   ),
                 ),
                 Padding(
@@ -472,7 +634,7 @@ class _ShopProfilePageState extends State<ShopProfilePage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Товар #${index + 1}',
+                        product['name'] ?? 'Без названия',
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
                         ),
@@ -481,7 +643,7 @@ class _ShopProfilePageState extends State<ShopProfilePage>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${(index + 1) * 1000} сом',
+                        '${product['price'] ?? 0} сом',
                         style: const TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
@@ -499,6 +661,19 @@ class _ShopProfilePageState extends State<ShopProfilePage>
   }
 
   Widget _buildPostsGrid() {
+    if (_isLoadingPosts) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_posts.isEmpty) {
+      return const Center(
+        child: Text(
+          'Нет постов',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+      );
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(2),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -507,16 +682,55 @@ class _ShopProfilePageState extends State<ShopProfilePage>
         crossAxisSpacing: 2,
         childAspectRatio: 1,
       ),
-      itemCount: 15,
+      itemCount: _posts.length,
       itemBuilder: (context, index) {
-        return Container(
-          color: AppColors.surface,
-          child: const Center(
-            child: Icon(
-              Icons.image,
-              size: 40,
-              color: AppColors.textSecondary,
-            ),
+        final post = _posts[index] as Map<String, dynamic>;
+        final media = post['media'] as List<dynamic>?;
+        final imageUrl = media?.isNotEmpty == true
+            ? media![0]['url']
+            : null;
+
+        return GestureDetector(
+          onTap: () {
+            // Convert posts to PostModel objects
+            final postModels = _posts.map((postJson) =>
+              PostModel.fromJson(postJson as Map<String, dynamic>)
+            ).toList();
+
+            // Navigate to TikTok-style feed starting from this post
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PostsViewerPage(
+                  posts: postModels,
+                  initialIndex: index,
+                ),
+              ),
+            );
+          },
+          child: Container(
+            color: AppColors.surface,
+            child: imageUrl != null
+                ? Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(
+                          Icons.image,
+                          size: 40,
+                          color: AppColors.textSecondary,
+                        ),
+                      );
+                    },
+                  )
+                : const Center(
+                    child: Icon(
+                      Icons.image,
+                      size: 40,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
           ),
         );
       },
@@ -524,11 +738,30 @@ class _ShopProfilePageState extends State<ShopProfilePage>
   }
 
   Widget _buildReviewsList() {
+    if (_isLoadingReviews) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_reviews.isEmpty) {
+      return const Center(
+        child: Text(
+          'Нет отзывов',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+      );
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(16),
-      itemCount: 5,
+      itemCount: _reviews.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
+        final review = _reviews[index] as Map<String, dynamic>;
+        final rating = (review['rating'] ?? 0).toInt();
+        final reviewerName = review['reviewerName'] ?? 'Пользователь';
+        final comment = review['comment'] ?? '';
+        final createdAt = review['createdAt'] as String?;
+
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -543,9 +776,12 @@ class _ShopProfilePageState extends State<ShopProfilePage>
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-                    child: const Icon(
-                      Icons.person,
-                      color: AppColors.primary,
+                    child: Text(
+                      reviewerName.isNotEmpty ? reviewerName[0].toUpperCase() : 'П',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -553,16 +789,16 @@ class _ShopProfilePageState extends State<ShopProfilePage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Пользователь',
-                          style: TextStyle(
+                        Text(
+                          reviewerName,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Row(
                           children: List.generate(5, (i) {
                             return Icon(
-                              i < 4 ? Icons.star : Icons.star_border,
+                              i < rating ? Icons.star : Icons.star_border,
                               size: 16,
                               color: Colors.amber,
                             );
@@ -571,24 +807,145 @@ class _ShopProfilePageState extends State<ShopProfilePage>
                       ],
                     ),
                   ),
-                  const Text(
-                    '2 дня назад',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                  if (createdAt != null)
+                    Text(
+                      _formatDate(createdAt),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Отличный магазин! Быстрая доставка, качественные товары.',
-                style: TextStyle(height: 1.5),
-              ),
+              if (comment.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  comment,
+                  style: const TextStyle(height: 1.5),
+                ),
+              ],
             ],
           ),
         );
       },
     );
+  }
+
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays == 0) {
+        return 'Сегодня';
+      } else if (difference.inDays == 1) {
+        return 'Вчера';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays} дн. назад';
+      } else if (difference.inDays < 30) {
+        return '${(difference.inDays / 7).floor()} нед. назад';
+      } else {
+        return '${(difference.inDays / 30).floor()} мес. назад';
+      }
+    } catch (e) {
+      return '';
+    }
+  }
+
+  Future<void> _loadProducts() async {
+    if (_actualShopId == null) {
+      debugPrint('No shop ID, cannot load products');
+      return;
+    }
+
+    setState(() {
+      _isLoadingProducts = true;
+    });
+
+    try {
+      final response = await _apiClient.get(
+        '/api/v1/catalog/products?shopId=$_actualShopId&size=20',
+      );
+
+      if (mounted && response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        setState(() {
+          _products = data['content'] as List<dynamic>;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading products: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingProducts = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadPosts() async {
+    if (_merchantId == null) {
+      debugPrint('No merchant ID, cannot load posts');
+      return;
+    }
+
+    setState(() {
+      _isLoadingPosts = true;
+    });
+
+    try {
+      final response = await _apiClient.get(
+        '/api/v1/social/posts/by-owner?ownerType=MERCHANT&ownerId=$_merchantId&size=20',
+      );
+
+      if (mounted && response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        setState(() {
+          _posts = data['content'] as List<dynamic>;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading posts: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingPosts = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    if (_actualShopId == null) {
+      debugPrint('No shop ID, cannot load reviews');
+      return;
+    }
+
+    setState(() {
+      _isLoadingReviews = true;
+    });
+
+    try {
+      final response = await _apiClient.get(
+        '/api/v1/reviews/shops/$_actualShopId?size=20',
+      );
+
+      if (mounted && response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        setState(() {
+          _reviews = data['content'] as List<dynamic>;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading reviews: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingReviews = false;
+        });
+      }
+    }
   }
 }

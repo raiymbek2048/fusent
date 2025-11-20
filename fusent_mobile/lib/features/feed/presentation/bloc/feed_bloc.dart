@@ -5,6 +5,7 @@ import 'package:fusent_mobile/features/feed/presentation/bloc/feed_state.dart';
 
 class FeedBloc extends Bloc<FeedEvent, FeedState> {
   final FeedRepository repository;
+  FeedLoaded? _cachedFeedState; // Cache feed state when viewing comments
 
   FeedBloc({required this.repository}) : super(FeedInitial()) {
     on<LoadPublicFeed>(_onLoadPublicFeed);
@@ -16,6 +17,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     on<LoadCommentsEvent>(_onLoadComments);
     on<CreateCommentEvent>(_onCreateComment);
     on<IncrementViewCountEvent>(_onIncrementViewCount);
+    on<RestoreCachedFeedEvent>(_onRestoreCachedFeed);
   }
 
   Future<void> _onLoadPublicFeed(
@@ -33,19 +35,23 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
       );
 
       if (event.page == 0) {
-        emit(FeedLoaded(
+        final feedState = FeedLoaded(
           posts: posts,
           hasReachedMax: posts.isEmpty || posts.length < 20,
           currentPage: 0,
-        ));
+        );
+        _cachedFeedState = feedState;
+        emit(feedState);
       } else {
         final currentState = state;
         if (currentState is FeedLoaded) {
-          emit(currentState.copyWith(
+          final feedState = currentState.copyWith(
             posts: [...currentState.posts, ...posts],
             hasReachedMax: posts.isEmpty || posts.length < 20,
             currentPage: event.page,
-          ));
+          );
+          _cachedFeedState = feedState;
+          emit(feedState);
         }
       }
     } catch (e) {
@@ -68,19 +74,23 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
       );
 
       if (event.page == 0) {
-        emit(FeedLoaded(
+        final feedState = FeedLoaded(
           posts: posts,
           hasReachedMax: posts.isEmpty || posts.length < 20,
           currentPage: 0,
-        ));
+        );
+        _cachedFeedState = feedState;
+        emit(feedState);
       } else {
         final currentState = state;
         if (currentState is FeedLoaded) {
-          emit(currentState.copyWith(
+          final feedState = currentState.copyWith(
             posts: [...currentState.posts, ...posts],
             hasReachedMax: posts.isEmpty || posts.length < 20,
             currentPage: event.page,
-          ));
+          );
+          _cachedFeedState = feedState;
+          emit(feedState);
         }
       }
     } catch (e) {
@@ -200,6 +210,11 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     Emitter<FeedState> emit,
   ) async {
     try {
+      // Cache current feed state before transitioning to comments
+      if (state is FeedLoaded) {
+        _cachedFeedState = state as FeedLoaded;
+      }
+
       final comments = await repository.getComments(
         postId: event.postId,
         page: event.page,
@@ -230,7 +245,21 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         text: event.text,
       );
 
-      // Update comments count and reload comments
+      // Update comments count in cached feed state regardless of current state
+      if (_cachedFeedState != null) {
+        final updatedPosts = _cachedFeedState!.posts.map((post) {
+          if (post.id == event.postId) {
+            return post.copyWith(
+              commentsCount: post.commentsCount + 1,
+            );
+          }
+          return post;
+        }).toList();
+
+        _cachedFeedState = _cachedFeedState!.copyWith(posts: updatedPosts);
+      }
+
+      // Update current state based on what it is
       final currentState = state;
       if (currentState is FeedLoaded) {
         final updatedPosts = currentState.posts.map((post) {
@@ -242,7 +271,9 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
           return post;
         }).toList();
 
-        emit(currentState.copyWith(posts: updatedPosts));
+        final feedState = currentState.copyWith(posts: updatedPosts);
+        _cachedFeedState = feedState;
+        emit(feedState);
       } else if (currentState is CommentsLoaded && currentState.postId == event.postId) {
         // If we're viewing comments, add new comment to the list without reloading
         final updatedComments = [comment, ...currentState.comments];
@@ -277,19 +308,23 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
       );
 
       if (event.page == 0) {
-        emit(FeedLoaded(
+        final feedState = FeedLoaded(
           posts: posts,
           hasReachedMax: posts.isEmpty || posts.length < 20,
           currentPage: 0,
-        ));
+        );
+        _cachedFeedState = feedState;
+        emit(feedState);
       } else {
         final currentState = state;
         if (currentState is FeedLoaded) {
-          emit(currentState.copyWith(
+          final feedState = currentState.copyWith(
             posts: [...currentState.posts, ...posts],
             hasReachedMax: posts.isEmpty || posts.length < 20,
             currentPage: event.page,
-          ));
+          );
+          _cachedFeedState = feedState;
+          emit(feedState);
         }
       }
     } catch (e) {
@@ -320,6 +355,15 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
       }
     } catch (e) {
       // Silently fail - view count is not critical
+    }
+  }
+
+  Future<void> _onRestoreCachedFeed(
+    RestoreCachedFeedEvent event,
+    Emitter<FeedState> emit,
+  ) async {
+    if (_cachedFeedState != null) {
+      emit(_cachedFeedState!);
     }
   }
 }

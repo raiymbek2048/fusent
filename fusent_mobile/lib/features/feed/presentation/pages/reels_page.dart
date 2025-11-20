@@ -3,6 +3,7 @@ import 'package:video_player/video_player.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
 import 'package:fusent_mobile/features/feed/data/models/post_model.dart';
+import 'package:fusent_mobile/features/feed/presentation/widgets/share_bottom_sheet.dart';
 
 class ReelsPage extends StatefulWidget {
   final String? initialPostId;
@@ -69,7 +70,7 @@ class _ReelsPageState extends State<ReelsPage> {
               shares: post.sharesCount,
               avatarUrl: '',
               isLiked: post.isLikedByCurrentUser,
-              ownerId: post.ownerId,
+              ownerId: post.ownerId ?? '',
               ownerType: post.ownerType.toString().split('.').last,
             );
           }).toList();
@@ -385,7 +386,14 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
                 icon: Icons.send,
                 label: _formatNumber(widget.reel.shares),
                 onTap: () {
-                  // TODO: Share
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => ShareBottomSheet(
+                      postId: widget.reel.postId,
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 24),

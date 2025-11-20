@@ -50,13 +50,16 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers(
                                 "/api/v1/auth/**",
-                                "/api/auth/**",  // Mobile app endpoints
+                                "/api/auth/**",  // Mobile app auth endpoints
                                 "/api/v1/public/**",
                                 "/api/v1/catalog/categories",
                                 "/api/v1/shops/**",
                                 "/api/v1/health",
                                 "/api/v1/social/feed/public",
                                 "/api/v1/media/url/**",
+                                "/api/catalog/**",  // Mobile app catalog endpoints
+                                "/api/shops/**",  // Mobile app shops endpoints
+                                "/api/social/feed/**",  // Mobile app social feed endpoints
                                 "/uploads/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",

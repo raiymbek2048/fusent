@@ -2,6 +2,7 @@ package kg.bishkek.fucent.fusent.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import kg.bishkek.fucent.fusent.model.MessageType;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -14,7 +15,10 @@ public class ChatDtos {
 
     public record SendMessageRequest(
         @NotNull UUID recipientId,
-        @NotBlank String messageText
+        String messageText,
+        MessageType messageType,
+        UUID sharedProductId,
+        UUID sharedPostId
     ) {}
 
     public record ChatMessageResponse(
@@ -25,9 +29,26 @@ public class ChatDtos {
         UUID recipientId,
         String recipientName,
         String messageText,
+        MessageType messageType,
+        SharedProductInfo sharedProduct,
+        SharedPostInfo sharedPost,
         Boolean isRead,
         Boolean isFlagged,
         Instant createdAt
+    ) {}
+
+    public record SharedProductInfo(
+        UUID id,
+        String name,
+        String imageUrl,
+        Double price
+    ) {}
+
+    public record SharedPostInfo(
+        UUID id,
+        String caption,
+        String imageUrl,
+        String shopName
     ) {}
 
     public record ConversationResponse(

@@ -24,7 +24,7 @@ public class EmployeeController {
 
     @Operation(summary = "Create a new employee (seller) for a shop")
     @PostMapping
-    @PreAuthorize("hasRole('MERCHANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
     public ResponseEntity<?> createEmployee(@Valid @RequestBody CreateEmployeeRequest request) {
         try {
             EmployeeResponse response = employeeService.createEmployee(request);
@@ -38,7 +38,7 @@ public class EmployeeController {
 
     @Operation(summary = "Get all employees for current merchant")
     @GetMapping
-    @PreAuthorize("hasRole('MERCHANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
     public ResponseEntity<List<EmployeeResponse>> getMyEmployees() {
         try {
             List<EmployeeResponse> employees = employeeService.getMyEmployees();
@@ -50,7 +50,7 @@ public class EmployeeController {
 
     @Operation(summary = "Get employees for a specific shop")
     @GetMapping("/shop/{shopId}")
-    @PreAuthorize("hasRole('MERCHANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
     public ResponseEntity<List<EmployeeResponse>> getEmployeesByShop(@PathVariable UUID shopId) {
         try {
             List<EmployeeResponse> employees = employeeService.getEmployeesByShop(shopId);
@@ -60,9 +60,23 @@ public class EmployeeController {
         }
     }
 
+    @Operation(summary = "Update employee details")
+    @PutMapping("/{employeeId}")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    public ResponseEntity<?> updateEmployee(
+            @PathVariable UUID employeeId,
+            @Valid @RequestBody UpdateEmployeeRequest request) {
+        try {
+            EmployeeResponse response = employeeService.updateEmployee(employeeId, request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     @Operation(summary = "Update employee's shop assignment")
     @PutMapping("/{employeeId}/shop")
-    @PreAuthorize("hasRole('MERCHANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
     public ResponseEntity<EmployeeResponse> updateEmployeeShop(
             @PathVariable UUID employeeId,
             @Valid @RequestBody UpdateEmployeeShopRequest request) {
@@ -76,7 +90,7 @@ public class EmployeeController {
 
     @Operation(summary = "Delete an employee")
     @DeleteMapping("/{employeeId}")
-    @PreAuthorize("hasRole('MERCHANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteEmployee(@PathVariable UUID employeeId) {
         try {
             employeeService.deleteEmployee(employeeId);
@@ -86,3 +100,4 @@ public class EmployeeController {
         }
     }
 }
+// Updated to use SELLER role instead of MERCHANT
