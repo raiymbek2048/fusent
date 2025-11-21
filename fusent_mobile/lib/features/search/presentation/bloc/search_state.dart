@@ -11,12 +11,14 @@ class SearchLoaded extends SearchState {
   final bool hasReachedMax;
   final int currentPage;
   final String query;
+  final int totalCount;
 
   SearchLoaded({
     required this.products,
     required this.hasReachedMax,
     required this.currentPage,
     required this.query,
+    this.totalCount = 0,
   });
 
   SearchLoaded copyWith({
@@ -24,12 +26,14 @@ class SearchLoaded extends SearchState {
     bool? hasReachedMax,
     int? currentPage,
     String? query,
+    int? totalCount,
   }) {
     return SearchLoaded(
       products: products ?? this.products,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       currentPage: currentPage ?? this.currentPage,
       query: query ?? this.query,
+      totalCount: totalCount ?? this.totalCount,
     );
   }
 }

@@ -34,6 +34,9 @@ public class CheckoutServiceImpl implements CheckoutService {
     public Order checkoutFromCart(UUID userId, UUID shopId, String shippingAddress, String paymentMethod, String notes) {
         // Get cart with items
         Cart cart = cartService.getCartWithItems(userId);
+        System.out.println("ajdk"+userId);
+        System.out.println("hajdkl"+cart.getId());
+        System.out.println("oehfdijd"+cart.getItems().size());
 
         if (cart.getItems().isEmpty()) {
             throw new IllegalStateException("Cart is empty");

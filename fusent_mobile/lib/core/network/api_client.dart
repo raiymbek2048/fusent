@@ -364,6 +364,25 @@ class ApiClient {
     );
   }
 
+  // Modern cart endpoints using variantId
+  Future<Response> updateCartItemByVariant({
+    required String variantId,
+    required int quantity,
+  }) async {
+    return await _dio.put(
+      '/api/v1/cart/items/$variantId',
+      data: {
+        'qty': quantity,
+      },
+    );
+  }
+
+  Future<Response> removeFromCartByVariant({
+    required String variantId,
+  }) async {
+    return await _dio.delete('/api/v1/cart/items/$variantId');
+  }
+
   // Chat endpoints
   Future<Response> createOrGetConversation({
     required String recipientId,
@@ -864,5 +883,157 @@ class ApiClient {
       },
     );
     return await _dio.get(path);
+  }
+
+  // Order endpoints
+  Future<Response> getShopOrders(String shopId) async {
+    return await _dio.get('/api/v1/orders/shop/$shopId');
+  }
+
+  Future<Response> updateOrderStatus({
+    required String orderId,
+    required String status,
+  }) async {
+    return await _dio.put(
+      '/api/v1/orders/$orderId/status',
+      data: {'status': status},
+    );
+  }
+
+  Future<Response> getOrderDetails(String orderId) async {
+    return await _dio.get('/api/v1/orders/$orderId');
+  }
+
+  Future<Response> getUserOrders(String userId) async {
+    return await _dio.get('/api/v1/orders/user/$userId');
+  }
+
+  // Favorites endpoints
+  Future<Response> getFavorites() async {
+    return await _dio.get('/api/v1/favorites');
+  }
+
+  Future<Response> addToFavorites(String productId) async {
+    return await _dio.post('/api/v1/favorites/$productId');
+  }
+
+  Future<Response> removeFromFavorites(String productId) async {
+    return await _dio.delete('/api/v1/favorites/$productId');
+  }
+
+  Future<Response> checkIsFavorite(String productId) async {
+    return await _dio.get('/api/v1/favorites/$productId/check');
+  }
+
+  // View History endpoints
+  Future<Response> getViewHistory() async {
+    return await _dio.get('/api/v1/view-history');
+  }
+
+  Future<Response> recordProductView(String productId) async {
+    return await _dio.post('/api/v1/view-history/$productId');
+  }
+
+  Future<Response> clearViewHistory() async {
+    return await _dio.delete('/api/v1/view-history');
+  }
+
+  // Notifications endpoints
+  Future<Response> getUserNotifications({int page = 0, int size = 20}) async {
+    return await _dio.get('/api/v1/notifications/user', queryParameters: {
+      'page': page,
+      'size': size,
+    });
+  }
+
+  Future<Response> markNotificationAsRead(String notificationId) async {
+    return await _dio.patch('/api/v1/notifications/$notificationId/read');
+  }
+
+  Future<Response> markAllNotificationsAsRead() async {
+    return await _dio.patch('/api/v1/notifications/mark-all-read');
+  }
+
+  Future<Response> getUnreadNotificationsCount() async {
+    return await _dio.get('/api/v1/notifications/unread-count');
+  }
+
+  // Delivery Address endpoints
+  Future<Response> getDeliveryAddresses() async {
+    return await _dio.get('/api/v1/addresses');
+  }
+
+  Future<Response> createDeliveryAddress(Map<String, dynamic> data) async {
+    return await _dio.post('/api/v1/addresses', data: data);
+  }
+
+  Future<Response> updateDeliveryAddress(String id, Map<String, dynamic> data) async {
+    return await _dio.put('/api/v1/addresses/$id', data: data);
+  }
+
+  Future<Response> deleteDeliveryAddress(String id) async {
+    return await _dio.delete('/api/v1/addresses/$id');
+  }
+
+  Future<Response> setDefaultAddress(String id) async {
+    return await _dio.patch('/api/v1/addresses/$id/default');
+  }
+
+  // Payment Methods endpoints
+  Future<Response> getPaymentMethods() async {
+    return await _dio.get('/api/v1/payment-methods');
+  }
+
+  Future<Response> createPaymentMethod(Map<String, dynamic> data) async {
+    return await _dio.post('/api/v1/payment-methods', data: data);
+  }
+
+  Future<Response> deletePaymentMethod(String id) async {
+    return await _dio.delete('/api/v1/payment-methods/$id');
+  }
+
+  Future<Response> setDefaultPaymentMethod(String id) async {
+    return await _dio.patch('/api/v1/payment-methods/$id/default');
+  }
+
+  // Profile endpoints
+  Future<Response> updateProfile({
+    String? fullName,
+    String? username,
+    String? phone,
+    String? bio,
+    String? address,
+    String? city,
+    String? telegramUsername,
+    String? instagramUsername,
+  }) async {
+    return await _dio.put('/api/v1/profile/me', data: {
+      if (fullName != null) 'fullName': fullName,
+      if (username != null) 'username': username,
+      if (phone != null) 'phone': phone,
+      if (bio != null) 'bio': bio,
+      if (address != null) 'address': address,
+      if (city != null) 'city': city,
+      if (telegramUsername != null) 'telegramUsername': telegramUsername,
+      if (instagramUsername != null) 'instagramUsername': instagramUsername,
+    });
+  }
+
+  // Checkout endpoint
+  Future<Response> checkout({
+    required String shopId,
+    String? shippingAddress,
+    String? paymentMethod,
+    String? notes,
+  }) async {
+    return await _dio.post(
+      '/api/v1/checkout',
+      data: {
+        'shopId': shopId,
+        if (shippingAddress != null) 'shippingAddress': shippingAddress,
+        if (paymentMethod != null) 'paymentMethod': paymentMethod,
+        if (notes != null) 'notes': notes,
+      },
+    );
   }
 }

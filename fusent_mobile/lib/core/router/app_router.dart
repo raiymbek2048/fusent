@@ -20,8 +20,18 @@ import '../../features/seller/presentation/pages/create_post_page.dart';
 import '../../features/seller/presentation/pages/my_posts_page.dart';
 import '../../features/seller/presentation/pages/shops_management_page.dart';
 import '../../features/seller/presentation/pages/employees_management_page.dart';
+import '../../features/seller/presentation/pages/seller_orders_page.dart';
+import '../../features/seller/presentation/pages/order_details_page.dart';
 import '../../features/map/presentation/pages/shops_map_page.dart';
 import '../../features/shop/presentation/pages/shop_profile_page.dart';
+import '../../features/profile/presentation/pages/order_history_page.dart';
+import '../../features/profile/presentation/pages/favorites_page.dart';
+import '../../features/profile/presentation/pages/view_history_page.dart';
+import '../../features/profile/presentation/pages/edit_profile_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/profile/presentation/pages/delivery_addresses_page.dart';
+import '../../features/profile/presentation/pages/payment_methods_page.dart';
+import '../../features/profile/presentation/pages/help_page.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -191,6 +201,75 @@ class AppRouter {
         path: '/seller/employees',
         name: 'seller-employees',
         builder: (context, state) => const EmployeesManagementPage(),
+      ),
+      GoRoute(
+        path: '/seller/orders',
+        name: 'seller-orders',
+        builder: (context, state) => const SellerOrdersPage(),
+      ),
+      GoRoute(
+        path: '/seller/orders/:orderId',
+        name: 'order-details',
+        builder: (context, state) {
+          final orderId = state.pathParameters['orderId']!;
+          return OrderDetailsPage(orderId: orderId);
+        },
+      ),
+
+      // Order History
+      GoRoute(
+        path: '/orders',
+        name: 'order-history',
+        builder: (context, state) => const OrderHistoryPage(),
+      ),
+
+      // Favorites
+      GoRoute(
+        path: '/favorites',
+        name: 'favorites',
+        builder: (context, state) => const FavoritesPage(),
+      ),
+
+      // View History
+      GoRoute(
+        path: '/view-history',
+        name: 'view-history',
+        builder: (context, state) => const ViewHistoryPage(),
+      ),
+
+      // Edit Profile
+      GoRoute(
+        path: '/edit-profile',
+        name: 'edit-profile',
+        builder: (context, state) => const EditProfilePage(),
+      ),
+
+      // Notifications
+      GoRoute(
+        path: '/notifications',
+        name: 'notifications',
+        builder: (context, state) => const NotificationsPage(),
+      ),
+
+      // Delivery Addresses
+      GoRoute(
+        path: '/delivery-addresses',
+        name: 'delivery-addresses',
+        builder: (context, state) => const DeliveryAddressesPage(),
+      ),
+
+      // Payment Methods
+      GoRoute(
+        path: '/payment-methods',
+        name: 'payment-methods',
+        builder: (context, state) => const PaymentMethodsPage(),
+      ),
+
+      // Help
+      GoRoute(
+        path: '/help',
+        name: 'help',
+        builder: (context, state) => const HelpPage(),
       ),
 
       // Shops Map

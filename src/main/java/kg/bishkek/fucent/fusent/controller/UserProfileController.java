@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kg.bishkek.fucent.fusent.dto.UserProfileDto;
 import kg.bishkek.fucent.fusent.model.AppUser;
+import kg.bishkek.fucent.fusent.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
 public class UserProfileController {
+
+    private final AppUserRepository userRepository;
 
     @Operation(summary = "Получить свой профиль", description = "Получение полной информации о текущем пользователе")
     @GetMapping("/me")
@@ -70,7 +73,7 @@ public class UserProfileController {
         if (request.getTelegramUsername() != null) user.setTelegramUsername(request.getTelegramUsername());
         if (request.getInstagramUsername() != null) user.setInstagramUsername(request.getInstagramUsername());
 
-        // TODO: Save to repository (need UserRepository injection)
+        userRepository.save(user);
 
         return getMyProfile(user);
     }
@@ -82,7 +85,7 @@ public class UserProfileController {
             @RequestBody UserProfileDto.UpdateAvatarRequest request
     ) {
         user.setAvatarUrl(request.getAvatarUrl());
-        // TODO: Save to repository
+        userRepository.save(user);
 
         return getMyProfile(user);
     }

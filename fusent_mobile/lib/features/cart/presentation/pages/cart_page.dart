@@ -36,23 +36,18 @@ class _CartPageState extends State<CartPage> {
         setState(() {
           _cartItems = items.map((item) {
             final itemMap = item as Map<String, dynamic>;
-            final product = itemMap['product'] as Map<String, dynamic>?;
-            final shop = product?['shop'] as Map<String, dynamic>?;
-            final variants = product?['variants'] as List<dynamic>?;
-            final firstVariant = variants?.isNotEmpty == true ? variants!.first as Map<String, dynamic> : null;
 
             return CartItem(
-              id: itemMap['id'] ?? product?['id'] ?? '',
-              productId: product?['id'] ?? '',
-              name: product?['name'] ?? 'Товар',
-              shopName: shop?['name'] ?? 'Магазин',
-              price: (firstVariant?['price'] ?? product?['currentPrice'] ?? 0).toDouble().toInt(),
-              quantity: itemMap['quantity'] ?? 1,
-              imageUrl: (product?['images'] as List<dynamic>?)?.isNotEmpty == true
-                  ? (product!['images'] as List<dynamic>).first as String
-                  : '',
-              isAvailable: product?['isActive'] ?? true,
-              errorMessage: (product?['isActive'] == false) ? 'Товар недоступен' : null,
+              id: itemMap['id'] ?? '',
+              productId: itemMap['productId'] ?? '',
+              variantId: itemMap['variantId'] ?? '',  // Use variantId for updates
+              name: itemMap['productName'] ?? 'Товар',
+              shopName: itemMap['shopName'] ?? 'Магазин',
+              price: ((itemMap['price'] ?? 0) as num).toDouble().toInt(),
+              quantity: itemMap['qty'] ?? 1,
+              imageUrl: itemMap['productImage'] ?? '',
+              isAvailable: (itemMap['stockQty'] ?? 0) > 0,
+              errorMessage: ((itemMap['stockQty'] ?? 0) <= 0) ? 'Товар недоступен' : null,
             );
           }).toList();
         });
@@ -83,9 +78,9 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
-  Future<void> _removeItem(String productId, int index) async {
+  Future<void> _removeItem(String variantId, int index) async {
     try {
-      final response = await _apiClient.removeFromCart(productId: productId);
+      final response = await _apiClient.removeFromCartByVariant(variantId: variantId);
 
       if (mounted && response.statusCode == 200) {
         setState(() {
@@ -112,7 +107,7 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
-  Future<void> _updateQuantity(String productId, int newQuantity, int index) async {
+  Future<void> _updateQuantity(String variantId, int newQuantity, int index) async {
     // Optimistic update
     final oldQuantity = _cartItems[index].quantity;
     setState(() {
@@ -120,8 +115,8 @@ class _CartPageState extends State<CartPage> {
     });
 
     try {
-      final response = await _apiClient.updateCartItem(
-        productId: productId,
+      final response = await _apiClient.updateCartItemByVariant(
+        variantId: variantId,
         quantity: newQuantity,
       );
 
@@ -340,7 +335,7 @@ class _CartPageState extends State<CartPage> {
                     IconButton(
                       icon: const Icon(Icons.delete_outline, size: 20),
                       color: AppColors.error,
-                      onPressed: () => _removeItem(item.productId, index),
+                      onPressed: () => _removeItem(item.variantId, index),
                       constraints: const BoxConstraints(
                         minWidth: 32,
                         minHeight: 32,
@@ -390,7 +385,7 @@ class _CartPageState extends State<CartPage> {
                           IconButton(
                             icon: const Icon(Icons.remove, size: 18),
                             onPressed: item.isAvailable && item.quantity > 1
-                                ? () => _updateQuantity(item.productId, item.quantity - 1, index)
+                                ? () => _updateQuantity(item.variantId, item.quantity - 1, index)
                                 : null,
                             constraints: const BoxConstraints(
                               minWidth: 32,
@@ -415,7 +410,7 @@ class _CartPageState extends State<CartPage> {
                           IconButton(
                             icon: const Icon(Icons.add, size: 18),
                             onPressed: item.isAvailable
-                                ? () => _updateQuantity(item.productId, item.quantity + 1, index)
+                                ? () => _updateQuantity(item.variantId, item.quantity + 1, index)
                                 : null,
                             constraints: const BoxConstraints(
                               minWidth: 32,
@@ -699,6 +694,7 @@ class _CartPageState extends State<CartPage> {
 class CartItem {
   final String id;
   final String productId;
+  final String variantId;  // Add variantId for updates
   final String name;
   final String shopName;
   final int price;
@@ -710,6 +706,7 @@ class CartItem {
   CartItem({
     required this.id,
     required this.productId,
+    required this.variantId,  // Add variantId parameter
     required this.name,
     required this.shopName,
     required this.price,

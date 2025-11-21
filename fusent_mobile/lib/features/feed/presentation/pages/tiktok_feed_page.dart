@@ -772,7 +772,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
         // Right Side Actions
         Positioned(
           right: 12,
-          bottom: widget.post.linkedProductId != null ? 240 : 180,
+          bottom: widget.post.linkedProductId != null ? 160 : 80,
           child: Column(
             children: [
               // Profile Avatar
@@ -786,7 +786,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: Colors.white, width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.3),
@@ -795,14 +795,14 @@ class _PostFeedItemState extends State<PostFeedItem> {
                     ],
                   ),
                   child: CircleAvatar(
-                    radius: 24,
+                    radius: 20,
                     backgroundColor: AppColors.surface,
                     child: Text(
                       widget.post.ownerName.isNotEmpty
                           ? widget.post.ownerName[0].toUpperCase()
                           : '?',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                       ),
@@ -810,7 +810,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Like Button
               _buildActionButton(
@@ -822,7 +822,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
                     widget.post.isLikedByCurrentUser ? Colors.red : Colors.white,
                 onTap: widget.onLike,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Comment Button
               _buildActionButton(
@@ -830,7 +830,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
                 label: _formatNumber(widget.post.commentsCount),
                 onTap: widget.onComment,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Share Button
               _buildActionButton(
@@ -847,7 +847,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
                   );
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Save/Bookmark Button
               _buildActionButton(
@@ -859,11 +859,59 @@ class _PostFeedItemState extends State<PostFeedItem> {
           ),
         ),
 
-        // Bottom Info
+        // Product Button - Large button ABOVE description
+        if (widget.post.linkedProductId != null)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 100,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  context.push('/product/${widget.post.linkedProductId}');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.shopping_bag, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Перейти к товару',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+        // Bottom Info - BELOW product button
         Positioned(
           left: 12,
           right: 80,
-          bottom: widget.post.linkedProductId != null ? 160 : 100,
+          bottom: 20,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -929,54 +977,6 @@ class _PostFeedItemState extends State<PostFeedItem> {
             ],
           ),
         ),
-
-        // Product Button - Large button at bottom
-        if (widget.post.linkedProductId != null)
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 80,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  context.push('/product/${widget.post.linkedProductId}');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.shopping_bag, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Перейти к товару',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }
@@ -992,7 +992,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.3),
               shape: BoxShape.circle,
@@ -1003,7 +1003,7 @@ class _PostFeedItemState extends State<PostFeedItem> {
                 ),
               ],
             ),
-            child: Icon(icon, color: color, size: 28),
+            child: Icon(icon, color: color, size: 24),
           ),
           if (label.isNotEmpty) ...[
             const SizedBox(height: 4),

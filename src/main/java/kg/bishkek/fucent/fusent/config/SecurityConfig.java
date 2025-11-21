@@ -60,6 +60,7 @@ public class SecurityConfig {
                                 "/api/catalog/**",  // Mobile app catalog endpoints
                                 "/api/shops/**",  // Mobile app shops endpoints
                                 "/api/social/feed/**",  // Mobile app social feed endpoints
+                                "/api/v1/orders/shop/**",  // Shop orders endpoint
                                 "/uploads/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",

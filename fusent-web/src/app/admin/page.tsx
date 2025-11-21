@@ -4,6 +4,8 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import MainLayout from '@/components/MainLayout'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/api'
 import {
   Users,
   ShoppingBag,
@@ -13,12 +15,33 @@ import {
   AlertCircle,
   DollarSign,
   Activity,
-  FolderTree
+  FolderTree,
+  CheckCircle
 } from 'lucide-react'
+
+interface DashboardStats {
+  totalUsers: number
+  totalSellers: number
+  totalMerchants: number
+  pendingMerchants: number
+  totalProducts: number
+  blockedProducts: number
+  totalOrders: number
+  pendingOrders: number
+}
 
 export default function AdminDashboard() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
+
+  const { data: statsData } = useQuery<DashboardStats>({
+    queryKey: ['admin', 'stats'],
+    queryFn: async () => {
+      const response = await api.get<DashboardStats>('/admin/stats')
+      return response.data
+    },
+    enabled: isAuthenticated && user?.role === 'ADMIN',
+  })
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'ADMIN') {
@@ -30,47 +53,40 @@ export default function AdminDashboard() {
     return null
   }
 
-  // Mock statistics - replace with real API calls
   const stats = [
     {
       title: 'Всего пользователей',
-      value: '1,234',
-      change: '+12%',
+      value: statsData?.totalUsers?.toLocaleString() || '0',
       icon: Users,
       color: 'blue',
     },
     {
-      title: 'Активные заказы',
-      value: '56',
-      change: '+5%',
+      title: 'Продавцы',
+      value: statsData?.totalSellers?.toLocaleString() || '0',
       icon: ShoppingBag,
       color: 'green',
     },
     {
       title: 'Магазины',
-      value: '89',
-      change: '+8%',
+      value: statsData?.totalMerchants?.toLocaleString() || '0',
       icon: Store,
       color: 'purple',
     },
     {
+      title: 'Ожидают одобрения',
+      value: statsData?.pendingMerchants?.toLocaleString() || '0',
+      icon: AlertCircle,
+      color: 'yellow',
+    },
+    {
       title: 'Продукты',
-      value: '3,456',
-      change: '+15%',
+      value: statsData?.totalProducts?.toLocaleString() || '0',
       icon: Package,
       color: 'orange',
     },
     {
-      title: 'Выручка (сегодня)',
-      value: '₸ 245,600',
-      change: '+22%',
-      icon: DollarSign,
-      color: 'emerald',
-    },
-    {
-      title: 'Активность',
-      value: '892',
-      change: '-3%',
+      title: 'Заблокировано товаров',
+      value: statsData?.blockedProducts?.toLocaleString() || '0',
       icon: Activity,
       color: 'red',
     },
@@ -108,13 +124,6 @@ export default function AdminDashboard() {
                   <div className={`p-3 rounded-lg bg-${stat.color}-100`}>
                     <Icon className={`h-6 w-6 text-${stat.color}-600`} />
                   </div>
-                  <span
-                    className={`text-sm font-semibold ${
-                      stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {stat.change}
-                  </span>
                 </div>
                 <h3 className="text-gray-600 text-sm font-medium mb-1">
                   {stat.title}
@@ -176,6 +185,15 @@ export default function AdminDashboard() {
                 <span className="flex items-center gap-3">
                   <FolderTree className="h-5 w-5 text-indigo-600" />
                   <span className="font-medium">Управление категориями</span>
+                </span>
+              </button>
+              <button
+                onClick={() => router.push('/admin/merchants')}
+                className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between"
+              >
+                <span className="flex items-center gap-3">
+                  <CheckCircle className="h-5 w-5 text-teal-600" />
+                  <span className="font-medium">Одобрение магазинов</span>
                 </span>
               </button>
             </div>

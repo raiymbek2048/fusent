@@ -56,6 +56,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           }
           _isLoading = false;
         });
+
+        // Record view in history
+        _apiClient.recordProductView(widget.productId).catchError((_) {});
       } else {
         setState(() {
           _error = 'Не удалось загрузить товар';
@@ -488,15 +491,33 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     child: OutlinedButton.icon(
                       onPressed: (product.variants.isEmpty || _selectedVariant != null) &&
                               (_selectedVariant?.inStock ?? product.stock > 0)
-                          ? () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Добавлено в корзину: ${product.name}${_selectedVariant != null ? ' (${_selectedVariant!.displayName})' : ''}',
-                                  ),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
+                          ? () async {
+                              try {
+                                final response = await _apiClient.addToCart(
+                                  productId: product.id,
+                                  quantity: 1,
+                                );
+
+                                if (mounted && response.statusCode == 200) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Добавлено в корзину: ${product.name}${_selectedVariant != null ? ' (${_selectedVariant!.displayName})' : ''}',
+                                      ),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Не удалось добавить в корзину'),
+                                      backgroundColor: AppColors.error,
+                                    ),
+                                  );
+                                }
+                              }
                             }
                           : null,
                       style: OutlinedButton.styleFrom(

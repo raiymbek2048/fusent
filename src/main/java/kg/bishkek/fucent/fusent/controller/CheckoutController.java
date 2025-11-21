@@ -6,10 +6,12 @@ import jakarta.validation.Valid;
 import kg.bishkek.fucent.fusent.dto.OrderDtos.*;
 import kg.bishkek.fucent.fusent.model.Order;
 import kg.bishkek.fucent.fusent.model.OrderItem;
+import kg.bishkek.fucent.fusent.model.AppUser;
 import kg.bishkek.fucent.fusent.repository.OrderItemRepository;
 import kg.bishkek.fucent.fusent.service.CheckoutService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,9 +27,11 @@ public class CheckoutController {
     private final OrderItemRepository orderItemRepository;
 
     @PostMapping
-    public ResponseEntity<OrderResponse> checkout(@Valid @RequestBody CheckoutRequest request) {
+    public ResponseEntity<OrderResponse> checkout(
+            @AuthenticationPrincipal AppUser user,
+            @Valid @RequestBody CheckoutRequest request) {
         Order order = checkoutService.checkoutFromCart(
-                request.shopId(), // Note: userId should come from authentication context
+                user.getId(),
                 request.shopId(),
                 request.shippingAddress(),
                 request.paymentMethod(),

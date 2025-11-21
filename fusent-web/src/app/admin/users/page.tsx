@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import MainLayout from '@/components/MainLayout'
 import { Search, UserCheck, UserX, Shield, ShoppingBag, User as UserIcon, RefreshCw } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 
 interface User {
@@ -15,6 +15,7 @@ interface User {
   createdAt: string
   updatedAt: string
   verified: boolean
+  blocked: boolean
 }
 
 interface UsersResponse {
@@ -28,9 +29,19 @@ interface UsersResponse {
 export default function AdminUsersPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
+  const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRole, setFilterRole] = useState<'all' | 'ADMIN' | 'SELLER' | 'BUYER'>('all')
   const [page, setPage] = useState(0)
+
+  const blockMutation = useMutation({
+    mutationFn: async ({ userId, blocked }: { userId: string; blocked: boolean }) => {
+      await api.post(`/admin/users/${userId}/${blocked ? 'block' : 'unblock'}`, { reason: 'Admin action' })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+  })
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'ADMIN') {
@@ -179,7 +190,7 @@ export default function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={u.id} className={`hover:bg-gray-50 transition-colors ${u.blocked ? 'bg-red-50' : ''}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
@@ -203,7 +214,12 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {u.verified ? (
+                      {u.blocked ? (
+                        <span className="flex items-center text-sm text-red-600">
+                          <UserX className="h-4 w-4 mr-1" />
+                          Заблокирован
+                        </span>
+                      ) : u.verified ? (
                         <span className="flex items-center text-sm text-green-600">
                           <UserCheck className="h-4 w-4 mr-1" />
                           Подтвержден
@@ -218,12 +234,17 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(u.createdAt).toLocaleDateString('ru-RU')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">
-                        Просмотр
-                      </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        Заблокировать
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => blockMutation.mutate({ userId: u.id, blocked: !u.blocked })}
+                        disabled={blockMutation.isPending}
+                        className={`px-3 py-1 rounded-lg ${
+                          u.blocked
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-red-100 text-red-700 hover:bg-red-200'
+                        }`}
+                      >
+                        {u.blocked ? 'Разблокировать' : 'Заблокировать'}
                       </button>
                     </td>
                   </tr>

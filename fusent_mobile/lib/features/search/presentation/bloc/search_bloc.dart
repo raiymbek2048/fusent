@@ -44,6 +44,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
               .toList();
         }
 
+        final totalCount = data is Map ? (data['totalElements'] ?? products.length) : products.length;
+
         if (event.page == 0) {
           if (products.isEmpty) {
             emit(SearchEmpty(query: event.query));
@@ -53,6 +55,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
               hasReachedMax: products.length < 20,
               currentPage: 0,
               query: event.query,
+              totalCount: totalCount,
             ));
           }
         } else {

@@ -48,6 +48,14 @@ public class Product {
     @Builder.Default
     private boolean active = true;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean blocked = false;
+
+    private Instant blockedAt;
+
+    @Column(length = 500)
+    private String blockedReason;
 
     @CreationTimestamp
     private Instant createdAt;

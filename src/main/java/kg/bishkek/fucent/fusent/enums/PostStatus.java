@@ -4,5 +4,6 @@ public enum PostStatus {
     ACTIVE,
     ARCHIVED,
     DELETED,
-    FLAGGED
+    FLAGGED,
+    BLOCKED
 }

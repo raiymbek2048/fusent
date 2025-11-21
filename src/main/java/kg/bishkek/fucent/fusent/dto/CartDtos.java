@@ -35,6 +35,7 @@ public class CartDtos {
 
     public record CartItemResponse(
         UUID id,
+        UUID productId,
         UUID variantId,
         String variantName,
         String productName,

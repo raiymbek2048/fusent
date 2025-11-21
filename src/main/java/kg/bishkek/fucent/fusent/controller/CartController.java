@@ -78,8 +78,8 @@ public class CartController {
         // Convert productId string to UUID
         UUID productId = UUID.fromString(request.productId());
 
-        // Get product with variants
-        Product product = productRepository.findById(productId)
+        // Get product with variants eagerly loaded
+        Product product = productRepository.findByIdWithVariants(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         // Get first variant
@@ -100,8 +100,8 @@ public class CartController {
         // Convert productId string to UUID
         UUID productId = UUID.fromString(request.productId());
 
-        // Get product with variants
-        Product product = productRepository.findById(productId)
+        // Get product with variants eagerly loaded
+        Product product = productRepository.findByIdWithVariants(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         // Get first variant
@@ -122,8 +122,8 @@ public class CartController {
         // Convert productId string to UUID
         UUID productId = UUID.fromString(request.productId());
 
-        // Get product with variants
-        Product product = productRepository.findById(productId)
+        // Get product with variants eagerly loaded
+        Product product = productRepository.findByIdWithVariants(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         // Get first variant
@@ -200,6 +200,7 @@ public class CartController {
         var product = variant.getProduct();
         return new CartItemResponse(
                 item.getId(),
+                product.getId(),
                 variant.getId(),
                 variant.getSku(),
                 product.getName(),

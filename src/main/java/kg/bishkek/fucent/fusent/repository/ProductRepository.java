@@ -109,4 +109,15 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
         WHERE m.id = :merchantId
         """)
     long countByMerchantId(@Param("merchantId") UUID merchantId);
+
+    /**
+     * Find product by ID with variants eagerly loaded (for cart operations)
+     */
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.variants WHERE p.id = :id")
+    Optional<Product> findByIdWithVariants(@Param("id") UUID id);
+
+    // Admin methods
+    Page<Product> findByBlocked(Boolean blocked, Pageable pageable);
+
+    long countByBlocked(Boolean blocked);
 }

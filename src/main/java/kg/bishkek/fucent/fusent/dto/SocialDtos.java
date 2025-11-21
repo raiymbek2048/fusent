@@ -22,7 +22,8 @@ public class SocialDtos {
         PostVisibility visibility,
         List<PostMediaDto> media,
         List<String> tags,
-        List<UUID> placeIds
+        List<UUID> placeIds,
+        UUID linkedProductId // Optional - link to a product
     ) {}
 
     public record UpdatePostRequest(
@@ -48,6 +49,7 @@ public class SocialDtos {
         List<PostMediaDto> media,
         List<String> tags,
         Boolean isLikedByCurrentUser,
+        UUID linkedProductId,
         Instant createdAt,
         Instant updatedAt
     ) {}

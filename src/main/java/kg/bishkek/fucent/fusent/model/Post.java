@@ -79,6 +79,9 @@ public class Post {
     @Builder.Default
     private BigDecimal trendingScore = BigDecimal.ZERO;
 
+    @Column(name = "linked_product_id")
+    private UUID linkedProductId;
+
     @CreationTimestamp
     @Column(name = "created_at")
     private Instant createdAt;

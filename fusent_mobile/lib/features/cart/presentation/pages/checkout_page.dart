@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/core/widgets/location_picker_map.dart';
+import 'package:fusent_mobile/core/network/api_client.dart';
 
 class CheckoutPage extends StatefulWidget {
   final double totalAmount;
@@ -22,9 +24,32 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _commentController = TextEditingController();
+  final ApiClient _apiClient = ApiClient();
 
   String _deliveryMethod = 'delivery'; // delivery or pickup
   String _paymentMethod = 'cash'; // cash or card
+  String? _shopId;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCart();
+  }
+
+  Future<void> _loadCart() async {
+    try {
+      final response = await _apiClient.getCart();
+      final cart = response.data;
+      if (cart != null && cart['items'] != null && cart['items'].length > 0) {
+        setState(() {
+          _shopId = cart['items'][0]['shopId'] as String?;
+        });
+      }
+    } catch (e) {
+      print('Error loading cart: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -35,39 +60,73 @@ class _CheckoutPageState extends State<CheckoutPage> {
     super.dispose();
   }
 
-  void _placeOrder() {
+  Future<void> _placeOrder() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Call API to place order
+      if (_shopId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ошибка: не удалось определить магазин')),
+        );
+        return;
+      }
 
-      // Show success dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 28),
-                SizedBox(width: 12),
-                Text('Заказ оформлен!'),
-              ],
-            ),
-            content: const Text(
-              'Ваш заказ успешно оформлен. Мы свяжемся с вами в ближайшее время для подтверждения.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  // Close dialog and go back to home
-                  Navigator.of(context).pop(); // close dialog
-                  context.go('/home'); // go to home
-                },
-                child: const Text('OK'),
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        await _apiClient.checkout(
+          shopId: _shopId!,
+          shippingAddress: _deliveryMethod == 'delivery' ? _addressController.text : null,
+          paymentMethod: _paymentMethod,
+          notes: _commentController.text.isNotEmpty ? _commentController.text : null,
+        );
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (!mounted) return;
+
+        // Show success dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 28),
+                  SizedBox(width: 12),
+                  Text('Заказ оформлен!'),
+                ],
               ),
-            ],
-          );
-        },
-      );
+              content: const Text(
+                'Ваш заказ успешно оформлен. Мы свяжемся с вами в ближайшее время для подтверждения.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    // Close dialog and go back to home
+                    Navigator.of(context).pop(); // close dialog
+                    context.go('/home'); // go to home
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка при оформлении заказа: $e')),
+        );
+      }
     }
   }
 
@@ -135,16 +194,46 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   if (_deliveryMethod == 'delivery') ...[
                     TextFormField(
                       controller: _addressController,
-                      decoration: const InputDecoration(
+                      readOnly: true,
+                      onTap: () async {
+                        final result = await Navigator.push<LocationResult>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LocationPickerMap(),
+                          ),
+                        );
+                        if (result != null && result.address != null) {
+                          setState(() {
+                            _addressController.text = result.address!;
+                          });
+                        }
+                      },
+                      decoration: InputDecoration(
                         labelText: 'Адрес доставки',
-                        prefixIcon: Icon(Icons.location_on_outlined),
-                        hintText: 'Улица, дом, квартира',
+                        prefixIcon: const Icon(Icons.location_on_outlined),
+                        hintText: 'Выберите адрес на карте',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.map),
+                          onPressed: () async {
+                            final result = await Navigator.push<LocationResult>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LocationPickerMap(),
+                              ),
+                            );
+                            if (result != null && result.address != null) {
+                              setState(() {
+                                _addressController.text = result.address!;
+                              });
+                            }
+                          },
+                        ),
                       ),
                       maxLines: 2,
                       validator: (value) {
                         if (_deliveryMethod == 'delivery' &&
                             (value == null || value.isEmpty)) {
-                          return 'Введите адрес доставки';
+                          return 'Выберите адрес доставки на карте';
                         }
                         return null;
                       },
@@ -377,15 +466,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: _placeOrder,
+              onPressed: _isLoading ? null : _placeOrder,
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 56),
                 backgroundColor: AppColors.primary,
               ),
-              icon: const Icon(Icons.check_circle_outline, size: 20),
-              label: const Text(
-                'Подтвердить заказ',
-                style: TextStyle(
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.check_circle_outline, size: 20),
+              label: Text(
+                _isLoading ? 'Оформление...' : 'Подтвердить заказ',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),

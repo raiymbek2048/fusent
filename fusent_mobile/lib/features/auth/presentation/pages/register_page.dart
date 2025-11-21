@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
+import 'package:fusent_mobile/core/widgets/location_picker_map.dart';
 import 'package:fusent_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:fusent_mobile/features/home/presentation/pages/home_page.dart';
 import 'package:fusent_mobile/features/seller/presentation/pages/seller_dashboard_page.dart';
@@ -302,17 +303,46 @@ class _RegisterPageState extends State<RegisterPage> {
                 if (_accountType == AccountType.seller) ...[
                   const SizedBox(height: 16),
 
-                  // Shop Address
+                  // Shop Address with Map Picker
                   TextFormField(
                     controller: _shopAddressController,
-                    keyboardType: TextInputType.streetAddress,
-                    decoration: const InputDecoration(
+                    readOnly: true,
+                    onTap: () async {
+                      final result = await Navigator.push<LocationResult>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LocationPickerMap(),
+                        ),
+                      );
+                      if (result != null && result.address != null) {
+                        setState(() {
+                          _shopAddressController.text = result.address!;
+                        });
+                      }
+                    },
+                    decoration: InputDecoration(
                       labelText: 'Адрес магазина',
-                      hintText: 'ул. Ленина, 123, Бишкек',
+                      hintText: 'Выберите адрес на карте',
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.location_on),
+                        onPressed: () async {
+                          final result = await Navigator.push<LocationResult>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LocationPickerMap(),
+                            ),
+                          );
+                          if (result != null && result.address != null) {
+                            setState(() {
+                              _shopAddressController.text = result.address!;
+                            });
+                          }
+                        },
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Введите адрес магазина';
+                        return 'Выберите адрес магазина на карте';
                       }
                       return null;
                     },

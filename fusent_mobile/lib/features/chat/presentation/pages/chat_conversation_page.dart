@@ -3,7 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
 import 'package:fusent_mobile/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:fusent_mobile/features/feed/data/models/post_model.dart';
+import 'package:fusent_mobile/features/feed/presentation/pages/posts_viewer_page.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 
 class ChatConversationPage extends StatefulWidget {
   final String chatId;
@@ -153,6 +156,9 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
               'time': _formatTime(msgMap['createdAt']),
               'status': msgMap['isRead'] == true ? 'read' : 'delivered',
               'senderId': msgMap['senderId'],
+              'messageType': msgMap['messageType'],
+              'sharedProduct': msgMap['sharedProduct'],
+              'sharedPost': msgMap['sharedPost'],
             };
           }).toList();
         });
@@ -399,6 +405,9 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                         isMine: isMine,
                         time: message['time'] as String,
                         status: isMine ? message['status'] as String? : null,
+                        messageType: message['messageType'] as String?,
+                        sharedProduct: message['sharedProduct'] as Map<String, dynamic>?,
+                        sharedPost: message['sharedPost'] as Map<String, dynamic>?,
                       );
                     },
                   ),
@@ -476,6 +485,9 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
     required bool isMine,
     required String time,
     String? status,
+    String? messageType,
+    Map<String, dynamic>? sharedProduct,
+    Map<String, dynamic>? sharedPost,
   }) {
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
@@ -488,36 +500,43 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
           crossAxisAlignment:
               isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color: isMine ? AppColors.primary : AppColors.surface,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isMine ? 18 : 4),
-                  bottomRight: Radius.circular(isMine ? 4 : 18),
+            // Shared content card
+            if (messageType == 'PRODUCT_SHARE' && sharedProduct != null)
+              _buildSharedProductCard(sharedProduct, isMine)
+            else if (messageType == 'POST_SHARE' && sharedPost != null)
+              _buildSharedPostCard(sharedPost, isMine)
+            else
+              // Regular text message
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+                decoration: BoxDecoration(
+                  color: isMine ? AppColors.primary : AppColors.surface,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(18),
+                    topRight: const Radius.circular(18),
+                    bottomLeft: Radius.circular(isMine ? 18 : 4),
+                    bottomRight: Radius.circular(isMine ? 4 : 18),
                   ),
-                ],
-              ),
-              child: Text(
-                text,
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.4,
-                  color: isMine ? Colors.white : AppColors.textPrimary,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.4,
+                    color: isMine ? Colors.white : AppColors.textPrimary,
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -543,6 +562,221 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                       color: status == 'read'
                           ? AppColors.primary
                           : AppColors.textSecondary,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSharedProductCard(Map<String, dynamic> product, bool isMine) {
+    return GestureDetector(
+      onTap: () {
+        if (product['id'] != null) {
+          context.push('/product/${product['id']}');
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isMine ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isMine ? AppColors.primary.withValues(alpha: 0.3) : AppColors.divider,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product image
+            if (product['imageUrl'] != null)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+                child: Image.network(
+                  product['imageUrl'],
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 150,
+                      color: AppColors.surface,
+                      child: const Center(
+                        child: Icon(Icons.shopping_bag, size: 48, color: AppColors.textSecondary),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.shopping_bag_outlined, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Товар',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.textSecondary),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    product['name'] ?? 'Unnamed Product',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (product['price'] != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      '${product['price']} ₸',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSharedPostCard(Map<String, dynamic> post, bool isMine) {
+    return GestureDetector(
+      onTap: () async {
+        if (post['id'] != null) {
+          // Load the full post data and open in viewer
+          try {
+            final response = await _apiClient.get('/api/v1/social/posts/${post['id']}');
+            if (response.statusCode == 200 && mounted) {
+              final postData = response.data as Map<String, dynamic>;
+              final postModel = PostModel.fromJson(postData);
+
+              // Navigate to posts viewer with this single post
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PostsViewerPage(
+                    posts: [postModel],
+                    initialIndex: 0,
+                  ),
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Не удалось загрузить пост: $e'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          }
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isMine ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isMine ? AppColors.primary.withValues(alpha: 0.3) : AppColors.divider,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Post image
+            if (post['imageUrl'] != null)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+                child: Image.network(
+                  post['imageUrl'],
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 150,
+                      color: AppColors.surface,
+                      child: const Center(
+                        child: Icon(Icons.image, size: 48, color: AppColors.textSecondary),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.article_outlined, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Публикация',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.textSecondary),
+                    ],
+                  ),
+                  if (post['caption'] != null && (post['caption'] as String).isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      post['caption'],
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (post['shopName'] != null) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.store, size: 14, color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          post['shopName'],
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ],

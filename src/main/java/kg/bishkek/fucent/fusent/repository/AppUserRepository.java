@@ -25,4 +25,11 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     // Find all employees for a merchant (across all shops)
     @Query("SELECT u FROM AppUser u WHERE u.shop.merchant.id = :merchantId AND u.role = :role")
     List<AppUser> findByShop_Merchant_IdAndRole(@Param("merchantId") UUID merchantId, @Param("role") Role role);
+
+    // Admin methods
+    Page<AppUser> findByBlocked(Boolean blocked, Pageable pageable);
+
+    Page<AppUser> findByRoleAndBlocked(Role role, Boolean blocked, Pageable pageable);
+
+    long countByRole(Role role);
 }

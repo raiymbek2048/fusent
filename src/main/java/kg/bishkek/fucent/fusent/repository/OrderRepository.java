@@ -20,4 +20,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.shop WHERE o.id = :orderId")
     Optional<Order> findByIdWithShop(UUID orderId);
+
+    // Admin methods
+    long countByStatus(OrderStatus status);
 }

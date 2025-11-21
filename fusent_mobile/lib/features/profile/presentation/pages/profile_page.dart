@@ -19,6 +19,10 @@ class ProfilePage extends StatelessWidget {
             title: const Text('Профиль'),
             actions: [
               IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () => context.push('/notifications'),
+              ),
+              IconButton(
                 icon: const Icon(Icons.settings_outlined),
                 onPressed: () {
                   // TODO: Open settings
@@ -135,9 +139,7 @@ class ProfilePage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            // TODO: Edit profile
-                          },
+                          onPressed: () => context.push('/edit-profile'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                           ),
@@ -179,32 +181,32 @@ class ProfilePage extends StatelessWidget {
             _buildMenuItem(
               icon: Icons.shopping_bag_outlined,
               title: 'Мои заказы',
-              onTap: () {},
+              onTap: () => context.push('/orders'),
             ),
             _buildMenuItem(
               icon: Icons.favorite_border,
               title: 'Избранное',
-              onTap: () {},
+              onTap: () => context.push('/favorites'),
             ),
             _buildMenuItem(
               icon: Icons.history,
               title: 'История просмотров',
-              onTap: () {},
+              onTap: () => context.push('/view-history'),
             ),
             _buildMenuItem(
               icon: Icons.payment_outlined,
               title: 'Способы оплаты',
-              onTap: () {},
+              onTap: () => context.push('/payment-methods'),
             ),
             _buildMenuItem(
               icon: Icons.location_on_outlined,
               title: 'Адреса доставки',
-              onTap: () {},
+              onTap: () => context.push('/delivery-addresses'),
             ),
             _buildMenuItem(
               icon: Icons.help_outline,
               title: 'Помощь',
-              onTap: () {},
+              onTap: () => context.push('/help'),
             ),
             _buildMenuItem(
               icon: Icons.logout,

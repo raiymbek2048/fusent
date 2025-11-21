@@ -6,6 +6,7 @@ class SearchProducts extends SearchEvent {
   final String? shopId;
   final double? minPrice;
   final double? maxPrice;
+  final String sortBy;
   final int page;
 
   SearchProducts({
@@ -14,6 +15,7 @@ class SearchProducts extends SearchEvent {
     this.shopId,
     this.minPrice,
     this.maxPrice,
+    this.sortBy = 'relevance',
     this.page = 0,
   });
 }

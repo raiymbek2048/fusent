@@ -10,6 +10,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 
+import kg.bishkek.fucent.fusent.enums.MerchantApprovalStatus;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -59,6 +61,30 @@ public class Merchant {
     @Builder.Default
     @Column(nullable = false)
     private Boolean isVerified = false;
+
+    // Blocking
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean blocked = false;
+
+    private Instant blockedAt;
+
+    @Column(length = 500)
+    private String blockedReason;
+
+    // Approval status
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(name = "approval_status", nullable = false, length = 20)
+    private MerchantApprovalStatus approvalStatus = MerchantApprovalStatus.PENDING;
+
+    @Column(name = "approval_note", length = 500)
+    private String approvalNote;
+
+    private Instant approvedAt;
+
+    @Column(name = "approved_by")
+    private UUID approvedBy;
 
     @CreationTimestamp
     private Instant createdAt;

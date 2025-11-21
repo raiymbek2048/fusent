@@ -64,6 +64,7 @@ public class PostServiceImpl implements PostService {
             .geoLon(request.geoLon())
             .visibility(request.visibility())
             .status(PostStatus.ACTIVE)
+            .linkedProductId(request.linkedProductId())
             .likesCount(0)
             .commentsCount(0)
             .sharesCount(0)
@@ -268,6 +269,7 @@ public class PostServiceImpl implements PostService {
             mediaList,
             tags,
             isLiked,
+            post.getLinkedProductId(),
             post.getCreatedAt(),
             post.getUpdatedAt()
         );

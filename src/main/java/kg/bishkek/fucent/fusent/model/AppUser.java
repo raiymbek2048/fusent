@@ -75,6 +75,15 @@ public class AppUser implements UserDetails {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean blocked = false;
+
+    private Instant blockedAt;
+
+    @Column(length = 500)
+    private String blockedReason;
+
     // Social links
     @Column
     private String telegramUsername;
@@ -133,6 +142,9 @@ public class AppUser implements UserDetails {
     public String getGender() { return gender; }
     public Boolean getIsVerified() { return isVerified; }
     public Boolean getIsActive() { return isActive; }
+    public Boolean getBlocked() { return blocked; }
+    public Instant getBlockedAt() { return blockedAt; }
+    public String getBlockedReason() { return blockedReason; }
 
     // Social links getters
     public String getTelegramUsername() { return telegramUsername; }
