@@ -106,9 +106,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    // Close dialog and go back to home
-                    Navigator.of(context).pop(); // close dialog
-                    context.go('/home'); // go to home
+                    // Use go_router to navigate - it will handle closing dialog
+                    context.go('/');
                   },
                   child: const Text('OK'),
                 ),
