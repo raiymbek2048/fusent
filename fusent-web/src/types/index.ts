@@ -35,11 +35,14 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  fullName: string
   email: string
+  username: string
+  phone: string
   password: string
-  role: 'SELLER' | 'BUYER'
-  firstName?: string
-  lastName?: string
+  accountType: 'buyer' | 'seller'
+  shopAddress?: string
+  hasSmartPOS?: boolean
 }
 
 export interface ChangePasswordRequest {
