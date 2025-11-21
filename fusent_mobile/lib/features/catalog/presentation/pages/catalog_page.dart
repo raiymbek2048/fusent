@@ -376,6 +376,7 @@ class _CatalogPageState extends State<CatalogPage> {
             imageUrl: product['imageUrl'] ?? '',
             rating: product['rating'] ?? 0.0,
             shopName: product['shopName'] ?? 'Магазин',
+            stock: product['stock'] ?? 0,
           );
         },
       ),
@@ -477,7 +478,9 @@ class _CatalogPageState extends State<CatalogPage> {
     required String imageUrl,
     required double rating,
     required String shopName,
+    required int stock,
   }) {
+    final bool isOutOfStock = stock <= 0;
     return GestureDetector(
       onTap: () {
         context.push('/product/$productId');
@@ -542,6 +545,28 @@ class _CatalogPageState extends State<CatalogPage> {
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Out of stock overlay
+                  if (isOutOfStock)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Нет в наличии',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

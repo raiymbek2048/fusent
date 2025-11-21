@@ -28,16 +28,39 @@ class _AddProductPageState extends State<AddProductPage> {
 
   String? _selectedCategory;
   bool _isLoading = false;
+  bool _isCategoriesLoading = true;
   XFile? _selectedImage;
 
-  // Categories from database
-  final List<Map<String, String>> _categories = [
-    {'id': '11111111-1111-1111-1111-111111111111', 'name': 'Электроника'},
-    {'id': '22222222-2222-2222-2222-222222222222', 'name': 'Одежда'},
-    {'id': '33333333-3333-3333-3333-333333333333', 'name': 'Продукты'},
-    {'id': '44444444-4444-4444-4444-444444444444', 'name': 'Книги'},
-    {'id': '55555555-5555-5555-5555-555555555555', 'name': 'Товары для дома'},
-  ];
+  // Categories from API
+  List<Map<String, String>> _categories = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final apiClient = sl<ApiClient>();
+      final response = await apiClient.get('/api/v1/categories');
+      if (response.statusCode == 200 && response.data != null) {
+        final List<dynamic> data = response.data is List
+            ? response.data
+            : (response.data['content'] ?? []);
+        setState(() {
+          _categories = data.map((c) => {
+            'id': c['id']?.toString() ?? '',
+            'name': c['name']?.toString() ?? '',
+          }).toList();
+          _isCategoriesLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading categories: $e');
+      setState(() => _isCategoriesLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -285,20 +308,40 @@ class _AddProductPageState extends State<AddProductPage> {
               const SizedBox(height: 16),
 
               // Category
-              DropdownButtonFormField<String>(
+              _isCategoriesLoading
+                  ? const InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Категория *',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.category),
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: 12),
+                          Text('Загрузка категорий...'),
+                        ],
+                      ),
+                    )
+                  : DropdownButtonFormField<String>(
                 value: _selectedCategory,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Категория *',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.category),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.category),
+                  hintText: _categories.isEmpty ? 'Нет категорий' : null,
                 ),
                 items: _categories.map((category) {
                   return DropdownMenuItem(
                     value: category['id'],
-                    child: Text(category['name']!),
+                    child: Text(category['name'] ?? ''),
                   );
                 }).toList(),
-                onChanged: (value) {
+                onChanged: _categories.isEmpty ? null : (value) {
                   setState(() {
                     _selectedCategory = value;
                   });

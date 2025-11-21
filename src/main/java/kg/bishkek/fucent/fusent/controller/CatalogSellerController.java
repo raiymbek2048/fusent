@@ -34,7 +34,10 @@ public class CatalogSellerController {
     @Transactional(readOnly = true)
     public List<Product> getMyProducts() {
         var userId = SecurityUtil.currentUserId(userRepository);
-        return productRepository.findByShopMerchantOwnerUserId(userId);
+        var products = productRepository.findByShopMerchantOwnerUserId(userId);
+        // Force load variants to populate stock field
+        products.forEach(p -> org.hibernate.Hibernate.initialize(p.getVariants()));
+        return products;
     }
 
     @PostMapping("/product")

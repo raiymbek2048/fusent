@@ -43,6 +43,7 @@ class _StoriesListState extends State<StoriesList> {
               'avatarUrl': owner?['avatarUrl'] ?? '',
               'hasViewed': storyMap['hasViewed'] ?? false,
               'mediaUrl': storyMap['mediaUrl'],
+              'isLive': storyMap['isLive'] ?? false,
             };
           }).toList();
         });
@@ -84,6 +85,7 @@ class _StoriesListState extends State<StoriesList> {
             username: story['username'] as String,
             avatarUrl: story['avatarUrl'] as String,
             hasNewStory: !(story['hasViewed'] as bool),
+            isLive: story['isLive'] as bool,
           );
         },
       ),
@@ -135,6 +137,7 @@ class _StoriesListState extends State<StoriesList> {
     required String username,
     required String avatarUrl,
     required bool hasNewStory,
+    required bool isLive,
   }) {
     return Padding(
       padding: const EdgeInsets.only(right: 10),
@@ -159,38 +162,72 @@ class _StoriesListState extends State<StoriesList> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: hasNewStory
-                    ? LinearGradient(
-                        colors: [AppColors.primary, AppColors.secondary],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : null,
-                border: !hasNewStory
-                    ? Border.all(color: Colors.grey[800]!, width: 1.5)
-                    : null,
-              ),
-              padding: const EdgeInsets.all(2),
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.black,
+            Stack(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: isLive
+                        ? const LinearGradient(
+                            colors: [Colors.red, Colors.pink],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : hasNewStory
+                            ? LinearGradient(
+                                colors: [AppColors.primary, AppColors.secondary],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                    border: !hasNewStory && !isLive
+                        ? Border.all(color: Colors.grey[800]!, width: 1.5)
+                        : null,
+                  ),
+                  padding: const EdgeInsets.all(2),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black,
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.grey[900],
+                      backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                      child: avatarUrl.isEmpty
+                          ? const Icon(Icons.person, color: Colors.white54, size: 20)
+                          : null,
+                    ),
+                  ),
                 ),
-                padding: const EdgeInsets.all(2),
-                child: CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.grey[900],
-                  backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                  child: avatarUrl.isEmpty
-                      ? const Icon(Icons.person, color: Colors.white54, size: 20)
-                      : null,
-                ),
-              ),
+                // LIVE badge
+                if (isLive)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'LIVE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 4),
             SizedBox(
