@@ -284,9 +284,18 @@ public class SocialController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
-        return savedPostService.getSavedPosts(
+        var savedPosts = savedPostService.getSavedPosts(
             PageRequest.of(page, size, Sort.by("createdAt").descending())
         );
+
+        // Populate post data for each saved post to avoid circular dependency
+        return savedPosts.map(sp -> new SavedPostResponse(
+            sp.id(),
+            sp.userId(),
+            sp.postId(),
+            postService.getPost(sp.postId()),
+            sp.createdAt()
+        ));
     }
 
     // ========== Shares ==========

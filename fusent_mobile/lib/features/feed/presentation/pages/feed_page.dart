@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/di/injection_container.dart';
 import 'package:fusent_mobile/features/feed/presentation/bloc/feed_bloc.dart';
@@ -91,13 +92,13 @@ class _FeedPageState extends State<FeedPage> with SingleTickerProviderStateMixin
                   IconButton(
                     icon: const Icon(Icons.favorite_border),
                     onPressed: () {
-                      // TODO: Navigate to favorites
+                      context.push('/favorites');
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.notifications_outlined),
                     onPressed: () {
-                      // TODO: Navigate to notifications
+                      context.push('/notifications');
                     },
                   ),
                 ],
@@ -250,6 +251,7 @@ class _FeedPageState extends State<FeedPage> with SingleTickerProviderStateMixin
                   likes: post.likesCount,
                   comments: post.commentsCount,
                   isLiked: post.isLikedByCurrentUser,
+                  isSaved: post.isSavedByCurrentUser,
                   linkedProductId: post.linkedProductId,
                   onLike: () {
                     bloc.add(LikePostEvent(
@@ -264,7 +266,7 @@ class _FeedPageState extends State<FeedPage> with SingleTickerProviderStateMixin
                     bloc.add(SharePostEvent(postId: post.id));
                   },
                   onSave: () {
-                    bloc.add(SavePostEvent(postId: post.id, isSaved: false));
+                    bloc.add(SavePostEvent(postId: post.id, isSaved: post.isSavedByCurrentUser));
                   },
                 );
               },

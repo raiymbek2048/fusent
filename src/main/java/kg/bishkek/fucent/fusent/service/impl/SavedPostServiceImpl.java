@@ -7,7 +7,6 @@ import kg.bishkek.fucent.fusent.repository.AppUserRepository;
 import kg.bishkek.fucent.fusent.repository.PostRepository;
 import kg.bishkek.fucent.fusent.repository.SavedPostRepository;
 import kg.bishkek.fucent.fusent.security.SecurityUtil;
-import kg.bishkek.fucent.fusent.service.PostService;
 import kg.bishkek.fucent.fusent.service.SavedPostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,7 +22,6 @@ public class SavedPostServiceImpl implements SavedPostService {
     private final SavedPostRepository savedPostRepository;
     private final PostRepository postRepository;
     private final AppUserRepository userRepository;
-    private final PostService postService;
 
     @Override
     @Transactional
@@ -93,12 +91,13 @@ public class SavedPostServiceImpl implements SavedPostService {
     }
 
     private SavedPostResponse toSavedPostResponse(SavedPost savedPost) {
-        var postResponse = postService.getPost(savedPost.getPost().getId());
+        // Return null for post to avoid circular dependency
+        // The controller or client can fetch the full post separately if needed
         return new SavedPostResponse(
             savedPost.getId(),
             savedPost.getUser().getId(),
             savedPost.getPost().getId(),
-            postResponse,
+            null,
             savedPost.getCreatedAt()
         );
     }

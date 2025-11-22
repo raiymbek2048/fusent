@@ -153,21 +153,42 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     Emitter<FeedState> emit,
   ) async {
     try {
-      emit(PostActionLoading(postId: event.postId, action: 'save'));
+      // Optimistically update UI first
+      final currentState = state;
+      if (currentState is FeedLoaded) {
+        final updatedPosts = currentState.posts.map((post) {
+          if (post.id == event.postId) {
+            return post.copyWith(
+              isSavedByCurrentUser: !event.isSaved,
+            );
+          }
+          return post;
+        }).toList();
 
+        emit(currentState.copyWith(posts: updatedPosts));
+      }
+
+      // Then call API in background
       if (event.isSaved) {
         await repository.unsavePost(event.postId);
       } else {
         await repository.savePost(event.postId);
       }
-
-      emit(PostActionSuccess(postId: event.postId, action: 'save'));
     } catch (e) {
-      emit(PostActionError(
-        postId: event.postId,
-        action: 'save',
-        message: e.toString(),
-      ));
+      // If API fails, revert the optimistic update
+      final currentState = state;
+      if (currentState is FeedLoaded) {
+        final revertedPosts = currentState.posts.map((post) {
+          if (post.id == event.postId) {
+            return post.copyWith(
+              isSavedByCurrentUser: event.isSaved,
+            );
+          }
+          return post;
+        }).toList();
+
+        emit(currentState.copyWith(posts: revertedPosts));
+      }
     }
   }
 

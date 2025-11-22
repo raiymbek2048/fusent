@@ -114,6 +114,7 @@ class PostModel extends Equatable {
   final List<PostMediaModel> media;
   final List<String> tags;
   final bool isLikedByCurrentUser;
+  final bool isSavedByCurrentUser;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -137,6 +138,7 @@ class PostModel extends Equatable {
     required this.media,
     required this.tags,
     required this.isLikedByCurrentUser,
+    required this.isSavedByCurrentUser,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -184,6 +186,7 @@ class PostModel extends Equatable {
           [],
       tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
       isLikedByCurrentUser: json['isLikedByCurrentUser'] as bool? ?? false,
+      isSavedByCurrentUser: json['isSavedByCurrentUser'] as bool? ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -210,6 +213,7 @@ class PostModel extends Equatable {
       'media': media.map((e) => e.toJson()).toList(),
       'tags': tags,
       'isLikedByCurrentUser': isLikedByCurrentUser,
+      'isSavedByCurrentUser': isSavedByCurrentUser,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -235,6 +239,7 @@ class PostModel extends Equatable {
     List<PostMediaModel>? media,
     List<String>? tags,
     bool? isLikedByCurrentUser,
+    bool? isSavedByCurrentUser,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -258,6 +263,7 @@ class PostModel extends Equatable {
       media: media ?? this.media,
       tags: tags ?? this.tags,
       isLikedByCurrentUser: isLikedByCurrentUser ?? this.isLikedByCurrentUser,
+      isSavedByCurrentUser: isSavedByCurrentUser ?? this.isSavedByCurrentUser,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -284,6 +290,7 @@ class PostModel extends Equatable {
         media,
         tags,
         isLikedByCurrentUser,
+        isSavedByCurrentUser,
         createdAt,
         updatedAt,
       ];

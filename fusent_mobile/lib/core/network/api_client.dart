@@ -933,6 +933,14 @@ class ApiClient {
     return await _dio.get('/api/v1/favorites/$productId/check');
   }
 
+  // Saved Posts endpoints
+  Future<Response> getSavedPosts({int page = 0, int size = 20}) async {
+    return await _dio.get(ApiEndpoints.getSavedPosts, queryParameters: {
+      'page': page,
+      'size': size,
+    });
+  }
+
   // View History endpoints
   Future<Response> getViewHistory() async {
     return await _dio.get('/api/v1/view-history');

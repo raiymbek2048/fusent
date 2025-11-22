@@ -25,7 +25,7 @@ import '../../features/seller/presentation/pages/order_details_page.dart';
 import '../../features/map/presentation/pages/shops_map_page.dart';
 import '../../features/shop/presentation/pages/shop_profile_page.dart';
 import '../../features/profile/presentation/pages/order_history_page.dart';
-import '../../features/profile/presentation/pages/favorites_page.dart';
+import '../../features/profile/presentation/pages/saved_posts_page.dart';
 import '../../features/profile/presentation/pages/view_history_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
@@ -223,11 +223,11 @@ class AppRouter {
         builder: (context, state) => const OrderHistoryPage(),
       ),
 
-      // Favorites
+      // Saved Posts (formerly Favorites)
       GoRoute(
         path: '/favorites',
         name: 'favorites',
-        builder: (context, state) => const FavoritesPage(),
+        builder: (context, state) => const SavedPostsPage(),
       ),
 
       // View History

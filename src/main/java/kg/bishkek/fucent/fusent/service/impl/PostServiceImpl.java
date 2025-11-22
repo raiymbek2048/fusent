@@ -8,6 +8,7 @@ import kg.bishkek.fucent.fusent.repository.*;
 import kg.bishkek.fucent.fusent.security.SecurityUtil;
 import kg.bishkek.fucent.fusent.service.LikeService;
 import kg.bishkek.fucent.fusent.service.PostService;
+import kg.bishkek.fucent.fusent.service.SavedPostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,7 @@ public class PostServiceImpl implements PostService {
     private final MerchantRepository merchantRepository;
     private final AppUserRepository userRepository;
     private final LikeService likeService;
+    private final SavedPostService savedPostService;
     private final FollowRepository followRepository;
 
     @Override
@@ -252,6 +254,14 @@ public class PostServiceImpl implements PostService {
             // User not authenticated
         }
 
+        // Check if saved by current user
+        Boolean isSaved = false;
+        try {
+            isSaved = savedPostService.isPostSaved(post.getId());
+        } catch (Exception e) {
+            // User not authenticated
+        }
+
         return new PostResponse(
             post.getId(),
             post.getOwnerType(),
@@ -269,6 +279,7 @@ public class PostServiceImpl implements PostService {
             mediaList,
             tags,
             isLiked,
+            isSaved,
             post.getLinkedProductId(),
             post.getCreatedAt(),
             post.getUpdatedAt()

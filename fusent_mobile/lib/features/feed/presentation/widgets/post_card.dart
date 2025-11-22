@@ -11,6 +11,7 @@ class PostCard extends StatefulWidget {
   final int likes;
   final int comments;
   final bool isLiked;
+  final bool isSaved;
   final String? linkedProductId; // ID привязанного товара
   final VoidCallback onLike;
   final VoidCallback onComment;
@@ -27,6 +28,7 @@ class PostCard extends StatefulWidget {
     required this.likes,
     required this.comments,
     required this.isLiked,
+    this.isSaved = false,
     this.linkedProductId,
     required this.onLike,
     required this.onComment,
@@ -270,8 +272,10 @@ class _PostCardState extends State<PostCard> {
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.bookmark_border),
-                  color: AppColors.textPrimary,
+                  icon: Icon(
+                    widget.isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  ),
+                  color: widget.isSaved ? AppColors.primary : AppColors.textPrimary,
                   onPressed: widget.onSave,
                 ),
               ],

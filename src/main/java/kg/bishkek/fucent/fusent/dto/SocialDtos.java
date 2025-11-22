@@ -49,6 +49,7 @@ public class SocialDtos {
         List<PostMediaDto> media,
         List<String> tags,
         Boolean isLikedByCurrentUser,
+        Boolean isSavedByCurrentUser,
         UUID linkedProductId,
         Instant createdAt,
         Instant updatedAt
