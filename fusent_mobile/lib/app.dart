@@ -6,8 +6,8 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/feed/presentation/bloc/feed_bloc.dart';
 import 'core/di/injection_container.dart' as di;
 
-class FucentApp extends StatelessWidget {
-  const FucentApp({super.key});
+class FusentApp extends StatelessWidget {
+  const FusentApp({super.key});
 
   @override
   Widget build(BuildContext context) {

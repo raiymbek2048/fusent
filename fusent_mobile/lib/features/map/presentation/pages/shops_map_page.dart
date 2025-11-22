@@ -40,8 +40,16 @@ class _ShopsMapPageState extends State<ShopsMapPage> {
     try {
       final response = await _apiClient.getAllShops();
 
-      if (mounted && response.statusCode == 200) {
-        final List<dynamic> shopsData = response.data as List<dynamic>;
+      if (mounted && response.statusCode == 200 && response.data != null) {
+        // Backend returns Page<ShopResponse> with structure: { content: [...], ... }
+        final data = response.data;
+        List<dynamic> shopsData = [];
+
+        if (data is Map && data.containsKey('content')) {
+          shopsData = data['content'] as List<dynamic>;
+        } else if (data is List) {
+          shopsData = data;
+        }
 
         setState(() {
           _allShops = shopsData.map((shop) {

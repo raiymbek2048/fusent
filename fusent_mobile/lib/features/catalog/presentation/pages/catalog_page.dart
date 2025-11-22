@@ -203,7 +203,7 @@ class _CatalogPageState extends State<CatalogPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Каталог'),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
+import 'package:fusent_mobile/core/widgets/location_picker_map.dart';
 
 class DeliveryAddressesPage extends StatefulWidget {
   const DeliveryAddressesPage({super.key});
@@ -153,8 +154,7 @@ class AddressFormSheet extends StatefulWidget {
 class _AddressFormSheetState extends State<AddressFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
-  late TextEditingController _cityController;
-  late TextEditingController _streetController;
+  late TextEditingController _addressController;
   late TextEditingController _buildingController;
   late TextEditingController _apartmentController;
   late TextEditingController _entranceController;
@@ -163,14 +163,29 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
   late TextEditingController _phoneController;
   late TextEditingController _commentController;
   bool _isDefault = false;
+  double? _latitude;
+  double? _longitude;
+  String? _city;
+  String? _street;
 
   @override
   void initState() {
     super.initState();
     final a = widget.address;
     _titleController = TextEditingController(text: a?['title'] ?? '');
-    _cityController = TextEditingController(text: a?['city'] ?? 'Бишкек');
-    _streetController = TextEditingController(text: a?['street'] ?? '');
+
+    // Construct full address from existing data
+    String fullAddress = '';
+    if (a?['city'] != null && a?['street'] != null) {
+      fullAddress = '${a['city']}, ${a['street']}';
+      if (a['building'] != null && a['building'].toString().isNotEmpty) {
+        fullAddress += ', ${a['building']}';
+      }
+    }
+    _addressController = TextEditingController(text: fullAddress);
+
+    _city = a?['city'];
+    _street = a?['street'];
     _buildingController = TextEditingController(text: a?['building'] ?? '');
     _apartmentController = TextEditingController(text: a?['apartment'] ?? '');
     _entranceController = TextEditingController(text: a?['entrance'] ?? '');
@@ -179,6 +194,35 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
     _phoneController = TextEditingController(text: a?['phone'] ?? '');
     _commentController = TextEditingController(text: a?['comment'] ?? '');
     _isDefault = a?['isDefault'] == true;
+    _latitude = a?['latitude'];
+    _longitude = a?['longitude'];
+  }
+
+  Future<void> _selectLocation() async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const LocationPickerMap(),
+    );
+
+    if (result != null) {
+      setState(() {
+        _latitude = result['latitude'];
+        _longitude = result['longitude'];
+        final address = result['address'] as String;
+        _addressController.text = address;
+
+        // Parse city and street from address if possible
+        final parts = address.split(',').map((e) => e.trim()).toList();
+        if (parts.isNotEmpty) {
+          _city = parts[0];
+          if (parts.length > 1) {
+            _street = parts[1];
+          }
+        }
+      });
+    }
   }
 
   @override
@@ -207,13 +251,17 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
                 validator: (v) => v?.isEmpty == true ? 'Обязательно' : null,
               ),
               TextFormField(
-                controller: _cityController,
-                decoration: const InputDecoration(labelText: 'Город'),
-                validator: (v) => v?.isEmpty == true ? 'Обязательно' : null,
-              ),
-              TextFormField(
-                controller: _streetController,
-                decoration: const InputDecoration(labelText: 'Улица'),
+                controller: _addressController,
+                decoration: InputDecoration(
+                  labelText: 'Адрес',
+                  hintText: 'Выберите адрес на карте',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.location_on),
+                    onPressed: _selectLocation,
+                  ),
+                ),
+                readOnly: true,
+                onTap: _selectLocation,
                 validator: (v) => v?.isEmpty == true ? 'Обязательно' : null,
               ),
               Row(
@@ -277,8 +325,8 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
                     if (_formKey.currentState!.validate()) {
                       widget.onSave({
                         'title': _titleController.text,
-                        'city': _cityController.text,
-                        'street': _streetController.text,
+                        'city': _city ?? 'Бишкек',
+                        'street': _street ?? _addressController.text,
                         'building': _buildingController.text,
                         'apartment': _apartmentController.text,
                         'entrance': _entranceController.text,
@@ -287,6 +335,8 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
                         'phone': _phoneController.text,
                         'comment': _commentController.text,
                         'isDefault': _isDefault,
+                        if (_latitude != null) 'latitude': _latitude,
+                        if (_longitude != null) 'longitude': _longitude,
                       });
                     }
                   },

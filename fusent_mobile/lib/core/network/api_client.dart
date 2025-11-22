@@ -1036,4 +1036,15 @@ class ApiClient {
       },
     );
   }
+
+  // Shops endpoints
+  Future<Response> getAllShops({int page = 0, int size = 1000}) async {
+    return await _dio.get(
+      '/api/v1/shops',
+      queryParameters: {
+        'page': page,
+        'size': size,
+      },
+    );
+  }
 }

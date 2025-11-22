@@ -13,7 +13,11 @@ import java.util.UUID;
 @Repository
 public interface ViewHistoryRepository extends JpaRepository<ViewHistory, UUID> {
 
-    @Query("SELECT vh FROM ViewHistory vh WHERE vh.user.id = :userId ORDER BY vh.viewedAt DESC")
+    @Query("SELECT vh FROM ViewHistory vh " +
+           "LEFT JOIN FETCH vh.product p " +
+           "LEFT JOIN FETCH p.shop " +
+           "LEFT JOIN FETCH p.category " +
+           "WHERE vh.user.id = :userId ORDER BY vh.viewedAt DESC")
     List<ViewHistory> findByUserIdOrderByViewedAtDesc(UUID userId);
 
     Optional<ViewHistory> findByUserIdAndProductId(UUID userId, UUID productId);
