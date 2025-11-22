@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
 import 'package:fusent_mobile/features/feed/data/models/post_model.dart';
+import 'package:fusent_mobile/features/feed/presentation/pages/posts_viewer_page.dart';
 
 class SavedPostsPage extends StatefulWidget {
   const SavedPostsPage({super.key});
@@ -127,8 +128,15 @@ class _SavedPostsPageState extends State<SavedPostsPage> {
 
           return GestureDetector(
             onTap: () {
-              // TODO: Navigate to post detail or open posts viewer
-              // For now, just show in feed context
+              // Navigate to posts viewer starting at tapped post
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => PostsViewerPage(
+                    posts: _savedPosts,
+                    initialIndex: index,
+                  ),
+                ),
+              );
             },
             child: Stack(
               fit: StackFit.expand,

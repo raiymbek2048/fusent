@@ -259,7 +259,15 @@ public class SocialController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Save a post")
     public SavedPostResponse savePost(@Valid @RequestBody SavedPostRequest request) {
-        return savedPostService.savePost(request);
+        var savedPost = savedPostService.savePost(request);
+        // Populate post data to avoid returning null
+        return new SavedPostResponse(
+            savedPost.id(),
+            savedPost.userId(),
+            savedPost.postId(),
+            postService.getPost(savedPost.postId()),
+            savedPost.createdAt()
+        );
     }
 
     @DeleteMapping("/saved-posts/{postId}")
