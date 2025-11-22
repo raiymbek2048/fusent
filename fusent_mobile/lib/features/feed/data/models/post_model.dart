@@ -141,6 +141,9 @@ class PostModel extends Equatable {
     required this.updatedAt,
   });
 
+  // Getter for productId (alias for linkedProductId)
+  String? get productId => linkedProductId;
+
   factory PostModel.fromJson(Map<String, dynamic> json) {
     return PostModel(
       id: json['id'] as String,

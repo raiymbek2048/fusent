@@ -5,7 +5,7 @@ package kg.bishkek.fucent.fusent.dto;
 import java.util.UUID;
 
 public class CatalogDtos {
-    public record ProductFilter(UUID shopId, UUID categoryId, String q, int page, int size) {}
+    public record ProductFilter(UUID shopId, UUID merchantId, UUID categoryId, String q, int page, int size) {}
     public record Paged<T>(java.util.List<T> items, long total, int page, int size) {}
 }
 

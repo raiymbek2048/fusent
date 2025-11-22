@@ -176,7 +176,7 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
 
     // Construct full address from existing data
     String fullAddress = '';
-    if (a?['city'] != null && a?['street'] != null) {
+    if (a != null && a['city'] != null && a['street'] != null) {
       fullAddress = '${a['city']}, ${a['street']}';
       if (a['building'] != null && a['building'].toString().isNotEmpty) {
         fullAddress += ', ${a['building']}';
@@ -199,18 +199,18 @@ class _AddressFormSheetState extends State<AddressFormSheet> {
   }
 
   Future<void> _selectLocation() async {
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const LocationPickerMap(),
+    final result = await Navigator.of(context).push<LocationResult>(
+      MaterialPageRoute(
+        builder: (context) => const LocationPickerMap(),
+        fullscreenDialog: true,
+      ),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       setState(() {
-        _latitude = result['latitude'];
-        _longitude = result['longitude'];
-        final address = result['address'] as String;
+        _latitude = result.latitude;
+        _longitude = result.longitude;
+        final address = result.address ?? '${result.latitude}, ${result.longitude}';
         _addressController.text = address;
 
         // Parse city and street from address if possible

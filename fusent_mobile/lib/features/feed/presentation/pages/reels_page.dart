@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fusent_mobile/core/constants/app_colors.dart';
 import 'package:fusent_mobile/core/network/api_client.dart';
 import 'package:fusent_mobile/features/feed/data/models/post_model.dart';
@@ -72,6 +73,7 @@ class _ReelsPageState extends State<ReelsPage> {
               isLiked: post.isLikedByCurrentUser,
               ownerId: post.ownerId ?? '',
               ownerType: post.ownerType.toString().split('.').last,
+              productId: post.productId,
             );
           }).toList();
         });
@@ -344,21 +346,21 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
         // Right Side Actions
         Positioned(
           right: 12,
-          bottom: 100,
+          bottom: 140,
           child: Column(
             children: [
               // Profile Avatar
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: Colors.white, width: 1.5),
                 ),
                 child: CircleAvatar(
-                  radius: 24,
+                  radius: 20,
                   backgroundImage: NetworkImage(widget.reel.avatarUrl),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Like Button
               _buildActionButton(
@@ -369,7 +371,7 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
                   widget.onLikeToggle(widget.reel.postId, widget.reel.isLiked);
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Comment Button
               _buildActionButton(
@@ -379,7 +381,7 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
                   // TODO: Open comments
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Share Button
               _buildActionButton(
@@ -396,7 +398,16 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
                   );
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+
+              // Save/Bookmark Button
+              _buildActionButton(
+                icon: _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                label: '',
+                color: _isSaved ? Colors.yellow : Colors.white,
+                onTap: _toggleSave,
+              ),
+              const SizedBox(height: 16),
 
               // More Button
               _buildActionButton(
@@ -410,11 +421,62 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
           ),
         ),
 
+        // "Go to Product" Button
+        if (widget.reel.productId != null)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 80,
+            child: Container(
+              width: double.infinity,
+              height: 50,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.secondary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.5),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    context.push('/product/${widget.reel.productId}');
+                  },
+                  borderRadius: BorderRadius.circular(25),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 24),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Перейти к товару',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
         // Bottom Info
         Positioned(
           left: 12,
           right: 80,
-          bottom: 100,
+          bottom: 20,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -475,21 +537,21 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 28),
+            child: Icon(icon, color: color, size: 22),
           ),
         ),
         if (label.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -523,16 +585,16 @@ class _ReelVideoPlayerState extends State<ReelVideoPlayer> {
                 leading: Icon(_isSaved ? Icons.bookmark : Icons.bookmark_border),
                 title: Text(_isSaved ? 'Убрать из сохраненных' : 'Сохранить'),
                 onTap: () {
-                  _toggleSave();
                   Navigator.pop(context);
+                  _toggleSave();
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.person_add_outlined),
                 title: Text(_isFollowing ? 'Отписаться' : 'Подписаться'),
                 onTap: () {
-                  _toggleFollow();
                   Navigator.pop(context);
+                  _toggleFollow();
                 },
               ),
               ListTile(
@@ -568,6 +630,7 @@ class ReelItem {
   bool isLiked;
   final String ownerId;
   final String ownerType;
+  final String? productId;
 
   ReelItem({
     required this.postId,
@@ -581,5 +644,6 @@ class ReelItem {
     required this.isLiked,
     required this.ownerId,
     required this.ownerType,
+    this.productId,
   });
 }

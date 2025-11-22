@@ -22,6 +22,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
 
         // Fetch products with standard pagination (no JOIN FETCH to avoid pagination issues)
         if (f.shopId()!=null)      page = products.findAllByShop_Id(f.shopId(), pageable);
+        else if (f.merchantId()!=null) page = products.findAllByMerchantId(f.merchantId(), pageable);
         else if (f.categoryId()!=null) page = products.findAllByCategory_Id(f.categoryId(), pageable);
         else if (f.q()!=null && !f.q().isBlank()) page = products.findAllByNameContainingIgnoreCase(f.q(), pageable);
         else page = products.findAll(pageable);

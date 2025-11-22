@@ -115,6 +115,7 @@ class _PostViewerItemState extends State<PostViewerItem> {
   final ApiClient _apiClient = ApiClient();
   bool _isFollowing = false;
   bool _isLoadingFollow = false;
+  bool _isSaved = false;
   late bool _isLiked;
   late int _likesCount;
 
@@ -124,6 +125,7 @@ class _PostViewerItemState extends State<PostViewerItem> {
     _isLiked = widget.post.isLikedByCurrentUser;
     _likesCount = widget.post.likesCount;
     _checkFollowStatus();
+    _checkSavedStatus();
   }
 
   Future<void> _checkFollowStatus() async {
@@ -178,6 +180,39 @@ class _PostViewerItemState extends State<PostViewerItem> {
           _isLoadingFollow = false;
         });
       }
+    }
+  }
+
+  Future<void> _checkSavedStatus() async {
+    try {
+      final response = await _apiClient.isSaved(widget.post.id);
+      if (mounted && response.statusCode == 200) {
+        setState(() {
+          _isSaved = response.data as bool? ?? false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking saved status: $e');
+    }
+  }
+
+  Future<void> _toggleSave() async {
+    setState(() {
+      _isSaved = !_isSaved;
+    });
+
+    try {
+      if (_isSaved) {
+        await _apiClient.savePost(widget.post.id);
+      } else {
+        await _apiClient.unsavePost(widget.post.id);
+      }
+    } catch (e) {
+      debugPrint('Error toggling save: $e');
+      // Revert on error
+      setState(() {
+        _isSaved = !_isSaved;
+      });
     }
   }
 
@@ -284,7 +319,7 @@ class _PostViewerItemState extends State<PostViewerItem> {
         // Right side actions
         Positioned(
           right: 12,
-          bottom: 120,
+          bottom: 140,
           child: Column(
             children: [
               // Profile Avatar
@@ -298,23 +333,23 @@ class _PostViewerItemState extends State<PostViewerItem> {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: Colors.white, width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        blurRadius: 6,
                       ),
                     ],
                   ),
                   child: CircleAvatar(
-                    radius: 24,
+                    radius: 20,
                     backgroundColor: AppColors.surface,
                     child: Text(
                       widget.post.ownerName.isNotEmpty
                           ? widget.post.ownerName[0].toUpperCase()
                           : '?',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                       ),
@@ -322,7 +357,7 @@ class _PostViewerItemState extends State<PostViewerItem> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Like Button
               _buildActionButton(
@@ -331,7 +366,7 @@ class _PostViewerItemState extends State<PostViewerItem> {
                 color: _isLiked ? Colors.red : Colors.white,
                 onTap: _toggleLike,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Comment Button
               _buildActionButton(
@@ -341,25 +376,85 @@ class _PostViewerItemState extends State<PostViewerItem> {
                   // TODO: Open comments
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Share Button
               _buildActionButton(
                 icon: Icons.send,
-                label: 'Поделиться',
+                label: _formatNumber(widget.post.sharesCount),
                 onTap: () {
                   // TODO: Share
                 },
+              ),
+              const SizedBox(height: 16),
+
+              // Save/Bookmark Button
+              _buildActionButton(
+                icon: _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                label: '',
+                color: _isSaved ? Colors.yellow : Colors.white,
+                onTap: _toggleSave,
               ),
             ],
           ),
         ),
 
+        // "Go to Product" Button
+        if (widget.post.productId != null)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 80,
+            child: Container(
+              width: double.infinity,
+              height: 50,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.secondary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.5),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    context.push('/product/${widget.post.productId}');
+                  },
+                  borderRadius: BorderRadius.circular(25),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 24),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Перейти к товару',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
         // Bottom Info
         Positioned(
           left: 12,
           right: 80,
-          bottom: 100,
+          bottom: 20,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -438,26 +533,26 @@ class _PostViewerItemState extends State<PostViewerItem> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 8,
+                  blurRadius: 6,
                 ),
               ],
             ),
-            child: Icon(icon, color: color, size: 28),
+            child: Icon(icon, color: color, size: 22),
           ),
           if (label.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: FontWeight.w600,
                 shadows: [
                   Shadow(

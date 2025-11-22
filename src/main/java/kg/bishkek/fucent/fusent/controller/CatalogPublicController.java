@@ -31,12 +31,13 @@ public class CatalogPublicController {
     @Transactional(readOnly = true)
     public Page<Product> products(
             @RequestParam(required=false) UUID shopId,
+            @RequestParam(required=false) UUID merchantId,
             @RequestParam(required=false) UUID categoryId,
             @RequestParam(required=false) String qtext,
             @RequestParam(defaultValue="0") int page,
             @RequestParam(defaultValue="20") int size
     ) {
-        return q.search(new ProductFilter(shopId, categoryId, qtext, page, size));
+        return q.search(new ProductFilter(shopId, merchantId, categoryId, qtext, page, size));
     }
 
     @GetMapping("/products/{id}")

@@ -322,6 +322,14 @@ class ApiClient {
     return await _dio.delete(path);
   }
 
+  Future<Response> isSaved(String postId) async {
+    final path = ApiEndpoints.replacePathParams(
+      '/api/v1/posts/{postId}/saved',
+      {'postId': postId},
+    );
+    return await _dio.get(path);
+  }
+
   // Cart endpoints
   Future<Response> getCart() async {
     return await _dio.get(ApiEndpoints.cart);
@@ -1033,17 +1041,6 @@ class ApiClient {
         if (shippingAddress != null) 'shippingAddress': shippingAddress,
         if (paymentMethod != null) 'paymentMethod': paymentMethod,
         if (notes != null) 'notes': notes,
-      },
-    );
-  }
-
-  // Shops endpoints
-  Future<Response> getAllShops({int page = 0, int size = 1000}) async {
-    return await _dio.get(
-      '/api/v1/shops',
-      queryParameters: {
-        'page': page,
-        'size': size,
       },
     );
   }

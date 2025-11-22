@@ -115,11 +115,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => context.go('/home/catalog'),
-              child: const Text('Перейти в каталог'),
-            ),
           ],
         ),
       );

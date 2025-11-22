@@ -111,6 +111,18 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     long countByMerchantId(@Param("merchantId") UUID merchantId);
 
     /**
+     * Find all products across all shops of a merchant (paginated)
+     */
+    @Query("""
+        SELECT p FROM Product p
+        INNER JOIN p.shop s
+        INNER JOIN s.merchant m
+        WHERE m.id = :merchantId
+        ORDER BY p.createdAt DESC
+        """)
+    Page<Product> findAllByMerchantId(@Param("merchantId") UUID merchantId, Pageable pageable);
+
+    /**
      * Find product by ID with variants eagerly loaded (for cart operations)
      */
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.variants WHERE p.id = :id")

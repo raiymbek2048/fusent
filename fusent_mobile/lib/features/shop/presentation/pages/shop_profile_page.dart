@@ -295,6 +295,7 @@ class _ShopProfilePageState extends State<ShopProfilePage>
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
+            backgroundColor: AppColors.background,
             flexibleSpace: FlexibleSpaceBar(
               background: _shopData['coverImage'] != null
                   ? Image.network(
@@ -302,12 +303,12 @@ class _ShopProfilePageState extends State<ShopProfilePage>
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: AppColors.surface,
+                          color: AppColors.background,
                         );
                       },
                     )
                   : Container(
-                      color: AppColors.surface,
+                      color: AppColors.background,
                     ),
             ),
           ),
@@ -854,8 +855,12 @@ class _ShopProfilePageState extends State<ShopProfilePage>
   }
 
   Future<void> _loadProducts() async {
-    if (_actualShopId == null) {
-      debugPrint('No shop ID, cannot load products');
+    // Try to use merchantId if shopId is not available
+    final queryId = _actualShopId ?? _merchantId;
+    final queryParam = _actualShopId != null ? 'shopId' : 'merchantId';
+
+    if (queryId == null) {
+      debugPrint('No shop ID or merchant ID, cannot load products');
       return;
     }
 
@@ -865,14 +870,18 @@ class _ShopProfilePageState extends State<ShopProfilePage>
 
     try {
       final response = await _apiClient.get(
-        '/api/v1/catalog/products?shopId=$_actualShopId&size=20',
+        '/api/v1/catalog/products?$queryParam=$queryId&size=20',
       );
+
+      debugPrint('Products response status: ${response.statusCode}');
+      debugPrint('Products query: $queryParam=$queryId');
 
       if (mounted && response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         setState(() {
           _products = data['content'] as List<dynamic>;
         });
+        debugPrint('Loaded ${_products.length} products');
       }
     } catch (e) {
       debugPrint('Error loading products: $e');

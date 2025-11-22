@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> {
       final apiClient = sl<ApiClient>();
 
       // Load unread chats count
-      final chatsResponse = await apiClient.getChats();
+      final chatsResponse = await apiClient.getConversations();
       if (chatsResponse.statusCode == 200 && chatsResponse.data != null) {
         final List<dynamic> chats = chatsResponse.data is List
             ? chatsResponse.data

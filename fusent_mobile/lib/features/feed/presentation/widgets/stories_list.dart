@@ -62,14 +62,14 @@ class _StoriesListState extends State<StoriesList> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading && _stories.isEmpty) {
-      return Container(
-        height: 90,
-        child: const Center(child: CircularProgressIndicator()),
+      return const SizedBox(
+        height: 100,
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
-    return Container(
-      height: 90,
+    return SizedBox(
+      height: 100,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         scrollDirection: Axis.horizontal,
